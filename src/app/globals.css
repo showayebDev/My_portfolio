@@ -1,0 +1,165 @@
+@import url("https://fonts.googleapis.com/css2?family=BBH+Sans+Bogle&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+
+@import "tailwindcss";
+
+@theme {
+  --bg-color: var(--bg-color);
+  --text-color: var(--text-color);
+  --secondary-text-color: var(--secondary-text-color);
+  --card-bg-color: var(--card-bg-color);
+  --border-color: var(--border-color);
+  --radius: 32px;
+  --btn-1-bg: var(--btn-1-bg);
+  --btn-1-text: var(--btn-1-text);
+  --btn-1-bg-hover: var(--btn-1-bg-hover);
+  --btn-2-bg: var(--btn-2-bg);
+  --btn-2-text: var(--btn-2-text);
+  --btn-2-bg-hover: var(--btn-color-2-bg-hover);
+  --hamburger-color: var(--hamburger-icon-color);
+}
+
+:root {
+  --bg-color: #f6f8fa;
+  --text-color: #1f2328;
+  --secondary-text-color: #57606a;
+  --link-color: #0969da;
+  --card-bg-color: #ffffff;
+  --border-color: #d0d7de;
+  --btn-1-bg: #f3f4f6;
+  --btn-1-text: #1f2328;
+  --btn-2-bg: #24292f;
+  --btn-2-text: #ffffff;
+  --hamburger-icon-color: #1f2328;
+  --btn-1-bg-hover: #e5e7eb;
+  --btn-color-2-bg-hover: #1f2328;
+}
+
+.dark {
+  --bg-color: #0d1117;
+  --text-color: #e6edf3;
+  --secondary-text-color: #8b949e;
+  --link-color: #58a6ff;
+  --card-bg-color: #161b22;
+  --border-color: #21262d;
+  --btn-1-bg: #21262d;
+  --btn-1-text: #e6edf3;
+  --btn-2-bg: #21262d;
+  --btn-2-text: #e6edf3;
+  --hamburger-icon-color: #e6edf3;
+  --btn-1-bg-hover: #30363d;
+  --btn-color-2-bg-hover: #30363d;
+}
+* {
+  transition: background-color 0.4s ease, color 0.4s ease,
+    border-color 0.4s ease, fill 0.4s ease, stroke 0.4s ease;
+}
+p {
+  color: var(--secondary-text-color);
+}
+h1,
+h3 {
+  color: var(--text-color);
+  font-weight: 700;
+}
+h2 {
+  color: var(--text-color);
+  font-weight: 500;
+}
+body {
+  background-color: var(--bg-color);
+  font-family: "Montserrat", sans-serif;
+}
+.icon {
+  font-size: 1.5rem;
+  color: var(--text-color);
+  transition: all 300ms ease;
+}
+.card {
+  transition: all 300ms ease;
+}
+.navLink {
+  @apply cursor-pointer text-[color:var(--text-color)] text-2xl no-underline decoration-[color:var(--bg-color)] hover:text-[color:var(--secondary-text-color)] hover:underline hover:underline-offset-[1rem] hover:decoration-[color:var(--border-color)] transition-all duration-300 ease-in-out;
+}
+
+.markdown-body {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  /* line-height: 1.7 !important; */
+  text-align: justify;
+}
+
+.markdown-body a {
+  color: var(--link-color) !important;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  color: var(--text-color) !important;
+}
+
+.markdown-body code,
+.markdown-body pre {
+  min-height: 40px;
+  border-radius: 6px;
+  /* padding: 0.35em 0.5em !important; */
+}
+
+.light .markdown-body code,
+.light .markdown-body pre,
+:not(.dark) .markdown-body code,
+:not(.dark) .markdown-body pre {
+  background-color: #e5e7eb !important;
+  color: #1f2937 !important;
+}
+
+.dark .markdown-body code,
+.dark .markdown-body pre {
+  background-color: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
+/* Custom Skill Rings and Scrollbars from UI.txt */
+.skill-ring {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--bg-color) 79%, transparent 80% 100%),
+              conic-gradient(var(--skill-color, #6366f1) var(--skill-percent, 0%), var(--border-color) 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 15px color-mix(in srgb, var(--skill-color, #6366f1) 15%, transparent);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.skill-ring:hover {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--skill-color, #6366f1) 35%, transparent);
+}
+.skill-inner {
+  width: 80px;
+  height: 80px;
+  background: var(--card-bg-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
