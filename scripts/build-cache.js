@@ -190,6 +190,7 @@ async function buildCache() {
       if (p.readme) {
         const cleanPath = p.readme.startsWith('/') ? p.readme : `/${p.readme}`;
         const baseName = path.basename(cleanPath);
+        const localPath = path.join(__dirname, '../public', cleanPath);
         try {
           const res = await downloadAppwriteAsset(filesMap, [baseName], cleanPath);
           p.readmeContent = res && res.buffer ? res.buffer.toString('utf-8') : '';
@@ -197,8 +198,21 @@ async function buildCache() {
           console.error(`Warning: Failed to process README for project ${p.name}:`, err.message);
           p.readmeContent = '';
         }
+
+        // Fallback to local readme file if download was empty
+        if (!p.readmeContent && fs.existsSync(localPath)) {
+          p.readmeContent = fs.readFileSync(localPath, 'utf-8');
+          console.log(`Loaded fallback local README from public${cleanPath}`);
+        }
       } else {
-        p.readmeContent = '';
+        // Direct local file check: public/readme/${p.name}.md
+        const fallbackPath = path.join(__dirname, '../public/readme', `${p.name}.md`);
+        if (fs.existsSync(fallbackPath)) {
+          p.readmeContent = fs.readFileSync(fallbackPath, 'utf-8');
+          console.log(`Loaded local README from public/readme/${p.name}.md`);
+        } else {
+          p.readmeContent = '';
+        }
       }
 
       projects.push(p);

@@ -1,29 +1,34 @@
-"use client";
-
-import React, { useEffect, useState, useContext } from "react";
-import { useParams } from "next/navigation";
+import fs from "fs";
+import path from "path";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import Button from "@/components/button";
-import { ThemeContext } from "@/context/ThemeContext";
+import MarkdownView from "@/components/MarkdownView";
 import portfolioData from "@/data/portfolio-data.json";
-
 import { marked } from "marked";
-import DOMPurify from "dompurify";
 import hljs from "highlight.js";
-import "github-markdown-css/github-markdown.css";
-import "highlight.js/styles/github-dark.css";
-import "highlight.js/styles/github.css";
 
-marked.setOptions({
-  highlight: function (code, lang) {
-    if (lang && hljs.getLanguage(lang)) {
-      return hljs.highlight(code, { language: lang }).value;
-    }
-    return hljs.highlightAuto(code).value;
-  },
-  langPrefix: "hljs language-",
-});
+// Custom code block renderer with highlight.js syntax highlighting
+const renderer = {
+  code({ text, lang }) {
+    const validLanguage = lang && hljs.getLanguage(lang) ? lang : null;
+    const highlighted = validLanguage
+      ? hljs.highlight(text, { language: validLanguage }).value
+      : hljs.highlightAuto(text).value;
+    const langClass = validLanguage ? ` class="hljs language-${validLanguage}"` : ' class="hljs"';
+    return `<pre><code${langClass}>${highlighted}</code></pre>`;
+  }
+};
+
+marked.use({ renderer, gfm: true, breaks: true });
+
+export async function generateStaticParams() {
+  const projects = portfolioData.projects || [];
+  return projects.map((p) => ({
+    name: p.name,
+  }));
+}
 
 function parseButtonsSafely(buttons) {
   if (Array.isArray(buttons)) return buttons;
@@ -39,71 +44,52 @@ function parseButtonsSafely(buttons) {
   return [];
 }
 
-export default function ProjectPage() {
-  const { name } = useParams();
-  const { theme } = useContext(ThemeContext);
-  const [effectiveTheme, setEffectiveTheme] = useState("light");
-  const [renderedReadme, setRenderedReadme] = useState("");
+function getProjectMarkdown(project) {
+  if (project.readmeContent && project.readmeContent.trim().length > 0) {
+    return project.readmeContent;
+  }
 
+  // Fallback 1: Check project.readme path in public folder
+  if (project.readme) {
+    try {
+      const cleanReadme = project.readme.startsWith("/") ? project.readme.slice(1) : project.readme;
+      const fullPath = path.join(process.cwd(), "public", cleanReadme);
+      if (fs.existsSync(fullPath)) {
+        return fs.readFileSync(fullPath, "utf-8");
+      }
+    } catch (e) {
+      console.warn(`Failed to read local markdown for ${project.name}:`, e.message);
+    }
+  }
+
+  // Fallback 2: Check public/readme/${project.name}.md
+  try {
+    const directPath = path.join(process.cwd(), "public", "readme", `${project.name}.md`);
+    if (fs.existsSync(directPath)) {
+      return fs.readFileSync(directPath, "utf-8");
+    }
+  } catch (e) {}
+
+  return "";
+}
+
+export default async function ProjectPage({ params }) {
+  const { name } = await params;
   const project = (portfolioData.projects || []).find(
     (p) => p.name?.toLowerCase() === (name || "").toLowerCase()
   );
 
-  const formattedProject = project
-    ? { ...project, buttons: parseButtonsSafely(project.buttons) }
-    : null;
-
-  useEffect(() => {
-    const updateTheme = () => {
-      if (theme === "auto") {
-        const prefersLight = window.matchMedia(
-          "(prefers-color-scheme: light)"
-        ).matches;
-        setEffectiveTheme(prefersLight ? "light" : "dark");
-      } else {
-        setEffectiveTheme(theme === "dark" ? "dark" : "light");
-      }
-    };
-
-    updateTheme();
-
-    if (project?.readmeContent) {
-      const html = DOMPurify.sanitize(marked.parse(project.readmeContent));
-      setRenderedReadme(html);
-    }
-  }, [name, theme, project]);
-
-  useEffect(() => {
-    if (!renderedReadme) return;
-
-    const blocks = document.querySelectorAll("pre > code");
-    blocks.forEach((block) => {
-      const wrapper = block.parentElement;
-      if (!wrapper) return;
-      wrapper.style.position = "relative";
-
-      if (wrapper.querySelector(".copy-btn")) return;
-
-      const btn = document.createElement("button");
-      btn.innerText = "Copy";
-      btn.className =
-        "copy-btn absolute top-2 right-2 bg-gray-800 text-white text-xs px-2 py-1 rounded hover:bg-gray-700 transition";
-      btn.onclick = () => {
-        navigator.clipboard.writeText(block.textContent || "");
-        btn.innerText = "Copied!";
-        setTimeout(() => (btn.innerText = "Copy"), 1500);
-      };
-      wrapper.appendChild(btn);
-    });
-  }, [renderedReadme]);
-
-  if (!formattedProject) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-xl">Project not found.</p>
-      </div>
-    );
+  if (!project) {
+    notFound();
   }
+
+  const formattedProject = {
+    ...project,
+    buttons: parseButtonsSafely(project.buttons),
+  };
+
+  const rawMarkdown = getProjectMarkdown(formattedProject);
+  const renderedHtml = rawMarkdown ? marked.parse(rawMarkdown) : "";
 
   const imgSrc = formattedProject.img || null;
 
@@ -164,15 +150,12 @@ export default function ProjectPage() {
         </div>
 
         <div className="md:w-3/4">
-          {renderedReadme && (
-            <div
-              className={`markdown-body md:p-8 ${
-                effectiveTheme === "dark"
-                  ? "dark github-markdown-dark dark-markdown"
-                  : "light github-markdown-light light-markdown"
-              }`}
-              dangerouslySetInnerHTML={{ __html: renderedReadme }}
-            />
+          {renderedHtml ? (
+            <MarkdownView html={renderedHtml} />
+          ) : (
+            <div className="text-[var(--secondary-text-color)] py-8">
+              No README available for this project.
+            </div>
           )}
         </div>
       </div>

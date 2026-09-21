@@ -1,4 +1,12 @@
 import { queryD1 } from "../../../lib/db";
+import portfolioData from "../../../data/portfolio-data.json";
+
+export async function generateStaticParams() {
+  const projects = portfolioData.projects || [];
+  return projects.map((p) => ({
+    name: p.name,
+  }));
+}
 
 async function getProject(name) {
   if (!name) return null;
