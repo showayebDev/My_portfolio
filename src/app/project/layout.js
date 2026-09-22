@@ -40,22 +40,14 @@ export const metadata = {
   },
 };
 
-import { queryD1 } from "../../lib/db";
+import portfolioData from "@/data/portfolio-data.json";
 
-async function getSocialLinks() {
-  try {
-    const rawSocial = await queryD1(
-      "SELECT url FROM social_data WHERE sort_order IS NOT NULL AND sort_order != 0 ORDER BY sort_order ASC, id ASC"
-    );
-    return rawSocial.map((s) => s.url);
-  } catch (error) {
-    console.error("Error fetching social links in layout:", error);
-    return [];
-  }
+function getSocialLinks() {
+  return portfolioData.socialLinksOnly || (portfolioData.social?.socials || []).map((s) => s.url);
 }
 
-export default async function RootLayout({ children }) {
-  const socialLinks = await getSocialLinks();
+export default function RootLayout({ children }) {
+  const socialLinks = getSocialLinks();
 
   return (
     <>

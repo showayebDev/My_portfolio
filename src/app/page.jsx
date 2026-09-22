@@ -2,7 +2,9 @@ import ProfileCard from "@/components/ProfileCard";
 import About from "@/components/About";
 import Projects from "@/components/Projects";
 import Skills from "@/components/Skills";
-import { queryD1 } from "../lib/db";
+import portfolioData from "@/data/portfolio-data.json";
+
+export const dynamic = "force-static";
 
 function parseButtonsSafely(buttons) {
   if (Array.isArray(buttons)) return buttons;
@@ -11,95 +13,44 @@ function parseButtonsSafely(buttons) {
       const parsed = JSON.parse(buttons);
       if (Array.isArray(parsed)) return parsed;
       if (typeof parsed === "string") return JSON.parse(parsed);
-    } catch (e) {
+    } catch {
       return [];
     }
   }
   return [];
 }
 
-async function getProjectData() {
-  try {
-    const rawProjects = await queryD1("SELECT * FROM projects WHERE sort_order IS NOT NULL AND sort_order != 0 ORDER BY sort_order ASC, id ASC");
-    return rawProjects.map((p) => ({
+export default function Home() {
+  const projectData = (portfolioData.projects || [])
+    .filter((p) => p.sort_order !== null && p.sort_order !== undefined && p.sort_order !== 0)
+    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    .map((p) => ({
       ...p,
       buttons: parseButtonsSafely(p.buttons),
     }));
-  } catch (error) {
-    console.error("Error fetching project data in Home:", error);
-    return [];
-  }
-}
 
-async function getSkillsData() {
-  try {
-    const rawSkills = await queryD1("SELECT * FROM skills WHERE sort_order IS NOT NULL AND sort_order != 0 ORDER BY sort_order ASC, id ASC");
-    return rawSkills.map((s) => ({
+  const skillsData = (portfolioData.skills || [])
+    .filter((s) => s.sort_order !== null && s.sort_order !== undefined && s.sort_order !== 0)
+    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    .map((s) => ({
       ...s,
-      categories: typeof s.categories === "string" ? JSON.parse(s.categories) : s.categories,
+      categories: Array.isArray(s.categories)
+        ? s.categories
+        : typeof s.categories === "string"
+        ? JSON.parse(s.categories)
+        : [],
     }));
-  } catch (error) {
-    console.error("Error fetching skills data in Home:", error);
-    return [];
-  }
-}
 
-async function getSocialData() {
-  try {
-    const rawSocial = await queryD1("SELECT name, platform, url FROM social_data WHERE sort_order IS NOT NULL AND sort_order != 0 ORDER BY sort_order ASC, id ASC");
-    let email = null;
-    let hasEmail = false;
-    const socials = [];
-    for (const item of rawSocial) {
-      if (item.platform.toLowerCase() === "email") {
-        email = item.url;
-        hasEmail = true;
-      } else {
-        socials.push({
-          name: item.name,
-          platform: item.platform,
-          url: item.url,
-        });
-      }
-    }
-    return {
-      contact: { email, hasEmail },
-      socials,
-    };
-  } catch (error) {
-    console.error("Error fetching social data in Home:", error);
-    return null;
-  }
-}
+  const socialData = portfolioData.social || {
+    contact: { email: null, hasEmail: false },
+    socials: [],
+  };
 
-async function getProfileStatus() {
-  try {
-    const rawStatus = await queryD1("SELECT status FROM profile_status LIMIT 1");
-    return rawStatus[0]?.status || null;
-  } catch (error) {
-    console.error("Error fetching profile status in Home:", error);
-    return null;
-  }
-}
+  const profileStatus = portfolioData.status || null;
 
-async function getEducationData() {
-  try {
-    const rawEducation = await queryD1("SELECT * FROM education WHERE sort_order IS NOT NULL AND sort_order != 0 ORDER BY sort_order ASC, id ASC");
-    return rawEducation;
-  } catch (error) {
-    console.error("Error fetching education data in Home:", error);
-    return [];
-  }
-}
-
-export default async function Home() {
-  const [projectData, skillsData, socialData, profileStatus, educationData] = await Promise.all([
-    getProjectData(),
-    getSkillsData(),
-    getSocialData(),
-    getProfileStatus(),
-    getEducationData(),
-  ]);
+  const educationData = (portfolioData.education || [])
+    .filter((e) => e.sort_order !== null && e.sort_order !== undefined && e.sort_order !== 0)
+    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 px-4 md:px-8 lg:px-12 py-8 min-h-screen">

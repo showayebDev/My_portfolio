@@ -1,5 +1,4 @@
-import { queryD1 } from "../../../lib/db";
-import portfolioData from "../../../data/portfolio-data.json";
+import portfolioData from "@/data/portfolio-data.json";
 
 export async function generateStaticParams() {
   const projects = portfolioData.projects || [];
@@ -8,23 +7,16 @@ export async function generateStaticParams() {
   }));
 }
 
-async function getProject(name) {
+function getProject(name) {
   if (!name) return null;
-  try {
-    const rawProjects = await queryD1(
-      "SELECT * FROM projects WHERE LOWER(name) = LOWER(?) AND sort_order IS NOT NULL AND sort_order != 0 LIMIT 1",
-      [name]
-    );
-    if (rawProjects.length === 0) return null;
-    const p = rawProjects[0];
-    return {
-      ...p,
-      buttons: typeof p.buttons === "string" ? JSON.parse(p.buttons) : p.buttons,
-    };
-  } catch (error) {
-    console.error("Error fetching project in layout:", error);
-    return null;
-  }
+  const project = (portfolioData.projects || []).find(
+    (p) => p.name?.toLowerCase() === name.toLowerCase() && p.sort_order !== null && p.sort_order !== 0
+  );
+  if (!project) return null;
+  return {
+    ...project,
+    buttons: typeof project.buttons === "string" ? JSON.parse(project.buttons) : project.buttons,
+  };
 }
 
 export async function generateMetadata({ params }) {

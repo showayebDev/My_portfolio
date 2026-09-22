@@ -23,6 +23,8 @@ const renderer = {
 
 marked.use({ renderer, gfm: true, breaks: true });
 
+export const dynamic = "force-static";
+
 export async function generateStaticParams() {
   const projects = portfolioData.projects || [];
   return projects.map((p) => ({
