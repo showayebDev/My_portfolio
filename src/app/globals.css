@@ -1,6 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=BBH+Sans+Bogle&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
-
 @import "tailwindcss";
 
 @theme {
@@ -68,7 +65,7 @@ h2 {
 }
 body {
   background-color: var(--bg-color);
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-montserrat), "Montserrat", sans-serif;
 }
 .icon {
   font-size: 1.5rem;

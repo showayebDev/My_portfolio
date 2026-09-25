@@ -54,7 +54,7 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 px-4 md:px-8 lg:px-12 py-8 min-h-screen">
-      <ProfileCard socialData={socialData} profileStatus={profileStatus} />
+      <ProfileCard socialData={socialData} profileStatus={profileStatus} profilePic={portfolioData.profilePic} />
       <main className="flex-1 space-y-6" id="about">
         <About educationData={educationData} />
         <Projects projectData={projectData} />

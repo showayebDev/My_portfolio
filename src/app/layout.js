@@ -1,8 +1,17 @@
 import "./globals.css";
+import { Montserrat } from "next/font/google";
 import { ThemeProvider } from "@/context/ThemeContext";
 import NextTopLoader from "nextjs-toploader";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import portfolioData from "@/data/portfolio-data.json";
+import AutoUpdater from "@/components/AutoUpdater";
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-montserrat",
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+});
 
 function getSocialLinks() {
   return portfolioData.socialLinksOnly || (portfolioData.social?.socials || []).map((s) => s.url);
@@ -66,10 +75,8 @@ export default async function RootLayout({ children }) {
   }
 
   return (
-    <html lang="en" className={initialClass} suppressHydrationWarning>
+    <html lang="en" className={`${initialClass} ${montserrat.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <script
@@ -138,8 +145,9 @@ export default async function RootLayout({ children }) {
           }}
         />
       </head>
-      <body suppressHydrationWarning>
+      <body className={montserrat.className} suppressHydrationWarning>
         <ThemeProvider>
+          <AutoUpdater currentBuildId={portfolioData.buildId} />
           <NextTopLoader />
           {children}
           <GoogleAnalytics gaId={gaId} />

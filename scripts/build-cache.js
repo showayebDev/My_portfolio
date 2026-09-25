@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const dns = require('dns');
 if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder('ipv4first');
@@ -76,13 +77,13 @@ async function fetchCollection(collectionId) {
   }
 }
 
-// Helper to map all files in Appwrite Storage bucket
+// Helper to map all files in Appwrite Storage bucket with full metadata
 async function getStorageFilesMap() {
   try {
     const response = await fetchWithRetry(() => storage.listFiles(bucketId, [Query.limit(100)]));
     const map = new Map();
     for (const file of response.files || []) {
-      map.set(file.name, file.$id);
+      map.set(file.name, file);
     }
     return map;
   } catch (err) {
@@ -91,31 +92,115 @@ async function getStorageFilesMap() {
   }
 }
 
-// Helper to download an asset from Appwrite Storage
+// Helper to download an asset from Appwrite Storage with smart cache & local preservation
 async function downloadAppwriteAsset(filesMap, possibleNames, getRelativePathFn) {
-  let fileId = null;
+  let matchedFile = null;
   let matchedName = null;
   for (const name of possibleNames) {
     if (filesMap.has(name)) {
-      fileId = filesMap.get(name);
+      matchedFile = filesMap.get(name);
       matchedName = name;
       break;
     }
   }
 
-  if (!fileId) {
+  const relativePath = typeof getRelativePathFn === 'function' ? getRelativePathFn(matchedName || possibleNames[0]) : getRelativePathFn;
+  const localPath = path.join(__dirname, '../public', relativePath);
+
+  // Check if local file already exists
+  const localExists = fs.existsSync(localPath);
+  let localBuf = null;
+  let localMd5 = null;
+  let localStat = null;
+
+  if (localExists) {
+    localBuf = fs.readFileSync(localPath);
+    localMd5 = crypto.createHash('md5').update(localBuf).digest('hex');
+    localStat = fs.statSync(localPath);
+  }
+
+  if (!matchedFile) {
+    // If not in Appwrite but exists locally, keep local file
+    if (localExists) {
+      return { buffer: localBuf, matchedName: matchedName || possibleNames[0], relativePath, isLocalOnly: true };
+    }
     return null;
   }
 
-  const relativePath = typeof getRelativePathFn === 'function' ? getRelativePathFn(matchedName) : getRelativePathFn;
-  const localPath = path.join(__dirname, '../public', relativePath);
-  fs.mkdirSync(path.dirname(localPath), { recursive: true });
+  const fileId = matchedFile.$id;
 
-  console.log(`Downloading Appwrite asset '${matchedName}' -> public${relativePath}`);
+  // 1. If local file exists and matches Appwrite MD5 signature, skip download (fast cache hit)
+  if (localExists && matchedFile.signature && localMd5.toLowerCase() === matchedFile.signature.toLowerCase()) {
+    console.log(`Asset '${matchedName}' -> public${relativePath} is already up to date (MD5: ${localMd5.slice(0, 8)}).`);
+    return { buffer: localBuf, matchedName, relativePath, cached: true };
+  }
+
+  // 2. If local file exists and has been modified locally after Appwrite's updatedAt:
+  // PRESERVE local changes! Do not overwrite with older Appwrite version.
+  if (localExists && localStat && matchedFile.$updatedAt) {
+    const localTime = localStat.mtime.getTime();
+    const appwriteTime = new Date(matchedFile.$updatedAt).getTime();
+    if (localTime > appwriteTime) {
+      console.log(`Local file public${relativePath} is newer than Appwrite (${localStat.mtime.toISOString()} > ${matchedFile.$updatedAt}). Preserving local file.`);
+      return { buffer: localBuf, matchedName, relativePath, isLocalOverride: true };
+    }
+  }
+
+  // 3. Otherwise (Appwrite is newer or local file does not exist): download from Appwrite
+  fs.mkdirSync(path.dirname(localPath), { recursive: true });
+  console.log(`Downloading updated Appwrite asset '${matchedName}' -> public${relativePath}`);
   const buffer = await fetchWithRetry(() => storage.getFileDownload(bucketId, fileId));
   const buf = Buffer.from(buffer);
   fs.writeFileSync(localPath, buf);
   return { buffer: buf, matchedName, relativePath };
+}
+
+let sharp = null;
+try {
+  sharp = require('sharp');
+} catch (e) {
+  // sharp is optional
+}
+
+// Helper to generate authentic Next.js Low-Quality Image Placeholder (blurDataURL)
+async function generateBlurDataURL(relativePath) {
+  if (!sharp || !relativePath) return null;
+  const cleanPath = relativePath.split('?')[0];
+  const localPath = path.join(__dirname, '../public', cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath);
+  if (!fs.existsSync(localPath)) return null;
+  try {
+    const ext = path.extname(localPath).toLowerCase();
+    if (ext === '.svg' || ext === '.ico') return null;
+    const buf = await sharp(localPath)
+      .resize(16, 12, { fit: 'inside' })
+      .webp({ quality: 20 })
+      .toBuffer();
+    return `data:image/webp;base64,${buf.toString('base64')}`;
+  } catch (err) {
+    return null;
+  }
+}
+
+// Helper to append content hash for safe cache-busting (?v=hash)
+function getVersionedAssetUrl(cleanPath, downloadedResult = null) {
+  if (!cleanPath) return cleanPath;
+  const baseCleanPath = cleanPath.split('?')[0];
+  try {
+    let buf = downloadedResult && downloadedResult.buffer ? downloadedResult.buffer : null;
+    if (!buf) {
+      const localPath = path.join(__dirname, '../public', baseCleanPath);
+      if (fs.existsSync(localPath)) {
+        buf = fs.readFileSync(localPath);
+      }
+    }
+    if (buf) {
+      const hash = crypto.createHash('md5').update(buf).digest('hex').slice(0, 8);
+      return `${baseCleanPath}?v=${hash}`;
+    }
+  } catch (e) {
+    // fallback to original clean path
+  }
+  return baseCleanPath;
 }
 
 async function buildCache() {
@@ -177,13 +262,16 @@ async function buildCache() {
 
       // Download project image from Appwrite Storage
       if (p.img) {
-        const cleanPath = p.img.startsWith('/') ? p.img : `/${p.img}`;
+        const cleanPath = (p.img.startsWith('/') ? p.img : `/${p.img}`).split('?')[0];
         const baseName = path.basename(cleanPath);
+        let dlRes = null;
         try {
-          await downloadAppwriteAsset(filesMap, [baseName], cleanPath);
+          dlRes = await downloadAppwriteAsset(filesMap, [baseName], cleanPath);
         } catch (err) {
           console.error(`Warning: Failed to download image for project ${p.name}:`, err.message);
         }
+        p.img = getVersionedAssetUrl(cleanPath, dlRes);
+        p.blurDataURL = await generateBlurDataURL(cleanPath);
       }
 
       // Fetch and download project README from Appwrite Storage
@@ -234,15 +322,17 @@ async function buildCache() {
 
       // Download skill icon from Appwrite Storage to s.src path
       if (s.src) {
-        const cleanPath = s.src.startsWith('/') ? s.src : `/${s.src}`;
+        const cleanPath = (s.src.startsWith('/') ? s.src : `/${s.src}`).split('?')[0];
         const baseName = path.basename(cleanPath);
         const iconVariant = baseName.startsWith('icon-') ? baseName : `icon-${baseName}`;
         const plainVariant = baseName.replace(/^icon-/, '');
+        let dlRes = null;
         try {
-          await downloadAppwriteAsset(filesMap, [iconVariant, plainVariant, baseName], cleanPath);
+          dlRes = await downloadAppwriteAsset(filesMap, [iconVariant, plainVariant, baseName], cleanPath);
         } catch (err) {
           console.error(`Warning: Failed to download icon for skill ${s.name}:`, err.message);
         }
+        s.src = getVersionedAssetUrl(cleanPath, dlRes);
       }
 
       skills.push(s);
@@ -269,11 +359,15 @@ async function buildCache() {
     }
 
     // 4.5 Download profile picture from Appwrite Storage
+    let profilePic = '/profile-pic.png';
     try {
-      await downloadAppwriteAsset(filesMap, ['profile-pic.png', 'profile_pic.png'], '/profile-pic.png');
+      const dlRes = await downloadAppwriteAsset(filesMap, ['profile-pic.png', 'profile_pic.png'], '/profile-pic.png');
+      profilePic = getVersionedAssetUrl('/profile-pic.png', dlRes);
     } catch (err) {
       console.error('Warning: Failed to download profile-pic.png:', err.message);
+      profilePic = getVersionedAssetUrl('/profile-pic.png');
     }
+    const profilePicBlur = await generateBlurDataURL('/profile-pic.png');
 
     // 4.6 Download static sitemap, robots, and favicon if present in Appwrite Storage
     const others = ['sitemap.xml', 'robots.txt', 'favicon.ico'];
@@ -300,20 +394,28 @@ async function buildCache() {
       // Download education logo from Appwrite Storage if src or icon is an image path
       const logoPath = edu.src || (edu.icon && (edu.icon.startsWith('/') || edu.icon.includes('.')) ? edu.icon : null);
       if (logoPath) {
-        const cleanPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
+        const cleanPath = (logoPath.startsWith('/') ? logoPath : `/${logoPath}`).split('?')[0];
         const baseName = path.basename(cleanPath);
+        let dlRes = null;
         try {
-          await downloadAppwriteAsset(filesMap, [baseName], cleanPath);
+          dlRes = await downloadAppwriteAsset(filesMap, [baseName], cleanPath);
         } catch (err) {
           console.error(`Warning: Failed to download logo for education ${edu.name}:`, err.message);
         }
+        const versionedLogo = getVersionedAssetUrl(cleanPath, dlRes);
+        if (edu.src) edu.src = versionedLogo;
+        else edu.icon = versionedLogo;
       }
 
       education.push(edu);
     }
 
-    // 5. Compile the consolidated portfolio data structure
+    // 5. Compile the consolidated portfolio data structure with unique buildId
+    const buildId = Date.now().toString(36);
     const portfolioCache = {
+      buildId,
+      profilePic,
+      profilePicBlur,
       projects,
       skills,
       social: {
@@ -331,6 +433,14 @@ async function buildCache() {
     fs.mkdirSync(path.dirname(outputJsonPath), { recursive: true });
     fs.writeFileSync(outputJsonPath, JSON.stringify(portfolioCache, null, 2), 'utf8');
     console.log(`Success! Saved consolidated portfolio data to ${outputJsonPath}`);
+
+    // 6.5 Write public/version.json for background auto-update detection
+    const versionData = {
+      buildId,
+      builtAt: new Date().toISOString()
+    };
+    fs.writeFileSync(path.join(publicDir, 'version.json'), JSON.stringify(versionData, null, 2), 'utf8');
+    console.log(`Generated public/version.json with buildId: ${buildId}`);
 
     // 7. Auto-generate robots.txt & sitemap.xml
     const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://showayeb.dev').replace(/\/+$/, '');

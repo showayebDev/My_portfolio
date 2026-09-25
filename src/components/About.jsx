@@ -20,12 +20,12 @@ const About = ({ educationData = [] }) => {
   return (
     <>
       <AnimatedContent
-        distance={100}
+        distance={20}
         direction="vertical"
-        duration={0.8}
-        ease="power3.out"
-        scale={0.95}
-        delay={0.1}
+        duration={0.3}
+        ease="power2.out"
+        scale={0.99}
+        delay={0.05}
       >
         <section className="bg-[var(--card-bg-color)] border border-[var(--border-color)] rounded-2xl p-6 shadow-md">
           <div className="flex justify-between items-center mb-6 border-b border-[var(--border-color)] pb-2 text-[var(--secondary-text-color)]">

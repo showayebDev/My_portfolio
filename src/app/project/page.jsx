@@ -57,22 +57,22 @@ export default function Project() {
 
       {/* Section header */}
       <AnimatedContent
-        distance={150}
+        distance={20}
         direction="vertical"
-        reverse={true}
-        duration={1.2}
-        ease="power3.out"
-        initialOpacity={0.2}
+        reverse={false}
+        duration={0.35}
+        ease="power2.out"
+        initialOpacity={0.7}
         animateOpacity
-        scale={0.3}
-        threshold={0.2}
+        scale={0.99}
+        threshold={0.05}
         delay={0}
       >
         <FadeContent
-          blur={true}
-          duration={900}
+          blur={false}
+          duration={300}
           easing="ease-out"
-          initialOpacity={0}
+          initialOpacity={0.7}
         >
           <p className="section__text__p1 text-center">Browse My Recent</p>
           <h1 className="title text-5xl text-center">Projects</h1>
@@ -92,18 +92,18 @@ export default function Project() {
                   onMouseEnter={() => handlePrefetch(project.name, imgSrc)}
                   onTouchStart={() => handlePrefetch(project.name, imgSrc)}
                 >
-                  <AnimatedContent
-                    distance={150}
-                    direction="vertical"
-                    reverse={true}
-                    duration={1.2}
-                    ease="power3.out"
-                    initialOpacity={0.2}
-                    animateOpacity
-                    scale={0.3}
-                    threshold={0.2}
-                    delay={0}
-                  >
+              <AnimatedContent
+                distance={25}
+                direction="vertical"
+                reverse={false}
+                duration={0.35}
+                ease="power2.out"
+                initialOpacity={0.6}
+                animateOpacity
+                scale={0.98}
+                threshold={0.05}
+                delay={0}
+              >
                     {/* Card */}
                     <div className="card shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-500 w-full bg-[var(--card-bg-color)] rounded-2xl h-[400px] overflow-hidden group">
                       <div>
@@ -116,6 +116,8 @@ export default function Project() {
                               alt={project.title}
                               width={500}
                               height={300}
+                              placeholder="blur"
+                              blurDataURL={project.blurDataURL || "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAABQAQCdASoKAAoABUB8JZQABAAAAP7uHqfoJXiW+ZLl0iBxIYAAAA=="}
                               quality={100}
                             />
                           )}
@@ -148,15 +150,15 @@ export default function Project() {
           <div className="w-full max-w-xs">
             <Link href={githubUrl} target="_blank" rel="noopener noreferrer" className="block h-full">
               <AnimatedContent
-                distance={150}
+                distance={25}
                 direction="vertical"
-                reverse={true}
-                duration={1.2}
-                ease="power3.out"
-                initialOpacity={0.2}
+                reverse={false}
+                duration={0.35}
+                ease="power2.out"
+                initialOpacity={0.6}
                 animateOpacity
-                scale={0.3}
-                threshold={0.2}
+                scale={0.98}
+                threshold={0.05}
                 delay={0}
               >
                 {/* Card */}

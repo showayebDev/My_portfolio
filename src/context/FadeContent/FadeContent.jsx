@@ -3,11 +3,11 @@ import { useRef, useEffect, useState } from "react";
 const FadeContent = ({
   children,
   blur = false,
-  duration = 1000,
+  duration = 300,
   easing = "ease-out",
   delay = 0,
-  threshold = 0.1,
-  initialOpacity = 0,
+  threshold = 0.05,
+  initialOpacity = 0.5,
   className = "",
 }) => {
   const [inView, setInView] = useState(false);
@@ -40,7 +40,7 @@ const FadeContent = ({
       style={{
         opacity: inView ? 1 : initialOpacity,
         transition: `opacity ${duration}ms ${easing}, filter ${duration}ms ${easing}`,
-        filter: blur ? (inView ? "blur(0px)" : "blur(10px)") : "none",
+        filter: blur ? (inView ? "blur(0px)" : "blur(4px)") : "none",
         zIndex: "-10",
       }}
     >

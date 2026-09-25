@@ -19,7 +19,7 @@ const calculateExperience = (startYear) => {
 const iconClass =
   "text-[1.5rem] cursor-pointer transition-transform duration-300 ease-in-out hover:scale-125";
 
-const ProfileCard = ({ socialData, profileStatus }) => {
+const ProfileCard = ({ socialData, profileStatus, profilePic }) => {
   const { theme, toggleTheme, showToggle } = useContext(ThemeContext);
   const experience = calculateExperience(2021) - 1; // Since 2021
 
@@ -35,15 +35,15 @@ const ProfileCard = ({ socialData, profileStatus }) => {
   return (
     <aside className="w-full lg:w-1/3 xl:w-1/4 space-y-8" id="profile">
       <AnimatedContent
-        distance={150}
+        distance={20}
         direction="vertical"
         reverse={false}
-        duration={1.2}
-        ease="power3.out"
-        initialOpacity={0.2}
+        duration={0.3}
+        ease="power2.out"
+        initialOpacity={0.7}
         animateOpacity
-        scale={0.9}
-        threshold={0.1}
+        scale={0.99}
+        threshold={0.05}
       >
         <section className="bg-[var(--card-bg-color)] border border-[var(--border-color)] rounded-2xl p-8 flex flex-col items-center text-center shadow-lg">
           {/* Header Row */}
@@ -91,7 +91,7 @@ const ProfileCard = ({ socialData, profileStatus }) => {
               <Image
                 alt="Showayeb Ahamed"
                 className="w-full h-full object-cover"
-                src="/profile-pic.png"
+                src={profilePic || "/profile-pic.png"}
                 width={128}
                 height={128}
                 quality={90}

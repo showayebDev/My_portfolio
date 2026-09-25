@@ -15,11 +15,11 @@ const Projects = ({ projectData = [] }) => {
   return (
     <>
       <AnimatedContent
-        distance={50}
+        distance={20}
         direction="vertical"
         Zindex={false}
-        duration={0.8}
-        ease="power3.out"
+        duration={0.3}
+        ease="power2.out"
       >
         <section
           className="bg-[var(--card-bg-color)] border border-[var(--border-color)] rounded-2xl p-6 shadow-md"
