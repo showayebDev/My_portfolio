@@ -1,28 +1,28 @@
 export const metadata = {
   title: "Showayeb Ahamed – Projects",
   description:
-    "Welcome to Showayeb Ahamed's projects! Discover my skills in web development, design, and programming. Explore my projects and learn more about my work.",
+    "Explore projects developed by Showayeb Ahamed. Discover full-stack web applications, open-source software, desktop tools, and modern web development work.",
   keywords:
     "Showayeb Ahamed, web developer, software developer, front-end development, full-stack development, programming, coding, portfolio, web projects, JavaScript, React, HTML, CSS, NextJs, TailwindCSS, Bootstrap, responsive design, developer portfolio, UHSC, UHSCIAN",
 
   metadataBase: new URL("https://showayeb.dev"),
 
   alternates: {
-    canonical: "https://showayeb.dev",
+    canonical: "https://showayeb.dev/project",
   },
 
   openGraph: {
     title: "Showayeb Ahamed – Projects",
     description:
-      "Welcome to Showayeb Ahamed's projects! Discover my skills in web development, design, and programming.",
-    url: "https://showayeb.dev/",
-    siteName: "Showayeb Ahamed's projects",
+      "Explore projects developed by Showayeb Ahamed. Discover full-stack web applications, open-source software, desktop tools, and modern web development work.",
+    url: "https://showayeb.dev/project",
+    siteName: "Showayeb Ahamed's Portfolio",
     images: [
       {
-        url: "https://showayeb.dev/profile-pic.jpg",
+        url: "https://showayeb.dev/profile-pic.png",
         width: 1200,
         height: 630,
-        alt: "Showayeb Ahamed's Portfolio Preview",
+        alt: "Showayeb Ahamed's Projects Preview",
       },
     ],
     locale: "en_US",
@@ -32,8 +32,8 @@ export const metadata = {
     card: "summary_large_image",
     title: "Showayeb Ahamed – Projects",
     description:
-      "Welcome to Showayeb Ahamed's projects! Discover my skills in web development, design, and programming.",
-    images: ["https://showayeb.dev/profile-pic.jpg"],
+      "Explore projects developed by Showayeb Ahamed. Discover full-stack web applications, open-source software, desktop tools, and modern web development work.",
+    images: ["https://showayeb.dev/profile-pic.png"],
   },
   icons: {
     icon: "/favicon.ico",
