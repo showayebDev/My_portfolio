@@ -3,11 +3,13 @@
 import Image from "next/image";
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Button from "@/components/button";
 import AnimatedContent from "@/context/AnimatedContent/AnimatedContent";
 import FadeContent from "@/context/FadeContent/FadeContent";
 import { BsGithub } from "react-icons/bs";
 import portfolioData from "@/data/portfolio-data.json";
+import { prefetchProject } from "@/lib/prefetch";
 
 function parseButtonsSafely(buttons) {
   if (Array.isArray(buttons)) return buttons;
@@ -24,6 +26,11 @@ function parseButtonsSafely(buttons) {
 }
 
 export default function Project() {
+  const router = useRouter();
+
+  const handlePrefetch = (name, imgSrc) => {
+    prefetchProject(router, name, imgSrc);
+  };
   const rawProjects = portfolioData.projects || [];
   const projectData = rawProjects
     .filter((p) => p.sort_order !== null && p.sort_order !== 0)
@@ -41,7 +48,7 @@ export default function Project() {
     <div id="projects" className="relative overflow-hidden flex flex-col py-8">
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 max-w-5xl flex items-center gap-2 text-sm text-[var(--secondary-text-color)] font-medium mb-6">
-        <Link href="/" className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200">
+        <Link href="/" prefetch={true} className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200">
           Home
         </Link>
         <span>/</span>
@@ -78,7 +85,13 @@ export default function Project() {
             const imgSrc = project.img || null;
             return (
               <div className="w-full max-w-xs" key={project.name || index}>
-                <Link href={`/project/${project.name}`} passHref>
+                <Link
+                  href={`/project/${project.name}`}
+                  prefetch={true}
+                  passHref
+                  onMouseEnter={() => handlePrefetch(project.name, imgSrc)}
+                  onTouchStart={() => handlePrefetch(project.name, imgSrc)}
+                >
                   <AnimatedContent
                     distance={150}
                     direction="vertical"

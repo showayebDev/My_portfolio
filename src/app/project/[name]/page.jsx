@@ -99,11 +99,11 @@ export default async function ProjectPage({ params }) {
     <div className="container mx-0 md:mx-auto px-4 py-8 max-w-[1280px]">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-[var(--secondary-text-color)] font-medium mb-8">
-        <Link href="/" className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200">
+        <Link href="/" prefetch={true} className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200">
           Home
         </Link>
         <span>/</span>
-        <Link href="/project" className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200">
+        <Link href="/project" prefetch={true} className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200">
           Projects
         </Link>
         <span>/</span>
@@ -122,7 +122,8 @@ export default async function ProjectPage({ params }) {
                 height={800}
                 placeholder="blur"
                 blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-                quality={100}
+                priority
+                quality={90}
               />
               <div className="mt-4">
                 <h1 className="text-2xl font-semibold mb-2">{formattedProject.title}</h1>

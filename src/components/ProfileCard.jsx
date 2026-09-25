@@ -94,7 +94,7 @@ const ProfileCard = ({ socialData, profileStatus }) => {
                 src="/profile-pic.png"
                 width={128}
                 height={128}
-                quality={100}
+                quality={90}
                 priority
               />
             </div>
