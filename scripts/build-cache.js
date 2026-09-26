@@ -479,6 +479,31 @@ ${allUrls.map(u => `  <url>
 
     fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), sitemapXmlContent, 'utf8');
     console.log(`Generated public/sitemap.xml with ${allUrls.length} URLs.`);
+
+    // 8. Generate public/_headers for Cloudflare Workers / Pages Static Assets Edge Caching
+    const cfHeadersContent = `/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/project/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/readme/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/profile-pic.png
+  Cache-Control: public, max-age=31536000, immutable
+
+/favicon.ico
+  Cache-Control: public, max-age=31536000, immutable
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/version.json
+  Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0
+`;
+    fs.writeFileSync(path.join(publicDir, '_headers'), cfHeadersContent, 'utf8');
+    console.log('Generated public/_headers for Cloudflare Edge caching.');
     console.log('--- Cache Build Finished Successfully ---');
   } catch (error) {
     console.error('\x1b[31m%s\x1b[0m', 'Cache Build Failed:', error.message);
