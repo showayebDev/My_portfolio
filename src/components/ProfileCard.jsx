@@ -19,7 +19,7 @@ const calculateExperience = (startYear) => {
 const iconClass =
   "text-[1.5rem] cursor-pointer transition-transform duration-300 ease-in-out hover:scale-125";
 
-const ProfileCard = ({ socialData, profileStatus, profilePic }) => {
+const ProfileCard = ({ socialData, profileStatus, profilePic, profilePicBlur }) => {
   const { theme, toggleTheme, showToggle } = useContext(ThemeContext);
   const experience = calculateExperience(2021) - 1; // Since 2021
 
@@ -95,6 +95,8 @@ const ProfileCard = ({ socialData, profileStatus, profilePic }) => {
                 width={128}
                 height={128}
                 quality={90}
+                placeholder={profilePicBlur ? "blur" : "empty"}
+                blurDataURL={profilePicBlur || undefined}
                 priority
               />
             </div>

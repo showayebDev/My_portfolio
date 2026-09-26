@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Button from "@/components/button";
 import MarkdownView from "@/components/MarkdownView";
 import portfolioData from "@/data/portfolio-data.json";
+import { PROJECT_HERO_IMAGE_CONFIG } from "@/lib/prefetch";
 import { marked } from "marked";
 import hljs from "highlight.js";
 
@@ -18,12 +19,13 @@ const renderer = {
       : hljs.highlightAuto(text).value;
     const langClass = validLanguage ? ` class="hljs language-${validLanguage}"` : ' class="hljs"';
     return `<pre><code${langClass}>${highlighted}</code></pre>`;
-  }
+  },
 };
 
 marked.use({ renderer, gfm: true, breaks: true });
 
 export const dynamic = "force-static";
+export const dynamicParams = false;
 
 export async function generateStaticParams() {
   const projects = portfolioData.projects || [];
@@ -99,11 +101,11 @@ export default async function ProjectPage({ params }) {
     <div className="container mx-0 md:mx-auto px-4 py-8 max-w-[1280px]">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-[var(--secondary-text-color)] font-medium mb-8">
-        <Link href="/" prefetch={true} className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200">
+        <Link href="/" prefetch={false} className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200">
           Home
         </Link>
         <span>/</span>
-        <Link href="/project" prefetch={true} className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200">
+        <Link href="/project" prefetch={false} className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200">
           Projects
         </Link>
         <span>/</span>
@@ -118,12 +120,15 @@ export default async function ProjectPage({ params }) {
                 src={imgSrc}
                 alt={formattedProject.title}
                 className="rounded-lg shadow-lg w-full"
-                width={1200}
-                height={800}
+                width={PROJECT_HERO_IMAGE_CONFIG.width}
+                height={PROJECT_HERO_IMAGE_CONFIG.height}
                 placeholder="blur"
-                blurDataURL={formattedProject.blurDataURL || "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAABQAQCdASoKAAoABUB8JZQABAAAAP7uHqfoJXiW+ZLl0iBxIYAAAA=="}
+                blurDataURL={
+                  formattedProject.blurDataURL ||
+                  "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAABQAQCdASoKAAoABUB8JZQABAAAAP7uHqfoJXiW+ZLl0iBxIYAAAA=="
+                }
                 priority
-                quality={90}
+                quality={PROJECT_HERO_IMAGE_CONFIG.quality}
               />
               <div className="mt-4">
                 <h1 className="text-2xl font-semibold mb-2">{formattedProject.title}</h1>

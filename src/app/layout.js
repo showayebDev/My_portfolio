@@ -80,37 +80,6 @@ export default async function RootLayout({ children }) {
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <script
-          type="speculationrules"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              prerender: [
-                {
-                  source: "document",
-                  where: {
-                    and: [
-                      { href_matches: "/*" },
-                      { not: { href_matches: "/api/*" } }
-                    ]
-                  },
-                  eagerness: "moderate"
-                }
-              ],
-              prefetch: [
-                {
-                  source: "document",
-                  where: {
-                    and: [
-                      { href_matches: "/*" },
-                      { not: { href_matches: "/api/*" } }
-                    ]
-                  },
-                  eagerness: "moderate"
-                }
-              ]
-            })
-          }}
-        />
-        <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

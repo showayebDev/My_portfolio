@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AnimatedContent from "@/context/AnimatedContent/AnimatedContent";
-import { prefetchProject } from "@/lib/prefetch";
+import { prefetchProject, prefetchRoute } from "@/lib/prefetch";
 
 const Projects = ({ projectData = [] }) => {
   const router = useRouter();
@@ -12,6 +12,11 @@ const Projects = ({ projectData = [] }) => {
   const handlePrefetch = (name, imgSrc) => {
     prefetchProject(router, name, imgSrc);
   };
+
+  const handlePrefetchAll = () => {
+    prefetchRoute(router, "/project");
+  };
+
   return (
     <>
       <AnimatedContent
@@ -31,7 +36,9 @@ const Projects = ({ projectData = [] }) => {
             </span>
             <Link
               href="/project"
-              prefetch={true}
+              prefetch={false}
+              onMouseEnter={handlePrefetchAll}
+              onTouchStart={handlePrefetchAll}
               className="text-xs font-semibold uppercase tracking-wider text-[var(--link-color)] hover:underline"
             >
               View All
@@ -44,7 +51,7 @@ const Projects = ({ projectData = [] }) => {
                 <Link
                   key={project.name}
                   href={`/project/${project.name}`}
-                  prefetch={true}
+                  prefetch={false}
                   passHref
                   className="block"
                   onMouseEnter={() => handlePrefetch(project.name, imgSrc)}
@@ -52,13 +59,15 @@ const Projects = ({ projectData = [] }) => {
                 >
                   <div className="flex items-center justify-between p-4 bg-[var(--bg-color)] border border-[var(--border-color)] rounded-xl hover:bg-[var(--border-color)] transition-all duration-300 cursor-pointer group shadow-sm">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden border border-[var(--border-color)] bg-[var(--bg-color)] relative">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden border border-[var(--border-color)] bg-[var(--bg-color)] relative shrink-0">
                         {imgSrc ? (
                           <Image
                             src={imgSrc}
                             alt={project.title}
-                            fill
-                            className="object-cover"
+                            width={48}
+                            height={48}
+                            quality={75}
+                            className="w-full h-full object-cover"
                           />
                         ) : (
                           <span className="text-xl select-none">💻</span>

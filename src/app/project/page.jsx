@@ -9,7 +9,7 @@ import AnimatedContent from "@/context/AnimatedContent/AnimatedContent";
 import FadeContent from "@/context/FadeContent/FadeContent";
 import { BsGithub } from "react-icons/bs";
 import portfolioData from "@/data/portfolio-data.json";
-import { prefetchProject } from "@/lib/prefetch";
+import { prefetchProject, prefetchRoute, PROJECT_HERO_IMAGE_CONFIG } from "@/lib/prefetch";
 
 function parseButtonsSafely(buttons) {
   if (Array.isArray(buttons)) return buttons;
@@ -29,8 +29,14 @@ export default function Project() {
   const router = useRouter();
 
   const handlePrefetch = (name, imgSrc) => {
-    prefetchProject(router, name, imgSrc);
+    // Card on /project already renders the exact PROJECT_HERO_IMAGE_CONFIG image, so skip duplicate image preload
+    prefetchProject(router, name, imgSrc, { skipImagePreload: true });
   };
+
+  const handlePrefetchHome = () => {
+    prefetchRoute(router, "/");
+  };
+
   const rawProjects = portfolioData.projects || [];
   const projectData = rawProjects
     .filter((p) => p.sort_order !== null && p.sort_order !== 0)
@@ -48,7 +54,13 @@ export default function Project() {
     <div id="projects" className="relative overflow-hidden flex flex-col py-8">
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 max-w-5xl flex items-center gap-2 text-sm text-[var(--secondary-text-color)] font-medium mb-6">
-        <Link href="/" prefetch={true} className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200">
+        <Link
+          href="/"
+          prefetch={false}
+          onMouseEnter={handlePrefetchHome}
+          onTouchStart={handlePrefetchHome}
+          className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200"
+        >
           Home
         </Link>
         <span>/</span>
@@ -87,57 +99,65 @@ export default function Project() {
               <div className="w-full max-w-xs" key={project.name || index}>
                 <Link
                   href={`/project/${project.name}`}
-                  prefetch={true}
+                  prefetch={false}
                   passHref
                   onMouseEnter={() => handlePrefetch(project.name, imgSrc)}
                   onTouchStart={() => handlePrefetch(project.name, imgSrc)}
                 >
-              <AnimatedContent
-                distance={25}
-                direction="vertical"
-                reverse={false}
-                duration={0.35}
-                ease="power2.out"
-                initialOpacity={0.6}
-                animateOpacity
-                scale={0.98}
-                threshold={0.05}
-                delay={0}
-              >
+                  <AnimatedContent
+                    distance={25}
+                    direction="vertical"
+                    reverse={false}
+                    duration={0.35}
+                    ease="power2.out"
+                    initialOpacity={0.6}
+                    animateOpacity
+                    scale={0.98}
+                    threshold={0.05}
+                    delay={0}
+                  >
                     {/* Card */}
-                    <div className="card shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-500 w-full bg-[var(--card-bg-color)] rounded-2xl h-[400px] overflow-hidden group">
-                      <div>
-                        {/* Project image */}
-                        <div className="w-full h-[300px] overflow-hidden relative">
-                          {imgSrc && (
-                            <Image
-                              className="w-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
-                              src={imgSrc}
-                              alt={project.title}
-                              width={500}
-                              height={300}
-                              placeholder="blur"
-                              blurDataURL={project.blurDataURL || "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAABQAQCdASoKAAoABUB8JZQABAAAAP7uHqfoJXiW+ZLl0iBxIYAAAA=="}
-                              quality={100}
-                            />
-                          )}
+                    <div className="card shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-500 w-full bg-[var(--card-bg-color)] rounded-2xl h-[420px] overflow-hidden group">
+                      <div className="flex flex-col h-full justify-between pb-4">
+                        {/* Upper Section: Image & Title */}
+                        <div>
+                          {/* Project image */}
+                          <div className="w-full h-[300px] overflow-hidden relative">
+                            {imgSrc && (
+                              <Image
+                                className="w-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
+                                src={imgSrc}
+                                alt={project.title}
+                                width={500}
+                                height={300}
+                                placeholder="blur"
+                                blurDataURL={
+                                  project.blurDataURL ||
+                                  "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAABQAQCdASoKAAoABUB8JZQABAAAAP7uHqfoJXiW+ZLl0iBxIYAAAA=="
+                                }
+                                quality={PROJECT_HERO_IMAGE_CONFIG.quality}
+                              />
+                            )}
+                          </div>
+
+                          {/* Card title */}
+                          <div className="card-body text-center mt-2 px-4">
+                            <h4 className="card-title text-[23px] text-[var(--text-color)]">
+                              {project.title}
+                            </h4>
+                          </div>
                         </div>
 
-                        {/* Card body */}
-                        <div className="card-body text-center mt-2">
-                          <h4 className="card-title text-[23px] text-[var(--text-color)]">
-                            {project.title}
-                          </h4>
-                          <div className="flex justify-center gap-2 flex-wrap">
-                            {project.buttons?.map((btn, i) => (
-                              <Button
-                                key={i}
-                                text={btn.name}
-                                link={btn.link}
-                                className="flex items-center gap-1.5 border border-[var(--border-color)] px-3 py-1 text-xs font-semibold text-[var(--text-color)] hover:text-indigo-500 hover:border-indigo-500/40 hover:bg-indigo-500/10 hover:shadow-sm transition-all duration-200 rounded-full"
-                              />
-                            ))}
-                          </div>
+                        {/* Lower Section: Buttons pinned to bottom */}
+                        <div className="flex justify-center gap-2 flex-wrap px-4">
+                          {project.buttons?.map((btn, i) => (
+                            <Button
+                              key={i}
+                              text={btn.name}
+                              link={btn.link}
+                              className="flex items-center gap-1.5 border border-[var(--border-color)] px-3 py-1 text-xs font-semibold text-[var(--text-color)] hover:text-indigo-500 hover:border-indigo-500/40 hover:bg-indigo-500/10 hover:shadow-sm transition-all duration-200 rounded-full"
+                            />
+                          ))}
                         </div>
                       </div>
                     </div>
