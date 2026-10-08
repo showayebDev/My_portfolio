@@ -1,0 +1,83 @@
+"use client";
+import { useRef, useEffect } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+const AnimatedContent = ({
+  children,
+  distance = 24,
+  direction = "vertical",
+  reverse = false,
+  duration = 0.35,
+  ease = "power2.out",
+  initialOpacity = 0.4,
+  animateOpacity = true,
+  scale = 1,
+  threshold = 0.05,
+  delay = 0,
+  onComplete,
+  Zindex = true,
+}) => {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const axis = direction === "horizontal" ? "x" : "y";
+    const offset = reverse ? -distance : distance;
+    const startPct = (1 - threshold) * 100;
+
+    gsap.set(el, {
+      [axis]: offset,
+      scale,
+      opacity: animateOpacity ? initialOpacity : 1,
+      zIndex: Zindex ? -10 : 1,
+    });
+
+    const anim = gsap.to(el, {
+      [axis]: 0,
+      scale: 1,
+      opacity: 1,
+      duration,
+      ease,
+      delay,
+      onComplete,
+      scrollTrigger: {
+        trigger: el,
+        start: `top ${startPct}%`,
+        toggleActions: "play none none none",
+        once: true,
+      },
+    });
+
+    return () => {
+      if (anim.scrollTrigger) {
+        anim.scrollTrigger.kill();
+      }
+      anim.kill();
+      gsap.killTweensOf(el);
+    };
+  }, [
+    distance,
+    direction,
+    reverse,
+    duration,
+    ease,
+    initialOpacity,
+    animateOpacity,
+    scale,
+    threshold,
+    delay,
+    onComplete,
+    Zindex,
+  ]);
+
+  return <div ref={ref}>{children}</div>;
+};
+
+export default AnimatedContent;

@@ -1,0 +1,76 @@
+{
+  "name": "My_portfolio",
+  "version": "1.0.0",
+  "description": "A blank template to get started with Payload 3.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "version:gen": "node scripts/generate-version.mjs",
+    "clean:lock": "node -e \"import('fs').then(fs => { if (fs.existsSync('.next/lock')) fs.unlinkSync('.next/lock'); })\"",
+    "build": "node scripts/generate-version.mjs && npm run clean:lock && cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build --webpack",
+    "dev": "node scripts/generate-version.mjs && cross-env NODE_OPTIONS=--no-deprecation next dev",
+    "develop": "node scripts/generate-version.mjs && cross-env NODE_OPTIONS=--no-deprecation next dev",
+    "devsafe": "node scripts/generate-version.mjs && rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev",
+    "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
+    "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
+    "ii": "npm install",
+    "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
+    "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
+    "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@payloadcms/db-mongodb": "^3.90.2",
+    "@payloadcms/db-postgres": "^3.90.2",
+    "@payloadcms/next": "3.90.2",
+    "@payloadcms/richtext-lexical": "3.90.2",
+    "@payloadcms/storage-s3": "^3.90.2",
+    "@payloadcms/ui": "3.90.2",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@uiw/react-md-editor": "^4.1.2",
+    "cross-env": "^7.0.3",
+    "dotenv": "16.4.7",
+    "github-markdown-css": "^5.9.0",
+    "graphql": "^16.8.1",
+    "gsap": "^3.15.0",
+    "highlight.js": "^11.12.0",
+    "jszip": "^3.10.2",
+    "marked": "^18.1.0",
+    "next": "16.3.3",
+    "nextjs-toploader": "^3.9.17",
+    "payload": "3.90.2",
+    "pg": "^8.13.1",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-icons": "^5.7.0",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@playwright/test": "1.58.2",
+    "@testing-library/react": "16.3.0",
+    "@types/node": "22.19.9",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "4.5.2",
+    "eslint": "^9.16.0",
+    "eslint-config-next": "16.3.3",
+    "jsdom": "28.0.0",
+    "prettier": "^3.4.2",
+    "tsx": "4.23.15",
+    "typescript": "5.7.3",
+    "vite-tsconfig-paths": "6.0.5",
+    "vitest": "4.0.18"
+  },
+  "engines": {
+    "node": ">=20.18.1",
+    "pnpm": "^9 || ^10 || ^11"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp",
+      "esbuild",
+      "unrs-resolver"
+    ]
+  }
+}
