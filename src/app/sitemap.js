@@ -26,7 +26,7 @@ export default async function sitemap() {
   try {
     const { projects } = await getAllProjects();
     const projectRoutes = (projects || [])
-      .filter((p) => (p.slug || p.name) && (p.sortOrder ?? p.sort_order ?? 0) !== 0)
+      .filter((p) => (p.slug || p.name) && p._status !== 'draft')
       .map((p) => ({
         url: `${siteUrl}/project/${encodeURIComponent(p.slug || p.name)}`,
         lastModified: p.updatedAt ? new Date(p.updatedAt) : today,

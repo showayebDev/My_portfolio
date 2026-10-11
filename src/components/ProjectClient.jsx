@@ -36,7 +36,7 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
   };
 
   const projectData = (initialProjects || [])
-    .filter((p) => (p.sortOrder ?? p.sort_order ?? 0) !== 0)
+    .filter((p) => p._status !== 'draft')
     .sort((a, b) => (b.sortOrder ?? b.sort_order ?? 0) - (a.sortOrder ?? a.sort_order ?? 0))
     .map((p) => ({
       ...p,

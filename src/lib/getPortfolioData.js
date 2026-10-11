@@ -78,8 +78,8 @@ export async function getPortfolioData() {
     const projectsRes = await payload.find({
       collection: 'projects',
       where: {
-        sortOrder: {
-          not_equals: 0,
+        _status: {
+          not_equals: 'draft',
         },
       },
       sort: '-sortOrder',
@@ -87,7 +87,7 @@ export async function getPortfolioData() {
       depth: 1,
     })
     projectsDocs = (projectsRes.docs || []).filter(
-      (p) => (p.sortOrder ?? p.sort_order ?? 0) !== 0
+      (p) => p._status !== 'draft'
     )
   } catch (e) {
     console.warn('Failed to load Projects collection:', e.message)
@@ -113,8 +113,8 @@ export async function getAllProjects() {
     const projectsRes = await payload.find({
       collection: 'projects',
       where: {
-        sortOrder: {
-          not_equals: 0,
+        _status: {
+          not_equals: 'draft',
         },
       },
       sort: '-sortOrder',
@@ -122,7 +122,7 @@ export async function getAllProjects() {
       depth: 1,
     })
     projectsDocs = (projectsRes.docs || []).filter(
-      (p) => (p.sortOrder ?? p.sort_order ?? 0) !== 0
+      (p) => p._status !== 'draft'
     )
   } catch (e) {
     console.warn('Failed to load Projects collection:', e.message)
@@ -164,7 +164,7 @@ export async function getProjectBySlug(slug) {
 
     if (projectsRes.docs && projectsRes.docs.length > 0) {
       const doc = projectsRes.docs[0]
-      if ((doc.sortOrder ?? doc.sort_order ?? 0) === 0) {
+      if (doc._status === 'draft') {
         return null
       }
       return doc
@@ -181,7 +181,7 @@ export async function getProjectBySlug(slug) {
       (p) => (p.slug || p.name)?.toLowerCase() === (slug || '').toLowerCase()
     )
     if (matched) {
-      if ((matched.sortOrder ?? matched.sort_order ?? 0) === 0) {
+      if (matched._status === 'draft') {
         return null
       }
       return matched

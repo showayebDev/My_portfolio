@@ -45,7 +45,7 @@ const Projects = ({ projectData = [] }) => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {projectData
-            .filter((p) => (p.sortOrder ?? p.sort_order ?? 0) !== 0)
+            .filter((p) => p._status !== 'draft')
             .map((project) => {
             const slug = project.slug || project.name;
             const imgSrc =

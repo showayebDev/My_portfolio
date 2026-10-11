@@ -817,6 +817,7 @@ export async function executeDumpImport(targetPayload, dump) {
           imageUrl: item.imageUrl || '',
           featured: item.featured ?? true,
           sortOrder: item.sortOrder ?? 0,
+          _status: item._status || 'published',
           buttons: Array.isArray(item.buttons) ? item.buttons : [],
           readmeContent: item.readmeContent || item.details || '',
         }

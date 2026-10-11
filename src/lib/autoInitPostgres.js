@@ -7,6 +7,14 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 DO $$ BEGIN
+  CREATE TYPE "public"."enum_projects_status" AS ENUM('draft', 'published');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "public"."enum__projects_v_version_status" AS ENUM('draft', 'published');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
   CREATE TYPE "public"."enum_education_icon" AS ENUM('FaUniversity', 'FaSchool', 'FaGraduationCap', 'FaBookReader');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
@@ -74,8 +82,37 @@ CREATE TABLE IF NOT EXISTS "projects" (
   "featured" boolean DEFAULT true,
   "sort_order" numeric DEFAULT 0,
   "readme_content" varchar,
+  "_status" "enum_projects_status" DEFAULT 'published',
   "updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   "created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "_projects_v_version_buttons" (
+  "_order" integer NOT NULL,
+  "_parent_id" integer NOT NULL,
+  "id" serial PRIMARY KEY NOT NULL,
+  "name" varchar,
+  "link" varchar,
+  "_uuid" varchar
+);
+
+CREATE TABLE IF NOT EXISTS "_projects_v" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "parent_id" integer,
+  "version_title" varchar,
+  "version_slug" varchar,
+  "version_description" varchar,
+  "version_image_id" integer,
+  "version_image_url" varchar,
+  "version_featured" boolean DEFAULT true,
+  "version_sort_order" numeric DEFAULT 0,
+  "version_readme_content" varchar,
+  "version_updated_at" timestamp(3) with time zone,
+  "version_created_at" timestamp(3) with time zone,
+  "version__status" "enum__projects_v_version_status" DEFAULT 'draft',
+  "created_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+  "updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+  "latest" boolean
 );
 
 CREATE TABLE IF NOT EXISTS "skills" (
@@ -371,6 +408,41 @@ export async function ensurePostgresSchema(connectionString) {
     } else {
       await client.query(`
         ALTER TABLE "profile" ADD COLUMN IF NOT EXISTS "show_job" boolean DEFAULT true;
+        DO $$ BEGIN
+          CREATE TYPE "public"."enum_projects_status" AS ENUM('draft', 'published');
+        EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN
+          CREATE TYPE "public"."enum__projects_v_version_status" AS ENUM('draft', 'published');
+        EXCEPTION WHEN duplicate_object THEN null; END $$;
+        ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "_status" "enum_projects_status" DEFAULT 'published';
+        UPDATE "projects" SET "_status" = 'published' WHERE "_status" IS NULL;
+
+        CREATE TABLE IF NOT EXISTS "_projects_v_version_buttons" (
+          "_order" integer NOT NULL,
+          "_parent_id" integer NOT NULL,
+          "id" serial PRIMARY KEY NOT NULL,
+          "name" varchar,
+          "link" varchar,
+          "_uuid" varchar
+        );
+        CREATE TABLE IF NOT EXISTS "_projects_v" (
+          "id" serial PRIMARY KEY NOT NULL,
+          "parent_id" integer,
+          "version_title" varchar,
+          "version_slug" varchar,
+          "version_description" varchar,
+          "version_image_id" integer,
+          "version_image_url" varchar,
+          "version_featured" boolean DEFAULT true,
+          "version_sort_order" numeric DEFAULT 0,
+          "version_readme_content" varchar,
+          "version_updated_at" timestamp(3) with time zone,
+          "version_created_at" timestamp(3) with time zone,
+          "version__status" "enum__projects_v_version_status" DEFAULT 'draft',
+          "created_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+          "updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+          "latest" boolean
+        );
       `).catch(() => {})
     }
   } catch (err) {

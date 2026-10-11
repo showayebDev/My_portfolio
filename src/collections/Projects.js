@@ -6,11 +6,21 @@ export const Projects = {
   slug: 'projects',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'featured', 'sortOrder'],
+    defaultColumns: ['title', 'slug', 'featured', '_status', 'sortOrder'],
   },
   defaultSort: '-sortOrder',
+  versions: {
+    drafts: true,
+  },
   access: {
-    read: () => true
+    read: ({ req: { user } }) => {
+      if (user) return true
+      return {
+        _status: {
+          equals: 'published',
+        },
+      }
+    },
   },
   hooks: {
     afterChange: [
@@ -89,7 +99,7 @@ export const Projects = {
                   defaultValue: 0,
                   admin: {
                     description:
-                      'Higher numbers appear first (e.g. 8 > 7 > 1). Set to 0 to hide from website completely.',
+                      'Higher numbers appear first (e.g. 8 > 7 > 1). Use Publish / Unpublish (Draft) status to show or hide from the website.',
                   },
                 },
               ],
