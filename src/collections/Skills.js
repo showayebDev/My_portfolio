@@ -9,10 +9,7 @@ export const Skills = {
     defaultColumns: ['name', 'showInFrontend', 'categories', 'percent', 'color', 'sortOrder'],
   },
   access: {
-    read: () => true,
-    create: ({ req: { user } }) => Boolean(user),
-    update: ({ req: { user } }) => Boolean(user),
-    delete: ({ req: { user } }) => Boolean(user),
+    read: () => true
   },
   hooks: {
     afterChange: [
