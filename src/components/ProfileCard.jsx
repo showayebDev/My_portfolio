@@ -1,8 +1,8 @@
 "use client";
-import { MdEmail } from "react-icons/md";
 import React, { useContext } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { MdEmail } from "react-icons/md";
 import AnimatedContent from "@/context/AnimatedContent/AnimatedContent";
 import { ThemeContext } from "@/context/ThemeContext";
 import { FaSun, FaMoon, FaLink } from "react-icons/fa";
@@ -18,9 +18,6 @@ import {
   BsTelegram,
 } from "react-icons/bs";
 import { AiOutlineInstagram } from "react-icons/ai";
-
-const iconClass =
-  "text-[1.5rem] cursor-pointer transition-transform duration-300 ease-in-out hover:scale-125";
 
 const ProfileCard = ({ profile = {} }) => {
   const { theme, toggleTheme, showToggle } = useContext(ThemeContext);
@@ -86,224 +83,237 @@ const ProfileCard = ({ profile = {} }) => {
         scale={0.99}
         threshold={0.05}
       >
-        <section className="bg-[var(--card-bg-color)] border border-[var(--border-color)] rounded-2xl p-8 flex flex-col items-center text-center shadow-lg">
-          {/* Header Row */}
-          <div className="flex justify-between items-center w-full mb-6 text-[var(--secondary-text-color)]">
+        <section className="collage-card p-6 sm:p-7 flex flex-col items-center text-center relative overflow-visible">
+          {/* Top Washi Tape Strips (Physical Collage Anchors) */}
+          <div className="washi-tape washi-tape-center washi-tape-amber" />
+          <div className="washi-tape washi-tape-corner-right washi-tape-sage" />
+
+          {/* Header Row: Theme Toggle + DYMO Tape Label + Archive No */}
+          <div className="flex justify-between items-center w-full mb-6 pt-1 text-[var(--secondary-text-color)]">
             {showToggle ? (
               <button
                 onClick={toggleTheme}
-                className="cursor-pointer text-xl text-[var(--secondary-text-color)] hover:text-[var(--text-color)] transition-colors duration-200"
-                title="Toggle Theme"
+                className="die-cut-sticker p-2 hover:bg-[var(--card-kraft-color)] cursor-pointer"
+                title="Toggle Moodboard Light / Dark"
               >
                 {theme === "light" ? (
-                  <FaMoon className="w-5 h-5" />
+                  <FaMoon className="w-4 h-4 text-amber-900" />
                 ) : theme === "dark" ? (
-                  <CgLaptop className="w-5 h-5" />
+                  <CgLaptop className="w-4 h-4 text-amber-200" />
                 ) : (
-                  <FaSun className="w-5 h-5" />
+                  <FaSun className="w-4 h-4 text-amber-500" />
                 )}
               </button>
             ) : (
-              <div className="w-6 h-6" />
+              <div className="w-8 h-8" />
             )}
-            <span className="text-lg font-bold tracking-wide text-[var(--text-color)]">
-              About me
-            </span>
-            <div className="w-6 h-6" />
+
+            <div className="dymo-label">
+              <span>✦ PROFILE ✦</span>
+            </div>
+
+            <div className="w-8 h-8" />
           </div>
 
-          {/* Profile Avatar & Status Section */}
-          <div className="relative mb-6 group flex flex-col items-center">
-            {/* Status Badge */}
-            {status && (
-              <div className="mb-3 px-3 py-1 text-xs font-medium text-[var(--text-color)] bg-[var(--bg-color)] border border-[var(--border-color)] rounded-full shadow-sm max-w-[200px] truncate animate-pulse">
+          {/* Status Postage Stamp Badge */}
+          {status && (
+            <div className="mb-5 postage-stamp bg-[var(--card-kraft-color)] border-dashed border-[var(--border-color)]">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+              <span className="font-bold text-[11px] uppercase tracking-wider text-[var(--text-color)]">
                 {status}
-              </div>
-            )}
-
-            {/* Profile Image */}
-            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-[var(--border-color)] shadow-md transition-transform duration-500 group-hover:scale-105 relative bg-[var(--bg-color)] flex items-center justify-center">
-              {avatarSrc ? (
-                <Image
-                  alt={name || "Profile"}
-                  className="w-full h-full object-cover"
-                  src={avatarSrc}
-                  width={128}
-                  height={128}
-                  quality={90}
-                  priority
-                />
-              ) : (
-                <span className="text-4xl text-[var(--secondary-text-color)] select-none">
-                  {name ? name.charAt(0).toUpperCase() : "👤"}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Bio text */}
-          {(greeting || name) && (
-            <p className="text-base text-[var(--secondary-text-color)] leading-relaxed">
-              {greeting && `${greeting} `}
-              {name && (
-                <span className="text-[var(--text-color)] font-semibold">
-                  {name}
-                </span>
-              )}
-              {name && "."}
-            </p>
-          )}
-          {bio && (
-            <p className="text-xs text-[var(--secondary-text-color)] mt-4 leading-relaxed max-w-[240px]">
-              {bio}
-            </p>
-          )}
-
-          {((showJob && job) || (showLocation && location) || (showExperience && experience)) && (
-            <>
-              <div className="w-full border-t border-[var(--border-color)] my-8"></div>
-
-              {/* Quick Info */}
-              <div className="w-full space-y-4 text-sm text-[var(--secondary-text-color)]">
-                {showJob && job && (
-                  <div className="flex justify-between items-center">
-                    <span>Job</span>
-                    <span className="text-[var(--text-color)] font-medium">
-                      {job}
-                    </span>
-                  </div>
-                )}
-                {showLocation && location && (
-                  <div className="flex justify-between items-center">
-                    <span>Location</span>
-                    <span className="text-[var(--text-color)] font-medium">
-                      {location}
-                    </span>
-                  </div>
-                )}
-                {showExperience && experience && (
-                  <div className="flex justify-between items-center">
-                    <span>Experience</span>
-                    <span className="text-[var(--text-color)] font-medium">
-                      {experience}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Reach Me Section */}
-          {(socials.length > 0 || email) && (
-            <div className="relative w-full flex items-center justify-center my-8">
-              <span className="bg-[var(--card-bg-color)] px-4 text-xs font-semibold uppercase tracking-wider text-[var(--secondary-text-color)] z-10">
-                Reach me
               </span>
-              <div className="absolute w-full border-t border-[var(--border-color)]"></div>
             </div>
           )}
 
-          {/* Social Links */}
-          <div className="w-full space-y-4 text-xs">
-            {socials.map((social, index) => {
-              let IconComponent;
-              let hoverColor = "hover:text-[var(--text-color)]";
-              const platformLower = (social.platform || "").toLowerCase();
+          {/* Vintage Polaroid Avatar */}
+          <div className="mb-6 relative group">
+            {/* Tiny piece of tape on the polaroid top */}
+            <div className="washi-tape washi-tape-center washi-tape-coral !w-[60px] !h-[16px] !top-[-8px]" />
 
-              if (platformLower === "github") {
-                IconComponent = BsGithub;
-                hoverColor = "hover:text-[#333] dark:hover:text-white";
-              } else if (platformLower === "instagram") {
-                IconComponent = AiOutlineInstagram;
-                hoverColor = "hover:text-[#e1306c]";
-              } else if (platformLower === "facebook") {
-                IconComponent = BsFacebook;
-                hoverColor = "hover:text-[#1877f2]";
-              } else if (platformLower === "whatsapp") {
-                IconComponent = BsWhatsapp;
-                hoverColor = "hover:text-[#25d366]";
-              } else if (platformLower === "discord") {
-                IconComponent = BsDiscord;
-                hoverColor = "hover:text-[#5865f2]";
-              } else if (platformLower === "linkedin") {
-                IconComponent = BsLinkedin;
-                hoverColor = "hover:text-[#0a66c2]";
-              } else if (platformLower === "twitter") {
-                IconComponent = BsTwitter;
-                hoverColor = "hover:text-[#1da1f2]";
-              } else if (platformLower === "youtube") {
-                IconComponent = BsYoutube;
-                hoverColor = "hover:text-[#ff0000]";
-              } else if (platformLower === "telegram") {
-                IconComponent = BsTelegram;
-                hoverColor = "hover:text-[#0088cc]";
-              } else {
-                IconComponent = FaLink;
-              }
-
-              let username = social.name;
-              try {
-                const cleanUrl = (social.url || "").replace(/\/$/, "");
-                const parts = cleanUrl.split("/");
-                const lastPart = parts[parts.length - 1] || social.name;
-
-                if (
-                  platformLower === "github" ||
-                  platformLower === "facebook" ||
-                  platformLower === "linkedin"
-                ) {
-                  username = lastPart;
-                } else if (
-                  platformLower === "instagram" ||
-                  platformLower === "twitter" ||
-                  platformLower === "telegram"
-                ) {
-                  username = lastPart.startsWith("@") ? lastPart : "@" + lastPart;
-                } else if (platformLower === "whatsapp") {
-                  username = lastPart;
-                }
-              } catch (e) {}
-
-              return (
-                <Link
-                  key={social.id || `${social.platform}-${index}`}
-                  href={social.url || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex justify-between items-center group cursor-pointer text-[var(--secondary-text-color)] hover:text-[var(--text-color)] transition-colors duration-200"
-                >
-                  <div className="flex items-center gap-3">
-                    <IconComponent
-                      className={`${iconClass} ${hoverColor} icon`}
-                      aria-label={social.name}
-                    />
-                    <span className="font-medium">{social.platform}</span>
-                  </div>
-                  <span className="text-[var(--text-color)] transition-colors group-hover:underline">
-                    {username}
-                  </span>
-                </Link>
-              );
-            })}
-
-            {email && (
-              <Link
-                href={`mailto:${email}`}
-                className="flex justify-between items-center group cursor-pointer text-[var(--secondary-text-color)] hover:text-[var(--text-color)] transition-colors duration-200"
-              >
-                <div className="flex items-center gap-3">
-                  <MdEmail
-                    className={`${iconClass} hover:text-[#1877f2] icon`}
-                    aria-label="Email"
+            <div className="polaroid-frame">
+              <div className="w-32 h-32 overflow-hidden border border-[var(--border-color)] bg-[var(--card-kraft-color)] flex items-center justify-center">
+                {avatarSrc ? (
+                  <Image
+                    alt={name || "Profile"}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    src={avatarSrc}
+                    width={140}
+                    height={140}
+                    quality={90}
+                    priority
                   />
-                  <span className="font-medium">Email</span>
-                </div>
-                <span className="text-[var(--text-color)] transition-colors group-hover:underline break-all max-w-[150px] text-right">
-                  {email}
-                </span>
-              </Link>
-            )}
+                ) : (
+                  <span className="text-4xl text-[var(--secondary-text-color)] select-none">
+                    {name ? name.charAt(0).toUpperCase() : "👤"}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
+
+          {/* Name & Greeting Typography */}
+          {(greeting || name) && (
+            <div className="mb-2">
+              <p className="collage-handwritten text-xl text-[var(--link-color)] font-bold -rotate-1">
+                {greeting || "Hello there!"}
+              </p>
+              <h1 className="collage-serif text-2xl font-extrabold text-[var(--text-color)] mt-0.5">
+                {name}
+              </h1>
+            </div>
+          )}
+
+          {/* Bio in Archival Index Paper Scrap */}
+          {bio && (
+            <div className="w-full mt-3 p-3.5 bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl shadow-inner relative text-left">
+              <div className="absolute -top-2.5 right-4 px-2 py-0.5 bg-[var(--card-bg-color)] border border-[var(--border-color)] rounded text-[9px] collage-mono font-bold uppercase tracking-wider text-[var(--secondary-text-color)]">
+                NOTE
+              </div>
+              <p className="text-xs text-[var(--text-color)] leading-relaxed font-medium">
+                {bio}
+              </p>
+            </div>
+          )}
+
+          {/* Quick Info Field Entries */}
+          {((showJob && job) || (showLocation && location) || (showExperience && experience)) && (
+            <div className="w-full mt-6 pt-5 border-t-2 border-dashed border-[var(--border-subtle)] space-y-2.5 text-xs">
+              {showJob && job && (
+                <div className="flex justify-between items-center bg-[var(--card-note-color)] px-3 py-2 rounded-lg border border-[var(--border-subtle)]">
+                  <span className="collage-mono text-[10px] uppercase font-bold text-[var(--secondary-text-color)]">
+                    [ROLE]
+                  </span>
+                  <span className="text-[var(--text-color)] font-bold">
+                    {job}
+                  </span>
+                </div>
+              )}
+              {showLocation && location && (
+                <div className="flex justify-between items-center bg-[var(--card-note-color)] px-3 py-2 rounded-lg border border-[var(--border-subtle)]">
+                  <span className="collage-mono text-[10px] uppercase font-bold text-[var(--secondary-text-color)]">
+                    [BASE]
+                  </span>
+                  <span className="text-[var(--text-color)] font-bold">
+                    {location}
+                  </span>
+                </div>
+              )}
+              {showExperience && experience && (
+                <div className="flex justify-between items-center bg-[var(--card-note-color)] px-3 py-2 rounded-lg border border-[var(--border-subtle)]">
+                  <span className="collage-mono text-[10px] uppercase font-bold text-[var(--secondary-text-color)]">
+                    [EXP]
+                  </span>
+                  <span className="text-[var(--text-color)] font-bold">
+                    {experience}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Postal Dispatch & Social Stickers */}
+          {(socials.length > 0 || email) && (
+            <div className="w-full mt-7 pt-4 border-t-2 border-dashed border-[var(--border-subtle)]">
+              <div className="flex items-center justify-center mb-4">
+                <span className="dymo-label bg-[var(--stamp-red)] text-white text-[10px]">
+                  DISPATCH // REACH ME
+                </span>
+              </div>
+
+              <div className="w-full space-y-2 text-xs">
+                {socials.map((social, index) => {
+                  let IconComponent;
+                  const platformLower = (social.platform || "").toLowerCase();
+
+                  if (platformLower === "github") {
+                    IconComponent = BsGithub;
+                  } else if (platformLower === "instagram") {
+                    IconComponent = AiOutlineInstagram;
+                  } else if (platformLower === "facebook") {
+                    IconComponent = BsFacebook;
+                  } else if (platformLower === "whatsapp") {
+                    IconComponent = BsWhatsapp;
+                  } else if (platformLower === "discord") {
+                    IconComponent = BsDiscord;
+                  } else if (platformLower === "linkedin") {
+                    IconComponent = BsLinkedin;
+                  } else if (platformLower === "twitter") {
+                    IconComponent = BsTwitter;
+                  } else if (platformLower === "youtube") {
+                    IconComponent = BsYoutube;
+                  } else if (platformLower === "telegram") {
+                    IconComponent = BsTelegram;
+                  } else {
+                    IconComponent = FaLink;
+                  }
+
+                  let username = social.name;
+                  try {
+                    const cleanUrl = (social.url || "").replace(/\/$/, "");
+                    const parts = cleanUrl.split("/");
+                    const lastPart = parts[parts.length - 1] || social.name;
+
+                    if (
+                      platformLower === "github" ||
+                      platformLower === "facebook" ||
+                      platformLower === "linkedin"
+                    ) {
+                      username = lastPart;
+                    } else if (
+                      platformLower === "instagram" ||
+                      platformLower === "twitter" ||
+                      platformLower === "telegram"
+                    ) {
+                      username = lastPart.startsWith("@") ? lastPart : "@" + lastPart;
+                    } else if (platformLower === "whatsapp") {
+                      username = lastPart;
+                    }
+                  } catch (_e) {}
+
+                  return (
+                    <Link
+                      key={social.id || `${social.platform}-${index}`}
+                      href={social.url || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-between items-center p-2.5 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl transition-all duration-200 group hover:translate-x-1 shadow-sm"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-7 h-7 rounded-lg bg-[var(--card-bg-color)] border border-[var(--border-color)] flex items-center justify-center text-sm text-[var(--text-color)] group-hover:rotate-6 transition-transform">
+                          <IconComponent />
+                        </span>
+                        <span className="font-bold text-[var(--text-color)]">
+                          {social.platform}
+                        </span>
+                      </div>
+                      <span className="collage-mono text-[11px] text-[var(--secondary-text-color)] group-hover:text-[var(--link-color)] transition-colors truncate max-w-[120px]">
+                        {username}
+                      </span>
+                    </Link>
+                  );
+                })}
+
+                {email && (
+                  <Link
+                    href={`mailto:${email}`}
+                    className="flex justify-between items-center p-2.5 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl transition-all duration-200 group hover:translate-x-1 shadow-sm"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-7 h-7 rounded-lg bg-[var(--card-bg-color)] border border-[var(--border-color)] flex items-center justify-center text-sm text-[var(--stamp-red)] group-hover:rotate-6 transition-transform">
+                        <MdEmail />
+                      </span>
+                      <span className="font-bold text-[var(--text-color)]">
+                        Email
+                      </span>
+                    </div>
+                    <span className="collage-mono text-[11px] text-[var(--secondary-text-color)] group-hover:text-[var(--link-color)] transition-colors truncate max-w-[120px]">
+                      {email}
+                    </span>
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
         </section>
       </AnimatedContent>
     </aside>

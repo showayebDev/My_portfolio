@@ -28,13 +28,23 @@ const About = ({ educationData = [] }) => {
       scale={0.99}
       delay={0.05}
     >
-      <section className="bg-[var(--card-bg-color)] border border-[var(--border-color)] rounded-2xl p-6 shadow-md">
-        <div className="flex justify-between items-center mb-6 border-b border-[var(--border-color)] pb-2 text-[var(--secondary-text-color)]">
-          <span className="text-sm font-semibold tracking-wide text-[var(--text-color)]">
-            Education
+      <section className="collage-card p-6 sm:p-7 relative overflow-visible">
+        {/* Washi Tape Accent */}
+        <div className="washi-tape washi-tape-corner-left washi-tape-cyan" />
+
+        {/* Section Header */}
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-6 pb-3 border-b-2 border-dashed border-[var(--border-subtle)]">
+          <div className="flex items-center gap-2.5">
+            <span className="dymo-label">
+              ✦ EDUCATION ✦
+            </span>
+          </div>
+          <span className="collage-handwritten text-xl font-bold text-[var(--link-color)] -rotate-1">
+            Studies & Archival Records
           </span>
         </div>
 
+        {/* Education Index Cards */}
         <div className="space-y-4">
           {list.map((edu, idx) => {
             const imgSrc =
@@ -42,41 +52,50 @@ const About = ({ educationData = [] }) => {
                 ? edu.logo.url
                 : edu.logoUrl || (edu.src || null);
             const IconComp = iconMap[edu.icon] || FaGraduationCap;
-            const colorClass = idx === 0 ? "text-sky-400" : "text-emerald-400";
             const period = edu.period || edu.direction || "";
+            const isAlt = idx % 2 === 1;
 
             return (
               <div
                 key={edu.id || idx}
-                className="flex items-center justify-between gap-4 p-3 bg-[var(--bg-color)] border border-[var(--border-color)] rounded-xl hover:border-[var(--secondary-text-color)] transition-all duration-300"
+                className={`p-4 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border-2 border-[var(--border-color)] rounded-xl transition-all duration-200 group hover:-translate-y-1 shadow-sm relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                  isAlt ? "hover:rotate-[0.5deg]" : "hover:-rotate-[0.5deg]"
+                }`}
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border border-[var(--border-color)] bg-[var(--card-bg-color)] p-1.5 overflow-hidden shrink-0 relative shadow-sm">
+                {/* Left: Stamp Logo + Content */}
+                <div className="flex items-start sm:items-center gap-4">
+                  {/* Wax Seal / Circular Stamp Frame */}
+                  <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full border-2 border-[var(--border-color)] bg-[var(--card-bg-color)] p-1.5 flex items-center justify-center shrink-0 shadow-sm relative group-hover:rotate-6 transition-transform">
                     {imgSrc ? (
                       <Image
                         src={imgSrc}
                         alt={edu.name}
-                        width={48}
-                        height={48}
+                        width={50}
+                        height={50}
                         className="w-full h-full object-contain select-none rounded-full"
                       />
                     ) : (
-                      <IconComp className={`w-6 h-6 ${colorClass}`} />
+                      <IconComp className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                     )}
                   </div>
+
                   <div>
-                    <h4 className="text-sm font-bold text-[var(--text-color)]">
+                    <h4 className="collage-serif text-base font-bold text-[var(--text-color)] group-hover:text-[var(--link-color)] transition-colors">
                       {edu.name}
                     </h4>
-                    <p className="text-xs text-[var(--secondary-text-color)] mt-0.5">
+                    <p className="text-xs text-[var(--secondary-text-color)] mt-0.5 font-medium leading-relaxed">
                       {edu.description}
                     </p>
                   </div>
                 </div>
+
+                {/* Right: Date Stamp */}
                 {period && (
-                  <span className="text-xs font-semibold text-[var(--secondary-text-color)] whitespace-nowrap bg-[var(--card-bg-color)] px-3 py-1 rounded-full border border-[var(--border-color)]">
-                    {period}
-                  </span>
+                  <div className="self-start sm:self-auto shrink-0">
+                    <span className="postage-stamp bg-[var(--card-bg-color)] border-dashed border-[var(--border-color)] text-[11px] text-[var(--text-color)]">
+                      📅 {period}
+                    </span>
+                  </div>
                 )}
               </div>
             );

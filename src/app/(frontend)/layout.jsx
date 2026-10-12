@@ -59,9 +59,17 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="en" className={`${initialClass} ${montserrat.variable}`} suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="min-h-screen bg-[var(--bg-color)] text-[var(--text-color)] transition-colors duration-300">
         <NextTopLoader
-          color="#38bdf8"
+          color="#c2410c"
           initialPosition={0.08}
           crawlSpeed={200}
           height={3}
@@ -69,7 +77,7 @@ export default async function RootLayout({ children }) {
           showSpinner={true}
           easing="ease"
           speed={200}
-          shadow="0 0 10px #38bdf8,0 0 5px #38bdf8"
+          shadow="0 0 10px #c2410c,0 0 5px #c2410c"
         />
         <BuildInvalidator />
         <ThemeProvider configTheme={configTheme}>

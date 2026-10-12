@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import AnimatedContent from "@/context/AnimatedContent/AnimatedContent";
 
-const SkillItem = ({ skill, showPercent = false }) => {
+const SkillItem = ({ skill, showPercent = false, index = 0 }) => {
   const [percent, setPercent] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
   const itemRef = useRef(null);
@@ -76,33 +76,63 @@ const SkillItem = ({ skill, showPercent = false }) => {
       ? skill.icon.url
       : skill.iconUrl || skill.src || "";
 
+  const tiltClass =
+    index % 4 === 0
+      ? "hover:-rotate-2"
+      : index % 4 === 1
+      ? "hover:rotate-2"
+      : index % 4 === 2
+      ? "hover:rotate-3"
+      : "hover:-rotate-3";
+
   return (
-    <div ref={itemRef} className="flex flex-col items-center group">
-      <div
-        className="skill-ring mb-4 group-hover:scale-105"
-        style={{
-          "--skill-color": skill.color || "#38bdf8",
-          "--skill-percent": showPercent ? `${percent}%` : "0%",
-        }}
-      >
-        <div className="skill-inner shadow-inner">
+    <div
+      ref={itemRef}
+      className={`skill-sticker w-full max-w-[130px] h-fit self-start ${tiltClass}`}
+      style={{
+        "--skill-color": skill.color || "#f59e0b",
+      }}
+    >
+      {showPercent ? (
+        <div
+          className="skill-sticker-ring mb-3"
+          style={{
+            "--skill-percent": `${percent}%`,
+          }}
+        >
+          <div className="skill-sticker-inner">
+            {iconSrc && (
+              <Image
+                src={iconSrc}
+                alt={skill.name}
+                width={32}
+                height={32}
+                className="w-8 h-8 object-contain select-none transition-transform duration-300 group-hover:scale-110"
+              />
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="w-14 h-14 rounded-full border-2 border-[var(--border-color)] bg-[var(--card-note-color)] p-2.5 flex items-center justify-center mb-3 shadow-inner group-hover:rotate-6 transition-transform">
           {iconSrc && (
             <Image
               src={iconSrc}
               alt={skill.name}
-              width={36}
-              height={36}
-              className="w-9 h-9 object-contain select-none transition-transform duration-500 group-hover:rotate-12"
+              width={34}
+              height={34}
+              className="w-8.5 h-8.5 object-contain select-none transition-transform duration-300 group-hover:scale-110"
             />
           )}
         </div>
-      </div>
-      <span className="text-xs font-semibold text-[var(--text-color)]">
+      )}
+
+      <span className="collage-mono text-xs font-bold text-[var(--text-color)] text-center tracking-tight">
         {skill.name}
       </span>
+
       {showPercent && (
-        <span className="text-[10px] font-bold text-[var(--secondary-text-color)] mt-0.5">
-          {percent}%
+        <span className="collage-handwritten text-sm font-bold text-[var(--link-color)] mt-0.5">
+          {percent}% approved
         </span>
       )}
     </div>
@@ -119,11 +149,10 @@ const Skills = ({
   const showPercent =
     propShowPercent !== undefined ? propShowPercent : envShowPercent;
 
-  // Build category list dynamically from categoriesData if provided, or fallback to standard list
   const skillCategories = React.useMemo(() => {
     if (Array.isArray(categoriesData) && categoriesData.length > 0) {
       return [
-        { id: "all", label: "All" },
+        { id: "all", label: "All Skills" },
         ...categoriesData.map((cat) => ({
           id: cat.slug || cat.id || (cat.name ? cat.name.toLowerCase().replace(/\s+/g, "-") : ""),
           label: cat.name || cat.slug,
@@ -131,7 +160,7 @@ const Skills = ({
       ];
     }
     return [
-      { id: "all", label: "All" },
+      { id: "all", label: "All Skills" },
       { id: "front-end", label: "Front-end" },
       { id: "back-end", label: "Back-end" },
       { id: "framework", label: "Framework" },
@@ -183,40 +212,50 @@ const Skills = ({
       ease="power2.out"
       delay={0.05}
     >
-      <section
-        className="bg-[var(--card-bg-color)] border border-[var(--border-color)] rounded-2xl p-6 shadow-md"
-        id="experience"
-      >
-        <div className="flex justify-between items-center mb-6 border-b border-[var(--border-color)] pb-2 text-[var(--secondary-text-color)]">
-          <span className="text-sm font-semibold tracking-wide text-[var(--text-color)]">
-            Technical Skills
+      <section className="collage-card p-6 sm:p-7 relative overflow-visible" id="experience">
+        {/* Washi Tape Accent */}
+        <div className="washi-tape washi-tape-corner-right washi-tape-sage" />
+
+        {/* Section Header */}
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-6 pb-3 border-b-2 border-dashed border-[var(--border-subtle)]">
+          <div className="flex items-center gap-2.5">
+            <span className="dymo-label">
+              ✦ SKILLS ✦
+            </span>
+          </div>
+          <span className="collage-handwritten text-xl font-bold text-[var(--link-color)] -rotate-1">
+            Swatches & Proven Tools
           </span>
         </div>
 
-        {/* Category Filters */}
-        <div className="flex flex-wrap gap-2 mb-10 overflow-x-auto pb-2 border-b border-[var(--border-color)]">
-          {skillCategories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
-                activeCategory === cat.id
-                  ? "bg-[var(--btn-2-bg)] text-[var(--btn-2-text)] shadow-sm"
-                  : "bg-[var(--bg-color)] text-[var(--secondary-text-color)] hover:bg-[var(--border-color)]"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        {/* Category Tabs: Washi Tape / File Folder Tabs */}
+        <div className="flex flex-wrap gap-2 mb-8 overflow-x-auto pb-2 border-b border-[var(--border-subtle)]">
+          {skillCategories.map((cat) => {
+            const isActive = activeCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs collage-mono font-bold tracking-wider uppercase transition-all cursor-pointer border ${
+                  isActive
+                    ? "bg-[var(--btn-2-bg)] text-[var(--btn-2-text)] border-[var(--border-color)] shadow-sm -rotate-1 scale-105"
+                    : "bg-[var(--card-note-color)] text-[var(--secondary-text-color)] border-[var(--border-subtle)] hover:bg-[var(--card-kraft-color)] hover:text-[var(--text-color)]"
+                }`}
+              >
+                {cat.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Skills Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-y-10 gap-x-4 justify-items-center min-h-[300px]">
-          {filteredSkills.map((skill) => (
+        {/* Skills Grid: Die-Cut Stickers */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 justify-items-center content-start items-start min-h-[260px]">
+          {filteredSkills.map((skill, index) => (
             <SkillItem
               key={`${activeCategory}-${skill.name}`}
               skill={skill}
               showPercent={showPercent}
+              index={index}
             />
           ))}
         </div>

@@ -24,6 +24,15 @@ function parseButtonsSafely(buttons) {
   return [];
 }
 
+const tapeColors = [
+  "washi-tape-amber",
+  "washi-tape-sage",
+  "washi-tape-cyan",
+  "washi-tape-coral",
+  "washi-tape-lavender",
+  "washi-tape-rose",
+];
+
 export default function ProjectClient({ initialProjects = [], initialProfile = {} }) {
   const router = useRouter();
 
@@ -36,7 +45,7 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
   };
 
   const projectData = (initialProjects || [])
-    .filter((p) => p._status !== 'draft')
+    .filter((p) => p._status !== "draft")
     .sort((a, b) => (b.sortOrder ?? b.sort_order ?? 0) - (a.sortOrder ?? a.sort_order ?? 0))
     .map((p) => ({
       ...p,
@@ -62,23 +71,29 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
       : (github?.url || "https://github.com"));
 
   return (
-    <div id="projects" className="relative overflow-hidden flex flex-col py-8">
-      {/* Breadcrumb */}
-      <div className="container mx-auto px-4 max-w-5xl flex items-center gap-2 text-sm text-[var(--secondary-text-color)] font-medium mb-6">
-        <Link
-          href="/"
-          prefetch={false}
-          onMouseEnter={handlePrefetchHome}
-          onTouchStart={handlePrefetchHome}
-          className="hover:text-[var(--text-color)] hover:underline transition-colors duration-200"
-        >
-          Home
-        </Link>
-        <span>/</span>
-        <span className="text-[var(--text-color)] font-semibold">Projects</span>
+    <div id="projects" className="relative overflow-visible flex flex-col py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto min-h-screen">
+      {/* Top Header Bar: Archival Breadcrumb */}
+      <div className="flex items-center justify-between gap-4 mb-8">
+        {/* Archival Card Catalog Breadcrumb */}
+        <div className="flex items-center flex-wrap gap-2 text-xs collage-mono font-bold text-[var(--secondary-text-color)] py-2 px-3.5 bg-[var(--card-note-color)] border-2 border-[var(--border-color)] rounded-xl shadow-sm">
+          <Link
+            href="/"
+            prefetch={false}
+            onMouseEnter={handlePrefetchHome}
+            onTouchStart={handlePrefetchHome}
+            className="hover:text-[var(--link-color)] transition-colors hover:underline flex items-center gap-1.5"
+          >
+            <span>◄</span>
+            <span>HOME</span>
+          </Link>
+          <span className="text-[var(--border-subtle)]">⟶</span>
+          <span className="text-[var(--text-color)] bg-[var(--card-kraft-color)] px-2.5 py-0.5 rounded border border-[var(--border-subtle)] uppercase">
+            PROJECTS
+          </span>
+        </div>
       </div>
 
-      {/* Section header */}
+      {/* Exhibition Main Header */}
       <AnimatedContent
         distance={20}
         direction="vertical"
@@ -91,25 +106,39 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
         threshold={0.05}
         delay={0}
       >
-        <FadeContent
-          blur={false}
-          duration={300}
-          easing="ease-out"
-          initialOpacity={0.7}
-        >
-          <p className="section__text__p1 text-center">Browse My Recent</p>
-          <h1 className="title text-5xl text-center">Projects</h1>
+        <FadeContent blur={false} duration={300} easing="ease-out" initialOpacity={0.7}>
+          <div className="text-center mb-10 relative">
+            {/* Top Washi Tape */}
+            <div className="washi-tape washi-tape-center washi-tape-amber !w-[110px]" />
+
+            <div className="inline-block mb-3 pt-2">
+              <span className="dymo-label text-xs sm:text-sm">
+                ✦ PROJECTS ✦
+              </span>
+            </div>
+            <h1 className="collage-serif text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[var(--text-color)] tracking-tight">
+              Curated Works & Quests
+            </h1>
+            <p className="collage-handwritten text-xl sm:text-2xl font-bold text-[var(--link-color)] mt-2">
+              Inspect recent builds, source code, and live software deployments
+            </p>
+          </div>
         </FadeContent>
       </AnimatedContent>
 
-      <div className="container mx-auto mt-4">
-        <div className="flex justify-center flex-wrap gap-3 w-full max-w-5xl relative mx-auto p-1">
+      {/* Projects Grid */}
+      <div className="w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-stretch">
           {projectData.map((project, index) => {
             const slug = project.slug || project.name;
             const imgSrc = project.img || null;
+            const tapeColor = tapeColors[index % tapeColors.length];
+            const isAlt = index % 2 === 1;
+            const specimenNumber = String(index + 1).padStart(2, "0");
+
             return (
               <div
-                className="w-full max-w-xs"
+                className="w-full"
                 key={slug || index}
                 onMouseEnter={() => handlePrefetch(slug, imgSrc)}
               >
@@ -118,7 +147,7 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
                   prefetch={false}
                   onMouseEnter={() => handlePrefetch(slug, imgSrc)}
                   onTouchStart={() => handlePrefetch(slug, imgSrc)}
-                  className="block h-full cursor-pointer"
+                  className="block h-full cursor-pointer group"
                 >
                   <AnimatedContent
                     distance={25}
@@ -133,19 +162,35 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
                     delay={0}
                     Zindex={false}
                   >
-                    {/* Card */}
+                    {/* Collage Exhibition Card */}
                     <div
-                      className="card shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-500 w-full bg-[var(--card-bg-color)] rounded-2xl h-[420px] overflow-hidden group"
-                      onMouseEnter={() => handlePrefetch(slug, imgSrc)}
+                      className={`collage-card p-4 sm:p-5 min-h-[380px] h-full flex flex-col justify-between relative overflow-visible ${
+                        isAlt ? "hover:rotate-1" : "hover:-rotate-1"
+                      }`}
                     >
-                      <div className="flex flex-col h-full justify-between pb-4">
-                        {/* Upper Section: Image & Title */}
-                        <div>
-                          {/* Project image */}
-                          <div className="w-full h-[300px] overflow-hidden relative">
-                            {imgSrc && (
+                      {/* Corner Washi Tape */}
+                      <div
+                        className={`washi-tape ${tapeColor} !w-[65px] !h-[16px] !top-[-8px] !right-[16px] !transform ${
+                          isAlt ? "!rotate-4" : "!-rotate-4"
+                        }`}
+                      />
+
+                      {/* Top: Stage / Specimen Badge + Polaroid Photo */}
+                      <div>
+                        {/* Card Top Row: Star Badge */}
+                        <div className="flex justify-end items-center min-h-[18px] mb-2 px-1">
+                          {project.featured !== false && (
+                            <span className="text-amber-500 text-xs font-bold">★</span>
+                          )}
+                        </div>
+
+                        {/* Polaroid Image Frame */}
+                        <div className="flex justify-center mb-3">
+                          <div className="polaroid-frame !p-2 !pb-3">
+                            <div className="w-48 h-48 sm:w-52 sm:h-52 aspect-square overflow-hidden border border-[var(--border-color)] bg-[var(--card-kraft-color)] relative rounded flex items-center justify-center">
+                            {imgSrc ? (
                               <Image
-                                className="w-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
+                                className="w-full h-full object-contain transition-transform duration-500 ease-in-out group-hover:scale-105"
                                 src={imgSrc}
                                 alt={project.title}
                                 width={500}
@@ -157,34 +202,48 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
                                 }
                                 quality={PROJECT_HERO_IMAGE_CONFIG.quality}
                               />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-4xl">
+                                🎨
+                              </div>
                             )}
                           </div>
-
-                          {/* Card title */}
-                          <div className="card-body text-center mt-2 px-4">
-                            <h4 className="card-title text-[23px] text-[var(--text-color)]">
-                              {project.title}
-                            </h4>
-                          </div>
                         </div>
+                      </div>
 
-                        {/* Lower Section: Buttons pinned to bottom */}
-                        <div
-                          className="flex justify-center gap-2 flex-wrap px-4"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                        >
-                          {project.buttons?.map((btn, i) => (
+                        {/* Title and Short Details */}
+                        <div className="px-1 text-left">
+                          <h4 className="collage-serif text-lg font-bold text-[var(--text-color)] group-hover:text-[var(--link-color)] transition-colors line-clamp-1">
+                            {project.title}
+                          </h4>
+                          <p className="text-xs text-[var(--secondary-text-color)] line-clamp-2 mt-1.5 font-medium leading-relaxed">
+                            {project.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Bottom Action Badges */}
+                      <div
+                        className="flex items-center gap-2 flex-wrap pt-3 mt-4 border-t-2 border-dashed border-[var(--border-subtle)]"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      >
+                        {project.buttons?.length > 0 ? (
+                          project.buttons.map((btn, i) => (
                             <Button
                               key={i}
                               text={btn.name}
                               link={btn.link}
-                              className="flex items-center gap-1.5 border border-[var(--border-color)] px-3 py-1 text-xs font-semibold text-[var(--text-color)] hover:text-indigo-500 hover:border-indigo-500/40 hover:bg-indigo-500/10 hover:shadow-sm transition-all duration-200 rounded-full"
+                              className="tactile-btn px-3 py-1.5 text-xs font-bold flex items-center gap-1.5"
                             />
-                          ))}
-                        </div>
+                          ))
+                        ) : (
+                          <span className="tactile-btn px-3 py-1.5 text-xs font-bold text-[var(--secondary-text-color)]">
+                            VIEW DETAILS ⟶
+                          </span>
+                        )}
                       </div>
                     </div>
                   </AnimatedContent>
@@ -192,64 +251,68 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
               </div>
             );
           })}
+        </div>
 
-          <div className="w-full max-w-xs">
-            <Link
-              href={githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block h-full"
+        {/* Master GitHub Code Vault Showcase (Full-Width Bottom Banner) */}
+        <div className="mt-12 w-full">
+          <Link
+            href={githubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block group"
+          >
+            <AnimatedContent
+              distance={25}
+              direction="vertical"
+              reverse={false}
+              duration={0.35}
+              ease="power2.out"
+              initialOpacity={0.6}
+              animateOpacity
+              scale={0.99}
+              threshold={0.05}
+              delay={0}
             >
-              <AnimatedContent
-                distance={25}
-                direction="vertical"
-                reverse={false}
-                duration={0.35}
-                ease="power2.out"
-                initialOpacity={0.6}
-                animateOpacity
-                scale={0.98}
-                threshold={0.05}
-                delay={0}
-              >
-                {/* Card */}
-                <div className="card shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-500 w-full bg-[var(--card-bg-color)] rounded-2xl h-[400px] overflow-hidden group flex flex-col justify-between">
-                  {/* Glowing GitHub Icon Top Section */}
-                  <div className="w-full h-[300px] bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] flex items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.15),transparent_60%)]"></div>
-                    <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:20px_20px] [mask-image:radial-gradient(ellipse_at_center,white_60%,transparent_100%)]"></div>
-                    <div className="absolute w-36 h-36 rounded-full bg-sky-500/10 blur-xl group-hover:bg-sky-500/20 transition-all duration-500"></div>
+              <div className="collage-card collage-kraft p-6 sm:p-8 relative overflow-visible hover:shadow-xl transition-all">
+                {/* Washi Tapes on Top Corners */}
+                <div className="washi-tape washi-tape-corner-left washi-tape-amber !w-[90px]" />
+                <div className="washi-tape washi-tape-corner-right washi-tape-sage !w-[90px]" />
 
-                    <div className="relative w-32 h-32 rounded-full border border-sky-500/30 flex items-center justify-center bg-slate-900/60 backdrop-blur-md shadow-[0_0_30px_rgba(56,189,248,0.15)] group-hover:shadow-[0_0_35px_rgba(56,189,248,0.3)] transition-all duration-500">
-                      <div className="w-28 h-28 rounded-full border border-sky-400/20 flex items-center justify-center bg-slate-950/80">
-                        <BsGithub className="text-[54px] text-white transition-all duration-500 group-hover:scale-110 group-hover:text-sky-400" />
-                      </div>
-                      <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-slate-900 border border-sky-500/40 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
-                        <span className="text-yellow-400 text-xs">⭐</span>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+                  {/* Left: GitHub Insignia Stamp + Text */}
+                  <div className="flex flex-col md:flex-row items-center gap-5">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-[var(--border-color)] bg-[var(--card-bg-color)] flex items-center justify-center shadow-md shrink-0 relative group-hover:scale-105 group-hover:-rotate-6 transition-transform">
+                      <BsGithub className="text-4xl sm:text-5xl text-[var(--text-color)] group-hover:text-[var(--link-color)] transition-colors" />
+                      <div className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-[var(--stamp-red)] text-white text-[10px] flex items-center justify-center font-bold border border-[var(--border-color)]">
+                        BONUS
                       </div>
                     </div>
-                  </div>
 
-                  {/* Card body */}
-                  <div className="card-body text-center p-3 flex flex-col justify-between flex-grow">
                     <div>
-                      <h4 className="card-title text-[23px] text-[var(--text-color)] font-bold">
-                        Explore More
-                      </h4>
-                      <p className="text-[12px] text-[var(--secondary-text-color)] mt-1 px-4 leading-normal">
-                        Check out my full profile and other projects on GitHub
+                      <div className="flex items-center justify-center md:justify-start gap-2 mb-1.5">
+                        <span className="dymo-label text-[10px]">
+                          ✦ REPOSITORY VAULT ✦
+                        </span>
+                      </div>
+                      <h3 className="collage-serif text-2xl sm:text-3xl font-bold text-[var(--text-color)]">
+                        Explore Complete Open Source Vault
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[var(--secondary-text-color)] mt-1 max-w-xl font-medium">
+                        Visit my GitHub profile for full repositories, code experiments, packages, and developer utilities.
                       </p>
                     </div>
-                    <div className="flex justify-center gap-2 flex-wrap mb-1">
-                      <span className="border border-[var(--border-color)] px-4 py-1 font-bold text-[13px] text-[var(--text-color)] bg-[var(--card-bg-color)] group-hover:bg-[var(--bg-color)] group-hover:text-[var(--secondary-text-color)] group-hover:shadow transition-all ease-in-out duration-300 rounded-full">
-                        GitHub
-                      </span>
-                    </div>
+                  </div>
+
+                  {/* Right: Tactile Vault Action Button */}
+                  <div className="shrink-0">
+                    <span className="tactile-btn tactile-btn-primary inline-flex items-center gap-2 px-6 py-3 text-xs sm:text-sm uppercase tracking-wider font-extrabold group-hover:scale-105 transition-transform">
+                      <span>[ VISIT GITHUB VAULT ↗ ]</span>
+                    </span>
                   </div>
                 </div>
-              </AnimatedContent>
-            </Link>
-          </div>
+              </div>
+            </AnimatedContent>
+          </Link>
         </div>
       </div>
     </div>

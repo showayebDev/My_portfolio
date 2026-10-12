@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import Button from "@/components/button";
 import MarkdownView from "@/components/MarkdownView";
@@ -103,7 +102,7 @@ function getProjectMarkdown(project) {
       if (fs.existsSync(directPath)) {
         return fs.readFileSync(directPath, "utf-8");
       }
-    } catch (e) {}
+    } catch (_e) { }
   }
 
   return "";
@@ -131,63 +130,94 @@ export default async function ProjectPage({ params }) {
       : formattedProject.imageUrl || formattedProject.img || null;
 
   return (
-    <div className="container mx-0 md:mx-auto px-4 py-8 max-w-[1280px]">
+    <div className="container mx-auto px-4 py-8 max-w-7xl min-h-screen">
       {/* Breadcrumb */}
       <ProjectBreadcrumbs projectTitle={formattedProject.title} />
 
-      <div className="flex flex-col lg:flex-row gap-8 md:items-center lg:items-start">
-        <div className="md:w-1/4 lg:sticky top-8">
-          {imgSrc && (
-            <div>
-              <Image
-                src={imgSrc}
-                alt={formattedProject.title}
-                className="rounded-lg shadow-lg w-full"
-                width={PROJECT_HERO_IMAGE_CONFIG.width}
-                height={PROJECT_HERO_IMAGE_CONFIG.height}
-                placeholder="blur"
-                blurDataURL={
-                  formattedProject.blurDataURL ||
-                  "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAABQAQCdASoKAAoABUB8JZQABAAAAP7uHqfoJXiW+ZLl0iBxIYAAAA=="
-                }
-                priority
-                quality={PROJECT_HERO_IMAGE_CONFIG.quality}
-              />
-              <div className="mt-4">
-                <h1 className="text-2xl font-semibold mb-2">{formattedProject.title}</h1>
-                <p className="text-[var(--secondary-text-color)] mb-4">
-                  {formattedProject.description}
-                </p>
-                <div className="flex flex-col gap-3">
-                  {formattedProject.buttons?.map((btn, i) => {
-                    const isGitHub = (btn.name || "").toLowerCase().includes("github");
-                    return (
-                      <Button
-                        key={i}
-                        text={btn.name}
-                        link={btn.link}
-                        className={`flex items-center justify-center gap-2.5 px-5 py-3 text-sm font-semibold rounded-xl w-full text-center transition-all duration-300 transform active:scale-[0.98] shadow-sm ${
-                          isGitHub
-                            ? "bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 text-white shadow-slate-900/10 hover:shadow-md hover:-translate-y-0.5 border border-transparent font-medium"
-                            : "bg-[var(--card-bg-color)] border border-[var(--border-color)] text-[var(--text-color)] hover:border-indigo-500/50 hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:-translate-y-0.5 font-medium"
-                        }`}
-                      />
-                    );
-                  })}
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        {/* Left: Compact Sticky Project Dossier Card */}
+        <div className="w-full lg:w-[325px] xl:w-[340px] shrink-0 lg:sticky top-6 self-start space-y-4">
+          <div className="collage-card p-3.5 sm:p-4 relative overflow-visible shadow-sm">
+            {/* Washi Tape */}
+            <div className="washi-tape washi-tape-center washi-tape-coral !w-[70px] !h-[18px] !-top-2" />
+
+
+            {/* Square Polaroid Photo Frame */}
+            {imgSrc && (
+              <div className="flex justify-center mb-3">
+                <div className="polaroid-frame !p-2 !pb-3">
+                  <div className="w-48 h-48 sm:w-52 sm:h-52 aspect-square overflow-hidden border border-[var(--border-color)] bg-[var(--card-kraft-color)] relative rounded flex items-center justify-center">
+                    <Image
+                      src={imgSrc}
+                      alt={formattedProject.title}
+                      className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
+                      width={PROJECT_HERO_IMAGE_CONFIG.width}
+                      height={PROJECT_HERO_IMAGE_CONFIG.height}
+                      placeholder="blur"
+                      blurDataURL={
+                        formattedProject.blurDataURL ||
+                        "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAABQAQCdASoKAAoABUB8JZQABAAAAP7uHqfoJXiW+ZLl0iBxIYAAAA=="
+                      }
+                      priority
+                      quality={PROJECT_HERO_IMAGE_CONFIG.quality}
+                    />
+                  </div>
+                  <div className="polaroid-caption !text-sm !mt-1.5 truncate max-w-[200px]">
+                    {formattedProject.title}
+                  </div>
                 </div>
               </div>
+            )}
+
+            {/* Description Note */}
+            <div className="mb-3 p-2.5 bg-[var(--card-note-color)] rounded-lg border border-[var(--border-color)] text-[11px] text-[var(--secondary-text-color)] font-medium leading-relaxed">
+              <p className="line-clamp-3 hover:line-clamp-none transition-all">{formattedProject.description}</p>
             </div>
-          )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2">
+              {formattedProject.buttons?.map((btn, i) => {
+                const isGitHub = (btn.name || "").toLowerCase().includes("github");
+                return (
+                  <Button
+                    key={i}
+                    text={btn.name}
+                    link={btn.link}
+                    className={`tactile-btn flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold w-full text-center transition-all duration-200 ${isGitHub
+                        ? "tactile-btn-primary"
+                        : "bg-[var(--card-kraft-color)] hover:bg-[var(--card-bg-color)]"
+                      }`}
+                  />
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        <div className="md:w-3/4">
-          {renderedHtml ? (
-            <MarkdownView html={renderedHtml} />
-          ) : (
-            <div className="text-[var(--secondary-text-color)] py-8">
-              No README available for this project.
+        {/* Right: Technical Field Report Document */}
+        <div className="w-full flex-1 min-w-0">
+          <div className="relative">
+            {/* Top Washi Tape on Document */}
+            <div className="washi-tape washi-tape-corner-left washi-tape-cyan !w-[75px] !-top-3 !left-6" />
+
+            {/* Header Ribbon */}
+            <div className="flex items-center justify-between mb-4 px-2">
+              <span className="dymo-label text-[10px]">
+                ✦ ARCHIVAL DOCUMENTATION // SPECIFICATION ✦
+              </span>
+              <span className="collage-handwritten text-lg font-bold text-[var(--link-color)]">
+                Field Notes & Guide
+              </span>
             </div>
-          )}
+
+            {renderedHtml ? (
+              <MarkdownView html={renderedHtml} />
+            ) : (
+              <div className="collage-card p-8 text-center text-[var(--secondary-text-color)] collage-mono text-sm">
+                No archival README document filed for this exhibit.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
