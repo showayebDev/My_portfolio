@@ -14,6 +14,7 @@ import { TbBuildingStore } from "react-icons/tb";
 
 const Button = ({ text, link, className, style, icon: CustomIcon, children }) => {
   const handleClick = (e) => {
+    e.preventDefault();
     e.stopPropagation();
     if (link) {
       window.open(link, "_blank", "noopener,noreferrer");

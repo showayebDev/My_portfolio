@@ -48,11 +48,18 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
       buttons: parseButtonsSafely(p.buttons),
     }));
 
-  const socials = initialProfile.socials || [];
-  const github = socials.find((s) => s.platform?.toLowerCase() === "github");
+  const socials = Array.isArray(initialProfile?.socials) ? initialProfile.socials : [];
+  const github = socials.find(
+    (s) =>
+      s.platform?.toLowerCase() === "github" ||
+      s.name?.toLowerCase() === "github"
+  );
   const githubUrl =
-    initialProfile.exploreMoreGitHubUrl ||
-    (github ? github.url : "https://github.com");
+    (github && github.url?.trim()) ||
+    (initialProfile?.exploreMoreGitHubUrl &&
+    initialProfile.exploreMoreGitHubUrl !== "https://github.com"
+      ? initialProfile.exploreMoreGitHubUrl
+      : (github?.url || "https://github.com"));
 
   return (
     <div id="projects" className="relative overflow-hidden flex flex-col py-8">
@@ -162,7 +169,13 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
                         </div>
 
                         {/* Lower Section: Buttons pinned to bottom */}
-                        <div className="flex justify-center gap-2 flex-wrap px-4">
+                        <div
+                          className="flex justify-center gap-2 flex-wrap px-4"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                        >
                           {project.buttons?.map((btn, i) => (
                             <Button
                               key={i}
