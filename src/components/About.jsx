@@ -44,8 +44,8 @@ const About = ({ educationData = [] }) => {
           </span>
         </div>
 
-        {/* Education Index Cards */}
-        <div className="space-y-4">
+        {/* Education Index Cards: 2-column grid on tablet (md..lg), full-width rows on desktop (lg+) and mobile (<md) */}
+        <div className={`grid gap-4 sm:gap-5 ${list.length > 1 ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-1" : "grid-cols-1"}`}>
           {list.map((edu, idx) => {
             const imgSrc =
               (typeof edu.logo === "object" && edu.logo?.url)
@@ -58,12 +58,12 @@ const About = ({ educationData = [] }) => {
             return (
               <div
                 key={edu.id || idx}
-                className={`p-4 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl transition-all duration-200 group hover:-translate-y-1 shadow-sm relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                className={`p-4 sm:p-5 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl transition-all duration-200 group hover:-translate-y-1 shadow-sm relative flex flex-col sm:flex-row sm:items-center md:flex-col md:items-stretch lg:flex-row lg:items-center justify-between gap-4 ${
                   isAlt ? "hover:rotate-[0.5deg]" : "hover:-rotate-[0.5deg]"
                 }`}
               >
-                {/* Left: Stamp Logo + Content */}
-                <div className="flex items-start sm:items-center gap-4">
+                {/* Left/Top Section: Stamp Seal Logo + Institution Info */}
+                <div className="flex items-start sm:items-center md:items-start lg:items-center gap-4 flex-1 min-w-0">
                   {/* Wax Seal / Circular Stamp Frame */}
                   <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full border border-[var(--border-subtle)] bg-[var(--card-bg-color)] p-1.5 flex items-center justify-center shrink-0 shadow-sm relative group-hover:rotate-6 transition-transform">
                     {imgSrc ? (
@@ -79,7 +79,7 @@ const About = ({ educationData = [] }) => {
                     )}
                   </div>
 
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h4 className="collage-serif text-base font-bold text-[var(--text-color)] group-hover:text-[var(--link-color)] transition-colors">
                       {edu.name}
                     </h4>
@@ -89,9 +89,9 @@ const About = ({ educationData = [] }) => {
                   </div>
                 </div>
 
-                {/* Right: Date Stamp */}
+                {/* Right/Bottom Section: Date Postage Stamp Badge */}
                 {period && (
-                  <div className="self-start sm:self-auto shrink-0">
+                  <div className="self-start sm:self-auto md:self-end md:w-full md:pt-2.5 md:border-t md:border-dashed md:border-[var(--border-subtle)] lg:w-auto lg:pt-0 lg:border-t-0 shrink-0 flex md:justify-end">
                     <span className="postage-stamp bg-[var(--card-bg-color)] border-dashed border-[var(--border-color)] text-[11px] text-[var(--text-color)]">
                       📅 {period}
                     </span>
