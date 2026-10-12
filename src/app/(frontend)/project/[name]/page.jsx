@@ -7,22 +7,7 @@ import MarkdownView from "@/components/MarkdownView";
 import ProjectBreadcrumbs from "@/components/ProjectBreadcrumbs";
 import { getProjectBySlug, getAllProjects } from "@/lib/getPortfolioData";
 import { PROJECT_HERO_IMAGE_CONFIG } from "@/lib/prefetch";
-import { marked } from "marked";
-import hljs from "highlight.js";
-
-// Custom code block renderer with highlight.js syntax highlighting
-const renderer = {
-  code({ text, lang }) {
-    const validLanguage = lang && hljs.getLanguage(lang) ? lang : null;
-    const highlighted = validLanguage
-      ? hljs.highlight(text, { language: validLanguage }).value
-      : hljs.highlightAuto(text).value;
-    const langClass = validLanguage ? ` class="hljs language-${validLanguage}"` : ' class="hljs"';
-    return `<pre><code${langClass}>${highlighted}</code></pre>`;
-  },
-};
-
-marked.use({ renderer, gfm: true, breaks: true });
+import { renderMarkdown } from "@/lib/markdown";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -122,7 +107,7 @@ export default async function ProjectPage({ params }) {
   };
 
   const rawMarkdown = getProjectMarkdown(formattedProject);
-  const renderedHtml = rawMarkdown ? marked.parse(rawMarkdown) : "";
+  const renderedHtml = renderMarkdown(rawMarkdown);
 
   const imgSrc =
     (typeof formattedProject.image === "object" && formattedProject.image?.url)
