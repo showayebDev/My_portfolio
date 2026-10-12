@@ -80,7 +80,7 @@ const Projects = ({ projectData = [] }) => {
                   onMouseEnter={() => handlePrefetch(slug, imgSrc)}
                   onTouchStart={() => handlePrefetch(slug, imgSrc)}
                 >
-                  <div className="p-4 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border-2 border-[var(--border-color)] rounded-xl transition-all duration-250 cursor-pointer shadow-sm relative overflow-visible hover:-translate-y-1.5 hover:shadow-md">
+                  <div className="p-4 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl transition-all duration-250 cursor-pointer shadow-sm relative overflow-visible hover:-translate-y-1.5 hover:shadow-md">
                     {/* Decorative Corner Tape */}
                     <div
                       className={`washi-tape ${tapeColor} !w-[55px] !h-[14px] !top-[-7px] !right-[12px] !transform !rotate-3`}
@@ -88,7 +88,7 @@ const Projects = ({ projectData = [] }) => {
 
                     <div className="flex items-center gap-3.5">
                       {/* Mini Polaroid Photo Frame */}
-                      <div className="w-16 h-16 rounded-lg overflow-hidden border-2 border-[var(--border-color)] bg-[var(--card-bg-color)] p-1 shrink-0 shadow-sm relative group-hover:scale-105 group-hover:-rotate-2 transition-transform">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden border border-[var(--border-subtle)] bg-[var(--card-bg-color)] p-1 shrink-0 shadow-sm relative group-hover:scale-105 group-hover:-rotate-2 transition-transform">
                         {imgSrc ? (
                           <Image
                             src={imgSrc}

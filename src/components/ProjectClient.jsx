@@ -75,7 +75,7 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
       {/* Top Header Bar: Archival Breadcrumb */}
       <div className="flex items-center justify-between gap-4 mb-8">
         {/* Archival Card Catalog Breadcrumb */}
-        <div className="flex items-center flex-wrap gap-2 text-xs collage-mono font-bold text-[var(--secondary-text-color)] py-2 px-3.5 bg-[var(--card-note-color)] border-2 border-[var(--border-color)] rounded-xl shadow-sm">
+        <div className="flex items-center flex-wrap gap-2 text-xs collage-mono font-bold text-[var(--secondary-text-color)] py-2 px-3.5 bg-[var(--card-note-color)] border border-[var(--border-color)] rounded-xl shadow-sm">
           <Link
             href="/"
             prefetch={false}
@@ -281,7 +281,7 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
                   {/* Left: GitHub Insignia Stamp + Text */}
                   <div className="flex flex-col md:flex-row items-center gap-5">
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-[var(--border-color)] bg-[var(--card-bg-color)] flex items-center justify-center shadow-md shrink-0 relative group-hover:scale-105 group-hover:-rotate-6 transition-transform">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-[var(--border-color)] bg-[var(--card-bg-color)] flex items-center justify-center shadow-md shrink-0 relative group-hover:scale-105 group-hover:-rotate-6 transition-transform">
                       <BsGithub className="text-4xl sm:text-5xl text-[var(--text-color)] group-hover:text-[var(--link-color)] transition-colors" />
                       <div className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-[var(--stamp-red)] text-white text-[10px] flex items-center justify-center font-bold border border-[var(--border-color)]">
                         BONUS

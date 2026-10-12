@@ -32,14 +32,14 @@
   --card-bg-color: #fffefb;
   --card-kraft-color: #f2e9dc;
   --card-note-color: #fdfaf3;
-  --border-color: #2d2824;
-  --border-subtle: #d6ccbe;
+  --border-color: #d6ccbe;
+  --border-subtle: #eae1d4;
 
-  /* Collage Shadows */
-  --paper-shadow: 4px 4px 0px #2d2824;
-  --paper-shadow-sm: 2.5px 2.5px 0px #2d2824;
-  --paper-shadow-lg: 6px 6px 0px #2d2824;
-  --paper-shadow-lift: 7px 8px 16px rgba(45, 40, 36, 0.12);
+  /* Collage Shadows - Soft, warm, tactile paper elevation */
+  --paper-shadow: 0 4px 16px -2px rgba(50, 42, 34, 0.08), 0 2px 6px -1px rgba(50, 42, 34, 0.04);
+  --paper-shadow-sm: 0 2px 8px -1px rgba(50, 42, 34, 0.06), 0 1px 3px rgba(50, 42, 34, 0.03);
+  --paper-shadow-lg: 0 12px 28px -4px rgba(50, 42, 34, 0.12), 0 4px 10px -2px rgba(50, 42, 34, 0.05);
+  --paper-shadow-lift: 0 16px 36px -6px rgba(50, 42, 34, 0.14);
 
   /* Washi Tape Strips (Pastel translucent fibrous tapes) */
   --tape-amber: rgba(245, 178, 64, 0.82);
@@ -80,10 +80,10 @@
   --border-subtle: #36322b;
 
   /* Collage Shadows */
-  --paper-shadow: 4px 4px 0px #090807;
-  --paper-shadow-sm: 2.5px 2.5px 0px #090807;
-  --paper-shadow-lg: 6px 6px 0px #090807;
-  --paper-shadow-lift: 8px 10px 24px rgba(0, 0, 0, 0.55);
+  --paper-shadow: 0 6px 20px -2px rgba(0, 0, 0, 0.55), 0 2px 6px -1px rgba(0, 0, 0, 0.35);
+  --paper-shadow-sm: 0 3px 10px -1px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.25);
+  --paper-shadow-lg: 0 14px 32px -4px rgba(0, 0, 0, 0.65), 0 4px 12px -2px rgba(0, 0, 0, 0.45);
+  --paper-shadow-lift: 0 18px 40px -6px rgba(0, 0, 0, 0.75);
 
   /* Washi Tape Strips (Glow / muted neon craft tapes) */
   --tape-amber: rgba(251, 191, 36, 0.82);
@@ -155,7 +155,7 @@ h1, h2, h3, h4, .collage-serif {
 /* Tactile Paper Card */
 .collage-card {
   background-color: var(--card-bg-color);
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   box-shadow: var(--paper-shadow);
   position: relative;
@@ -169,7 +169,7 @@ h1, h2, h3, h4, .collage-serif {
 /* Kraft Paper Card variation */
 .collage-kraft {
   background-color: var(--card-kraft-color);
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   box-shadow: var(--paper-shadow);
 }
 
@@ -222,7 +222,7 @@ h1, h2, h3, h4, .collage-serif {
 /* Polaroid Photo Frame */
 .polaroid-frame {
   background-color: #ffffff;
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   padding: 10px 10px 24px 10px;
   box-shadow: var(--paper-shadow);
   display: inline-block;
@@ -258,7 +258,7 @@ h1, h2, h3, h4, .collage-serif {
 /* Die-Cut Sticker */
 .die-cut-sticker {
   background-color: var(--card-bg-color);
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: 14px;
   box-shadow: var(--paper-shadow-sm);
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -301,7 +301,7 @@ h1, h2, h3, h4, .collage-serif {
 
 /* Vintage Postage Stamp */
 .postage-stamp {
-  border: 2px dashed var(--border-color);
+  border: 1px dashed var(--border-color);
   background-color: var(--card-note-color);
   padding: 4px 10px;
   border-radius: 6px;
@@ -312,7 +312,7 @@ h1, h2, h3, h4, .collage-serif {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(50, 42, 34, 0.05);
 }
 
 /* Circular Rubber Ink Stamp */
@@ -336,7 +336,7 @@ h1, h2, h3, h4, .collage-serif {
 .tactile-btn {
   background-color: var(--card-bg-color);
   color: var(--text-color);
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: var(--paper-shadow-sm);
   font-family: var(--font-sans);
@@ -378,7 +378,7 @@ h1, h2, h3, h4, .collage-serif {
 .skill-sticker {
   position: relative;
   background-color: var(--card-bg-color);
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   box-shadow: var(--paper-shadow-sm);
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -399,13 +399,13 @@ h1, h2, h3, h4, .collage-serif {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   background: radial-gradient(closest-side, var(--card-bg-color) 78%, transparent 80% 100%),
               conic-gradient(var(--skill-color, #f59e0b) var(--skill-percent, 0%), var(--border-subtle) 0);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(50, 42, 34, 0.06);
 }
 
 .skill-sticker-inner {
@@ -431,7 +431,7 @@ h1, h2, h3, h4, .collage-serif {
   background-color: var(--card-bg-color) !important;
   color: var(--text-color) !important;
   font-family: var(--font-sans);
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   box-shadow: var(--paper-shadow);
   padding: 24px;
@@ -514,7 +514,7 @@ h1, h2, h3, h4, .collage-serif {
   background-color: #f5eedf !important;
   color: #231f1c !important;
   font-family: var(--font-mono) !important;
-  border: 2px solid var(--border-color) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 12px !important;
   box-shadow: var(--paper-shadow-sm) !important;
   padding: 18px 20px !important;
@@ -842,7 +842,7 @@ html.dark .markdown-body .hljs-deletion {
 .markdown-body table {
   border-collapse: separate !important;
   border-spacing: 0 !important;
-  border: 2px solid var(--border-color) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 12px !important;
   overflow: hidden !important;
   box-shadow: var(--paper-shadow-sm) !important;
@@ -854,7 +854,7 @@ html.dark .markdown-body .hljs-deletion {
 .markdown-body table th {
   background-color: var(--card-kraft-color) !important;
   color: var(--text-color) !important;
-  border-bottom: 2px solid var(--border-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
   font-family: var(--font-mono) !important;
   font-size: 0.85rem !important;
   letter-spacing: 0.05em !important;
@@ -895,7 +895,7 @@ html.dark .markdown-body .hljs-deletion {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--card-kraft-color);
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   box-shadow: 1px 1px 0px var(--border-color);
 }

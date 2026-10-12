@@ -58,14 +58,14 @@ const About = ({ educationData = [] }) => {
             return (
               <div
                 key={edu.id || idx}
-                className={`p-4 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border-2 border-[var(--border-color)] rounded-xl transition-all duration-200 group hover:-translate-y-1 shadow-sm relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                className={`p-4 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl transition-all duration-200 group hover:-translate-y-1 shadow-sm relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                   isAlt ? "hover:rotate-[0.5deg]" : "hover:-rotate-[0.5deg]"
                 }`}
               >
                 {/* Left: Stamp Logo + Content */}
                 <div className="flex items-start sm:items-center gap-4">
                   {/* Wax Seal / Circular Stamp Frame */}
-                  <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full border-2 border-[var(--border-color)] bg-[var(--card-bg-color)] p-1.5 flex items-center justify-center shrink-0 shadow-sm relative group-hover:rotate-6 transition-transform">
+                  <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full border border-[var(--border-subtle)] bg-[var(--card-bg-color)] p-1.5 flex items-center justify-center shrink-0 shadow-sm relative group-hover:rotate-6 transition-transform">
                     {imgSrc ? (
                       <Image
                         src={imgSrc}

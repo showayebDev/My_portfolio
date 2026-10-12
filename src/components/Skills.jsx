@@ -113,7 +113,7 @@ const SkillItem = ({ skill, showPercent = false, index = 0 }) => {
           </div>
         </div>
       ) : (
-        <div className="w-14 h-14 rounded-full border-2 border-[var(--border-color)] bg-[var(--card-note-color)] p-2.5 flex items-center justify-center mb-3 shadow-inner group-hover:rotate-6 transition-transform">
+        <div className="w-14 h-14 rounded-full border border-[var(--border-subtle)] bg-[var(--card-note-color)] p-2.5 flex items-center justify-center mb-3 shadow-inner group-hover:rotate-6 transition-transform">
           {iconSrc && (
             <Image
               src={iconSrc}
