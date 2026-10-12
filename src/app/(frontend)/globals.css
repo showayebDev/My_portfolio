@@ -902,3 +902,54 @@ html.dark .markdown-body .hljs-deletion {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--tape-amber);
 }
+
+/* ============================================================
+   404 NOT FOUND SPECIALIZED STYLES
+   ============================================================ */
+
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(0.8deg);
+  }
+}
+
+@keyframes compass-wobble {
+  0% { transform: rotate(0deg); }
+  20% { transform: rotate(18deg); }
+  45% { transform: rotate(-24deg); }
+  70% { transform: rotate(10deg); }
+  85% { transform: rotate(-6deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes stamp-pop {
+  0% { transform: scale(1) rotate(-6deg); }
+  40% { transform: scale(1.12) rotate(-3deg); }
+  70% { transform: scale(0.95) rotate(-8deg); }
+  100% { transform: scale(1) rotate(-6deg); }
+}
+
+.animate-float-gentle {
+  animation: float-gentle 4.5s ease-in-out infinite;
+}
+
+.animate-compass-wobble {
+  animation: compass-wobble 6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.animate-stamp-pop {
+  animation: stamp-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-gentle,
+  .animate-compass-wobble,
+  .animate-stamp-pop {
+    animation: none !important;
+  }
+}
+
