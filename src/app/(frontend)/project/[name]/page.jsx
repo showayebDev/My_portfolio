@@ -122,59 +122,74 @@ export default async function ProjectPage({ params }) {
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         {/* Left: Compact Sticky Project Dossier Card */}
         <div className="w-full lg:w-[325px] xl:w-[340px] shrink-0 lg:sticky top-6 self-start space-y-4">
-          <div className="collage-card p-3.5 sm:p-4 relative overflow-visible shadow-sm">
+          <div className="collage-card p-4 sm:p-5 md:p-6 lg:p-4 relative overflow-visible shadow-sm">
             {/* Washi Tape */}
             <div className="washi-tape washi-tape-center washi-tape-coral !w-[70px] !h-[18px] !-top-2" />
 
-
-            {/* Square Polaroid Photo Frame */}
-            {imgSrc && (
-              <div className="flex justify-center mb-3">
-                <div className="polaroid-frame !p-2 !pb-3">
-                  <div className="w-48 h-48 sm:w-52 sm:h-52 aspect-square overflow-hidden border border-[var(--border-color)] bg-[var(--card-kraft-color)] relative rounded flex items-center justify-center">
-                    <Image
-                      src={imgSrc}
-                      alt={formattedProject.title}
-                      className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
-                      width={PROJECT_HERO_IMAGE_CONFIG.width}
-                      height={PROJECT_HERO_IMAGE_CONFIG.height}
-                      placeholder="blur"
-                      blurDataURL={
-                        formattedProject.blurDataURL ||
-                        "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAABQAQCdASoKAAoABUB8JZQABAAAAP7uHqfoJXiW+ZLl0iBxIYAAAA=="
-                      }
-                      priority
-                      quality={PROJECT_HERO_IMAGE_CONFIG.quality}
-                    />
-                  </div>
-                  <div className="polaroid-caption !text-sm !mt-1.5 truncate max-w-[200px]">
-                    {formattedProject.title}
+            {/* 2-Part Responsive Layout: 2 parts on md to lg, 1 column on mobile & desktop sidebar */}
+            <div className="flex flex-col md:flex-row lg:flex-col gap-5 md:gap-7 lg:gap-3.5 items-center md:items-start lg:items-center">
+              {/* Part 1: Polaroid Photo Frame */}
+              {imgSrc && (
+                <div className="shrink-0 flex justify-center w-full md:w-auto lg:w-full">
+                  <div className="polaroid-frame !p-2 !pb-3 sm:!p-2.5 sm:!pb-3.5">
+                    <div className="w-48 h-48 sm:w-52 sm:h-52 md:w-56 md:h-56 lg:w-52 lg:h-52 aspect-square overflow-hidden border border-[var(--border-color)] bg-[var(--card-kraft-color)] relative rounded flex items-center justify-center">
+                      <Image
+                        src={imgSrc}
+                        alt={formattedProject.title}
+                        className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
+                        width={PROJECT_HERO_IMAGE_CONFIG.width}
+                        height={PROJECT_HERO_IMAGE_CONFIG.height}
+                        placeholder="blur"
+                        blurDataURL={
+                          formattedProject.blurDataURL ||
+                          "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAABQAQCdASoKAAoABUB8JZQABAAAAP7uHqfoJXiW+ZLl0iBxIYAAAA=="
+                        }
+                        priority
+                        quality={PROJECT_HERO_IMAGE_CONFIG.quality}
+                      />
+                    </div>
+                    <div className="polaroid-caption !text-sm md:!text-base lg:!text-sm !mt-1.5 truncate max-w-[200px] md:max-w-[220px] lg:max-w-[200px]">
+                      {formattedProject.title}
+                    </div>
                   </div>
                 </div>
+              )}
+
+              {/* Part 2: Project Details & Action Buttons */}
+              <div className="flex-1 w-full min-w-0 flex flex-col justify-between self-stretch">
+                {/* Description Note */}
+                <div className="mb-4 lg:mb-3 p-3.5 md:p-4 lg:p-2.5 bg-[var(--card-note-color)] rounded-xl border border-[var(--border-color)] text-xs md:text-sm lg:text-[11px] text-[var(--secondary-text-color)] font-medium leading-relaxed">
+                  <div className="text-[10px] md:text-[11px] lg:text-[10px] uppercase font-bold tracking-wider text-[var(--link-color)] collage-mono mb-1.5 flex items-center gap-1.5">
+                    <span>✦</span>
+                    <span>PROJECT OVERVIEW</span>
+                  </div>
+                  <p className="line-clamp-4 md:line-clamp-none lg:line-clamp-3 hover:line-clamp-none transition-all">
+                    {formattedProject.description}
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-1 gap-2.5 w-full mt-auto">
+                  {formattedProject.buttons?.map((btn, i) => {
+                    const isGitHub = (btn.name || "").toLowerCase().includes("github");
+                    const isSingle = formattedProject.buttons?.length === 1;
+                    return (
+                      <Button
+                        key={i}
+                        text={btn.name}
+                        link={btn.link}
+                        className={`tactile-btn flex items-center justify-center gap-1.5 px-3.5 py-2.5 text-xs font-bold w-full text-center transition-all duration-200 ${
+                          isSingle ? "sm:col-span-2 md:col-span-2 lg:col-span-1" : ""
+                        } ${
+                          isGitHub
+                            ? "tactile-btn-primary"
+                            : "bg-[var(--card-kraft-color)] hover:bg-[var(--card-bg-color)]"
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
               </div>
-            )}
-
-            {/* Description Note */}
-            <div className="mb-3 p-2.5 bg-[var(--card-note-color)] rounded-lg border border-[var(--border-color)] text-[11px] text-[var(--secondary-text-color)] font-medium leading-relaxed">
-              <p className="line-clamp-3 hover:line-clamp-none transition-all">{formattedProject.description}</p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2">
-              {formattedProject.buttons?.map((btn, i) => {
-                const isGitHub = (btn.name || "").toLowerCase().includes("github");
-                return (
-                  <Button
-                    key={i}
-                    text={btn.name}
-                    link={btn.link}
-                    className={`tactile-btn flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold w-full text-center transition-all duration-200 ${isGitHub
-                        ? "tactile-btn-primary"
-                        : "bg-[var(--card-kraft-color)] hover:bg-[var(--card-bg-color)]"
-                      }`}
-                  />
-                );
-              })}
             </div>
           </div>
         </div>
