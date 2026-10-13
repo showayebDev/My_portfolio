@@ -1,6 +1,5 @@
 import { getPayload } from 'payload'
 import config from '../payload.config.js'
-import { rememberCache } from './redis.js'
 
 async function getSafePayload() {
   try {
@@ -40,12 +39,12 @@ async function fetchPortfolioDataFromDb() {
   if (Array.isArray(profile?.featuredProjects)) {
     profile.featuredProjects = profile.featuredProjects
       .filter((p) => p && typeof p === 'object')
-      .map(({ readmeContent, ...cardData }) => cardData)
+      .map(({ readmeContent: _readmeContent, ...cardData }) => cardData)
   }
   if (Array.isArray(profile?.allProjectsOrder)) {
     profile.allProjectsOrder = profile.allProjectsOrder
       .filter((p) => p && typeof p === 'object')
-      .map(({ readmeContent, ...cardData }) => cardData)
+      .map(({ readmeContent: _readmeContent, ...cardData }) => cardData)
   }
 
   let educationDocs = []
@@ -113,7 +112,7 @@ async function fetchPortfolioDataFromDb() {
       })
       projectsDocs = (projectsRes.docs || [])
         .filter((p) => p._status !== 'draft')
-        .map(({ readmeContent, ...cardData }) => cardData)
+        .map(({ readmeContent: _readmeContent, ...cardData }) => cardData)
     } catch (e) {
       console.warn('Failed to load Projects collection:', e.message)
     }
@@ -139,13 +138,10 @@ async function fetchPortfolioDataFromDb() {
 }
 
 /**
- * Fetch portfolio data with Redis cache-aside.
- * TTL is controlled via REDIS_CACHE_TTL_SECONDS in .env (0 = Permanent until edited).
- * Checks Redis first; if miss, fetches from DB, saves to Redis, and returns.
- * If Redis is disabled (USE_REDIS=false) or errors, cleanly falls back to DB.
+ * Fetch portfolio data directly from database.
  */
 export async function getPortfolioData() {
-  return rememberCache('portfolio:all', fetchPortfolioDataFromDb)
+  return fetchPortfolioDataFromDb()
 }
 
 /**
@@ -177,7 +173,7 @@ async function fetchAllProjectsFromDb() {
     })
     allPublishedDocs = (projectsRes.docs || [])
       .filter((p) => p._status !== 'draft')
-      .map(({ readmeContent, ...cardData }) => cardData)
+      .map(({ readmeContent: _readmeContent, ...cardData }) => cardData)
   } catch (e) {
     console.warn('Failed to load Projects collection:', e.message)
   }
@@ -197,12 +193,12 @@ async function fetchAllProjectsFromDb() {
   if (Array.isArray(profile?.featuredProjects)) {
     profile.featuredProjects = profile.featuredProjects
       .filter((p) => p && typeof p === 'object')
-      .map(({ readmeContent, ...cardData }) => cardData)
+      .map(({ readmeContent: _readmeContent, ...cardData }) => cardData)
   }
   if (Array.isArray(profile?.allProjectsOrder)) {
     profile.allProjectsOrder = profile.allProjectsOrder
       .filter((p) => p && typeof p === 'object')
-      .map(({ readmeContent, ...cardData }) => cardData)
+      .map(({ readmeContent: _readmeContent, ...cardData }) => cardData)
   }
 
   // 3. Smart Hybrid Ordering for /project page:
@@ -247,11 +243,10 @@ async function fetchAllProjectsFromDb() {
 }
 
 /**
- * Fetch all projects with Redis caching.
- * TTL is controlled via REDIS_CACHE_TTL_SECONDS in .env (0 = Permanent until edited).
+ * Fetch all projects directly from database.
  */
 export async function getAllProjects() {
-  return rememberCache('portfolio:projects:all', fetchAllProjectsFromDb)
+  return fetchAllProjectsFromDb()
 }
 
 /**
@@ -307,11 +302,9 @@ async function fetchProjectBySlugFromDb(slug) {
 }
 
 /**
- * Fetch a single project by slug with Redis caching.
- * TTL is controlled via REDIS_CACHE_TTL_SECONDS in .env (0 = Permanent until edited).
+ * Fetch a single project by slug directly from database.
  */
 export async function getProjectBySlug(slug) {
   if (!slug) return null
-  const cacheKey = `portfolio:project:${String(slug).toLowerCase()}`
-  return rememberCache(cacheKey, () => fetchProjectBySlugFromDb(slug))
+  return fetchProjectBySlugFromDb(slug)
 }

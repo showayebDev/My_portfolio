@@ -9,9 +9,7 @@ import {
   flushPrefetchCache,
   checkBuildVersion,
   STORAGE_BUILD_KEY,
-  STORAGE_ROUTES_KEY,
   STORAGE_IMAGES_KEY,
-  PROJECT_HERO_IMAGE_CONFIG,
 } from "./prefetch";
 
 describe("prefetch runtime & cache invalidation", () => {

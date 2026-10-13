@@ -141,7 +141,6 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
             const imgSrc = project.img || null;
             const tapeColor = tapeColors[index % tapeColors.length];
             const isAlt = index % 2 === 1;
-            const specimenNumber = String(index + 1).padStart(2, "0");
 
             return (
               <div

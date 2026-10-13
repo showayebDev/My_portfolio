@@ -20,7 +20,6 @@ export const ThemeProvider = ({ children, configTheme: propConfigTheme }) => {
   // Load user choice from localStorage on client mount if toggling is allowed
   useEffect(() => {
     if (configTheme === "dark" || configTheme === "light") {
-      setTheme(configTheme);
       return;
     }
 

@@ -39,7 +39,9 @@ export const MarkdownEditor = (props) => {
   const [previewMode, setPreviewMode] = useState('live')
 
   const localValueRef = useRef(localValue)
-  localValueRef.current = localValue
+  useEffect(() => {
+    localValueRef.current = localValue
+  }, [localValue])
 
   const lastDispatchedValueRef = useRef(typeof value === 'string' ? value : '')
   const isFocusedRef = useRef(false)

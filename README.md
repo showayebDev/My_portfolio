@@ -24,7 +24,6 @@ This repository hosts the source code for **Showayeb Ahamed's** personal portfol
 * **Payload CMS 3.0:** Native, code-first headless CMS integrated directly into the Next.js application at `/admin`.
 * **Universal Database Architecture (SQL & NoSQL):** Seamlessly auto-detects and connects to either **PostgreSQL** (Neon, Supabase, local) or **MongoDB** (Atlas, local) from a single `DATABASE_URL` string, featuring auto-bootstrapping for blank PostgreSQL databases.
 * **Cloudflare R2 / AWS S3 Storage:** Cloud object storage with folder prefixes (`projects/`, `icons/`, `profile/`, `media/`) and fallback handling.
-* **Smart Redis Caching & On-Demand Purge:** High-speed cache-aside layer with configurable TTL (`REDIS_CACHE_TTL_SECONDS=0` for permanent cache) and automated instant purge on CMS updates via lifecycle hooks.
 * **Built-in Migration & Backup Center:** Self-hosted migration suite at `/admin/migration` supporting direct database cloning, JSON dump export/import with cross-database ID translation, and cloud-to-cloud media bucket transfers.
 * **Zero-Latency Route & Image Prefetching:** Custom predictive prefetching utility that pre-caches routes and hero images upon hover, with automatic cache invalidation on new deployments.
 * **Centralized Drag-and-Drop Project Ordering:** Custom project display order on both the Homepage and `/project` archive page managed directly via relationship fields in `Profile & Settings`.
@@ -46,10 +45,9 @@ This repository hosts the source code for **Showayeb Ahamed's** personal portfol
 * **Rich Text / Documentation:** [@payloadcms/richtext-lexical](https://payloadcms.com/docs/lexical/overview) & [@uiw/react-md-editor](https://github.com/uiwjs/react-md-editor)
 * **Markdown Rendering:** [Marked](https://marked.js.org/) & [Highlight.js](https://highlightjs.org/)
 
-### Databases & Cache
+### Databases
 * **SQL:** [PostgreSQL](https://www.postgresql.org/) via `@payloadcms/db-postgres` & `pg`
 * **NoSQL:** [MongoDB](https://www.mongodb.com/) via `@payloadcms/db-mongodb`
-* **In-Memory Cache:** [Redis / Upstash](https://upstash.com/) via `ioredis`
 
 ### Object Storage & Media
 * **Storage:** [Cloudflare R2](https://www.cloudflare.com/products/r2/) / [AWS S3](https://aws.amazon.com/s3/) via `@payloadcms/storage-s3` & `@aws-sdk/client-s3`
@@ -65,7 +63,6 @@ This repository hosts the source code for **Showayeb Ahamed's** personal portfol
 * **Package Manager:** `npm`, `pnpm`, or `bun`
 * **Database:** A PostgreSQL database (e.g. [Neon](https://neon.tech/), [Supabase](https://supabase.com/)) OR a MongoDB database (e.g. [MongoDB Atlas](https://www.mongodb.com/atlas))
 * **Object Storage (Optional for media uploads):** [Cloudflare R2](https://www.cloudflare.com/products/r2/) or [AWS S3](https://aws.amazon.com/s3/)
-* **Redis (Optional for caching):** [Upstash Redis](https://upstash.com/) or local Redis
 
 ### 1. Clone & Install Dependencies
 
@@ -103,12 +100,6 @@ S3_ENDPOINT=https://<your-account-id>.r2.cloudflarestorage.com
 S3_REGION=auto
 S3_FORCE_PATH_STYLE=true
 S3_PUBLIC_URL=https://pub-xxxxxx.r2.dev
-
-# Redis Cache Configuration
-USE_REDIS=false
-REDIS_URL="rediss://default:password@your-endpoint.upstash.io:6379"
-# 0 = Permanent cache (invalidated instantly on admin edits), or specify seconds (e.g. 604800 for 7 days)
-REDIS_CACHE_TTL_SECONDS=0
 ```
 
 ### 3. Run the Development Server

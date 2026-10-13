@@ -6,12 +6,10 @@ import {
   ListObjectsV2Command,
 } from '@aws-sdk/client-s3'
 import JSZip from 'jszip'
-import path from 'path'
 import { buildConfig, getPayload } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
-import { s3Storage } from '@payloadcms/storage-s3'
 import { Users } from '../collections/Users.js'
 import { Media } from '../collections/Media.js'
 import { Projects } from '../collections/Projects.js'

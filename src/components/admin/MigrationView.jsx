@@ -1,9 +1,17 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useSyncExternalStore } from 'react'
+
+const emptySubscribe = () => () => {}
+const useMounted = () => useSyncExternalStore(emptySubscribe, () => true, () => false)
 
 export const MigrationView = () => {
-  const [mounted, setMounted] = useState(false)
-  const [activeTab, setActiveTab] = useState('bucket')
+  const mounted = useMounted()
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#database') {
+      return 'database'
+    }
+    return 'bucket'
+  })
   const [status, setStatus] = useState(null)
   const [loadingStatus, setLoadingStatus] = useState(true)
   // ZIP Download State
@@ -38,12 +46,15 @@ export const MigrationView = () => {
   const [dbImportFile, setDbImportFile] = useState(null)
   const [dbImportResult, setDbImportResult] = useState(null)
   // Fetch status on mount
-  const fetchStatus = async () => {
-    try {
-      setLoadingStatus(true)
-      const res = await fetch('/api/migration/status')
-      if (res.ok) {
-        const data = await res.json()
+  useEffect(() => {
+    let ignore = false
+    fetch('/api/migration/status')
+      .then((res) => {
+        if (!res.ok) throw new Error('Status request failed')
+        return res.json()
+      })
+      .then((data) => {
+        if (ignore) return
         setStatus(data)
         // If users exist in the active DB and the user is not authenticated,
         // redirect them to the admin login page so they can sign in.
@@ -53,18 +64,18 @@ export const MigrationView = () => {
             window.location.href = `/admin/login?redirect=${encodeURIComponent(currentPath)}`
           }
         }
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoadingStatus(false)
-    }
-  }
-  useEffect(() => {
-    setMounted(true)
-    fetchStatus()
-    if (typeof window !== 'undefined' && window.location.hash === '#database') {
-      setActiveTab('database')
+      })
+      .catch(() => {
+        // ignore
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoadingStatus(false)
+        }
+      })
+
+    return () => {
+      ignore = true
     }
   }, [])
 
@@ -569,7 +580,7 @@ export const MigrationView = () => {
                 >
                   Downloads all files from your storage packaged neatly into folders (
                   <code>projects/</code>, <code>icons/</code>, <code>profile/</code>,{' '}
-                  <code>media/</code>) matching your database's prefix records.
+                  <code>media/</code>) matching your database&apos;s prefix records.
                 </p>
               </div>
 
