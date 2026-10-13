@@ -24,14 +24,14 @@ export const Projects = {
   },
   hooks: {
     afterChange: [
-      ({ doc }) => {
-        revalidateProject(doc.slug || doc.name)
+      async ({ doc }) => {
+        await revalidateProject(doc.slug || doc.name)
         return doc
       },
     ],
     afterDelete: [
-      ({ doc }) => {
-        revalidateProject(doc.slug || doc.name)
+      async ({ doc }) => {
+        await revalidateProject(doc.slug || doc.name)
         return doc
       },
     ],

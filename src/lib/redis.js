@@ -42,9 +42,8 @@ export function getRedisClient() {
   if (!globalThis.__redisClient) {
     try {
       const client = new Redis(process.env.REDIS_URL, {
-        lazyConnect: true,
         maxRetriesPerRequest: 1,
-        enableOfflineQueue: false, // Prevents hanging requests when Redis is temporarily offline
+        enableOfflineQueue: true,
         connectTimeout: 5000,
         retryStrategy(times) {
           if (times > 3) {

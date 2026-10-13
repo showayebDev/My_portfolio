@@ -11,8 +11,8 @@ export const Profile = {
   },
   hooks: {
     afterChange: [
-      ({ doc }) => {
-        revalidateAll()
+      async ({ doc }) => {
+        await revalidateAll()
         return doc
       },
     ],

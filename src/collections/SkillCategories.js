@@ -18,14 +18,14 @@ export const SkillCategories = {
   },
   hooks: {
     afterChange: [
-      ({ doc }) => {
-        revalidateAll()
+      async ({ doc }) => {
+        await revalidateAll()
         return doc
       },
     ],
     afterDelete: [
-      ({ doc }) => {
-        revalidateAll()
+      async ({ doc }) => {
+        await revalidateAll()
         return doc
       },
     ],
