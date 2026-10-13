@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AnimatedContent from "@/context/AnimatedContent/AnimatedContent";
-import { prefetchProject, prefetchRoute } from "@/lib/prefetch";
+import { prefetchProject, prefetchRoute, markImageCached } from "@/lib/prefetch";
 
 const tapeColors = [
   "washi-tape-amber",
@@ -96,6 +96,7 @@ const Projects = ({ projectData = [] }) => {
                             width={64}
                             height={64}
                             quality={75}
+                            onLoad={() => markImageCached(imgSrc)}
                             className="w-full h-full object-contain rounded"
                           />
                         ) : (

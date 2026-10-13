@@ -77,6 +77,9 @@ export const preloadHeroImage = (imgSrc, customConfig = {}) => {
     return;
   }
 
+  // Mark cached immediately to prevent rapid/concurrent duplicate triggers
+  markImageCached(imgSrc);
+
   if (process.env.NODE_ENV !== "production") {
     console.log(`[Prefetch] 🖼️ Preloading hero image: "${imgSrc}"`);
   }
@@ -108,32 +111,21 @@ export const preloadHeroImage = (imgSrc, customConfig = {}) => {
     }
     img.src = targetSrc;
 
-    const onComplete = () => markImageCached(imgSrc);
-
     if (typeof img.decode === "function") {
-      img.decode().then(onComplete).catch(onComplete);
-    } else {
-      img.onload = onComplete;
-      img.onerror = onComplete;
+      img.decode().catch(() => {});
     }
   } catch {
     // Fallback for non-standard image URLs (e.g. data URLs or special external protocols)
     try {
       const fallbackImg = new Image();
       fallbackImg.src = imgSrc;
-      fallbackImg.onload = () => markImageCached(imgSrc);
-      fallbackImg.onerror = () => markImageCached(imgSrc);
     } catch {}
   }
-
-  // Also issue a low-priority fetch so the image request is visible in DevTools Fetch/XHR and warms HTTP cache
-  try {
-    fetch(targetSrc, { mode: "no-cors", priority: "low" }).catch(() => {});
-  } catch {}
 };
 
 /**
  * Prefetches a general Next.js route once per session on hover.
+ * Uses Next.js native router.prefetch() to populate the client router cache without duplicate requests or 307 redirects.
  */
 export const prefetchRoute = (router, href) => {
   if (!href || typeof window === "undefined") return;
@@ -151,24 +143,12 @@ export const prefetchRoute = (router, href) => {
     console.log(`[Prefetch] ⚡ Prefetching route: "${href}"`);
   }
 
-  // 1. Next.js router.prefetch (active in production)
+  // Next.js router.prefetch handles route prefetching & cache management natively
   if (router && typeof router.prefetch === "function") {
     try {
       router.prefetch(href);
     } catch {}
   }
-
-  // 2. Explicit RSC prefetch request
-  // (In Next.js dev mode, router.prefetch is a no-op; this explicit fetch ensures the route
-  // compiles in dev mode and appears in the DevTools Network tab under Fetch/XHR)
-  try {
-    fetch(href, {
-      headers: {
-        RSC: "1",
-        "Next-Router-Prefetch": "1",
-      },
-    }).catch(() => {});
-  } catch {}
 };
 
 /**

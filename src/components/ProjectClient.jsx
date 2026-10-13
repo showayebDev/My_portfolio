@@ -8,7 +8,7 @@ import Button from "@/components/button";
 import AnimatedContent from "@/context/AnimatedContent/AnimatedContent";
 import FadeContent from "@/context/FadeContent/FadeContent";
 import { BsGithub } from "react-icons/bs";
-import { prefetchProject, prefetchRoute, PROJECT_HERO_IMAGE_CONFIG } from "@/lib/prefetch";
+import { prefetchProject, prefetchRoute, markImageCached, PROJECT_HERO_IMAGE_CONFIG } from "@/lib/prefetch";
 
 function parseButtonsSafely(buttons) {
   if (Array.isArray(buttons)) return buttons;
@@ -147,7 +147,6 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
               <div
                 className="w-full"
                 key={slug || index}
-                onMouseEnter={() => handlePrefetch(slug, imgSrc)}
               >
                 <Link
                   href={`/project/${slug}`}
@@ -206,6 +205,7 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
                                     "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAABQAQCdASoKAAoABUB8JZQABAAAAP7uHqfoJXiW+ZLl0iBxIYAAAA=="
                                   }
                                   quality={PROJECT_HERO_IMAGE_CONFIG.quality}
+                                  onLoad={() => markImageCached(imgSrc)}
                                 />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-4xl">

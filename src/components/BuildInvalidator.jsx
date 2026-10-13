@@ -12,29 +12,37 @@ export default function BuildInvalidator() {
   const router = useRouter();
 
   useEffect(() => {
-    // 1. Initial check on mount
-    checkBuildVersion(router);
+    let lastChecked = 0;
+    const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown
 
-    // 2. Check whenever user refocuses or switches back to this tab
-    const handleFocusOrVisible = () => {
+    const runCheck = (force = false) => {
+      const now = Date.now();
+      if (!force && now - lastChecked < COOLDOWN_MS) return;
+      lastChecked = now;
+      checkBuildVersion(router);
+    };
+
+    // 1. Initial check on mount
+    runCheck(true);
+
+    // 2. Check when user switches back to this tab (throttled by cooldown)
+    const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        checkBuildVersion(router);
+        runCheck(false);
       }
     };
 
-    window.addEventListener("focus", handleFocusOrVisible);
-    document.addEventListener("visibilitychange", handleFocusOrVisible);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // 3. Periodic background check every 3 minutes while the document is active
+    // 3. Periodic background check every 5 minutes while active
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") {
-        checkBuildVersion(router);
+        runCheck(false);
       }
-    }, 3 * 60 * 1000);
+    }, 5 * 60 * 1000);
 
     return () => {
-      window.removeEventListener("focus", handleFocusOrVisible);
-      document.removeEventListener("visibilitychange", handleFocusOrVisible);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       clearInterval(interval);
     };
   }, [router]);
