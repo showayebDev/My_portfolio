@@ -1,5 +1,6 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config.js'
+import { rememberCache } from './redis.js'
 
 async function getSafePayload() {
   try {
@@ -11,7 +12,10 @@ async function getSafePayload() {
   }
 }
 
-export async function getPortfolioData() {
+/**
+ * Direct database query for full portfolio data.
+ */
+async function fetchPortfolioDataFromDb() {
   const payload = await getSafePayload()
   if (!payload) {
     return {
@@ -81,14 +85,17 @@ export async function getPortfolioData() {
         _status: {
           not_equals: 'draft',
         },
+        featured: {
+          not_equals: false,
+        },
       },
       sort: '-sortOrder',
       limit: 100,
       depth: 1,
     })
-    projectsDocs = (projectsRes.docs || []).filter(
-      (p) => p._status !== 'draft'
-    )
+    projectsDocs = (projectsRes.docs || [])
+      .filter((p) => p._status !== 'draft' && p.featured !== false)
+      .map(({ readmeContent, ...cardData }) => cardData)
   } catch (e) {
     console.warn('Failed to load Projects collection:', e.message)
   }
@@ -102,7 +109,20 @@ export async function getPortfolioData() {
   }
 }
 
-export async function getAllProjects() {
+/**
+ * Fetch portfolio data with Redis cache-aside (1 hour TTL).
+ * Checks Redis first; if miss, fetches from DB, saves to Redis, and returns.
+ * If Redis is disabled (USE_REDIS=false) or errors, cleanly falls back to DB.
+ */
+export async function getPortfolioData() {
+  return rememberCache('portfolio:all', 3600, fetchPortfolioDataFromDb)
+}
+
+/**
+ * Direct database query for all published projects.
+ * Excludes heavy readmeContent (markdown docs) so the list cache stays lightweight (~3-5 KB instead of 50+ KB).
+ */
+async function fetchAllProjectsFromDb() {
   const payload = await getSafePayload()
   if (!payload) {
     return { projects: [], profile: {} }
@@ -121,9 +141,9 @@ export async function getAllProjects() {
       limit: 100,
       depth: 1,
     })
-    projectsDocs = (projectsRes.docs || []).filter(
-      (p) => p._status !== 'draft'
-    )
+    projectsDocs = (projectsRes.docs || [])
+      .filter((p) => p._status !== 'draft')
+      .map(({ readmeContent, ...cardData }) => cardData)
   } catch (e) {
     console.warn('Failed to load Projects collection:', e.message)
   }
@@ -144,7 +164,17 @@ export async function getAllProjects() {
   }
 }
 
-export async function getProjectBySlug(slug) {
+/**
+ * Fetch all projects with Redis caching (1 hour TTL).
+ */
+export async function getAllProjects() {
+  return rememberCache('portfolio:projects:all', 3600, fetchAllProjectsFromDb)
+}
+
+/**
+ * Direct database query for a single project by slug.
+ */
+async function fetchProjectBySlugFromDb(slug) {
   const payload = await getSafePayload()
   if (!payload) {
     return null
@@ -191,4 +221,13 @@ export async function getProjectBySlug(slug) {
   }
 
   return null
+}
+
+/**
+ * Fetch a single project by slug with Redis caching (1 hour TTL).
+ */
+export async function getProjectBySlug(slug) {
+  if (!slug) return null
+  const cacheKey = `portfolio:project:${String(slug).toLowerCase()}`
+  return rememberCache(cacheKey, 3600, () => fetchProjectBySlugFromDb(slug))
 }
