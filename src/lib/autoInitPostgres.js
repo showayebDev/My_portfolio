@@ -243,6 +243,14 @@ CREATE TABLE IF NOT EXISTS "profile" (
   "created_at" timestamp(3) with time zone
 );
 
+CREATE TABLE IF NOT EXISTS "profile_rels" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "order" integer,
+  "parent_id" integer NOT NULL,
+  "path" varchar NOT NULL,
+  "projects_id" integer
+);
+
 DO $$ BEGIN
   ALTER TABLE "users_sessions" ADD CONSTRAINT "users_sessions_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
@@ -315,6 +323,14 @@ DO $$ BEGIN
   ALTER TABLE "profile" ADD CONSTRAINT "profile_avatar_id_media_id_fk" FOREIGN KEY ("avatar_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
+DO $$ BEGIN
+  ALTER TABLE "profile_rels" ADD CONSTRAINT "profile_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."profile"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "profile_rels" ADD CONSTRAINT "profile_rels_projects_fk" FOREIGN KEY ("projects_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
 CREATE INDEX IF NOT EXISTS "users_sessions_order_idx" ON "users_sessions" USING btree ("_order");
 CREATE INDEX IF NOT EXISTS "users_sessions_parent_id_idx" ON "users_sessions" USING btree ("_parent_id");
 CREATE INDEX IF NOT EXISTS "users_updated_at_idx" ON "users" USING btree ("updated_at");
@@ -367,9 +383,13 @@ CREATE INDEX IF NOT EXISTS "payload_migrations_created_at_idx" ON "payload_migra
 CREATE INDEX IF NOT EXISTS "profile_socials_order_idx" ON "profile_socials" USING btree ("_order");
 CREATE INDEX IF NOT EXISTS "profile_socials_parent_id_idx" ON "profile_socials" USING btree ("_parent_id");
 CREATE INDEX IF NOT EXISTS "profile_avatar_idx" ON "profile" USING btree ("avatar_id");
+CREATE INDEX IF NOT EXISTS "profile_rels_order_idx" ON "profile_rels" USING btree ("order");
+CREATE INDEX IF NOT EXISTS "profile_rels_parent_idx" ON "profile_rels" USING btree ("parent_id");
+CREATE INDEX IF NOT EXISTS "profile_rels_path_idx" ON "profile_rels" USING btree ("path");
+CREATE INDEX IF NOT EXISTS "profile_rels_projects_id_idx" ON "profile_rels" USING btree ("projects_id");
 `
 
-let hasChecked = false
+const checkedUrls = new Set()
 
 /**
  * Automatically checks if a connected PostgreSQL database is blank.
@@ -378,8 +398,8 @@ let hasChecked = false
  * @param {string} connectionString
  */
 export async function ensurePostgresSchema(connectionString) {
-  if (!connectionString || hasChecked) return
-  hasChecked = true
+  if (!connectionString || checkedUrls.has(connectionString)) return
+  checkedUrls.add(connectionString)
 
   const client = new pg.Client({
     connectionString,
@@ -443,9 +463,30 @@ export async function ensurePostgresSchema(connectionString) {
           "updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
           "latest" boolean
         );
+
+        CREATE TABLE IF NOT EXISTS "profile_rels" (
+          "id" serial PRIMARY KEY NOT NULL,
+          "order" integer,
+          "parent_id" integer NOT NULL,
+          "path" varchar NOT NULL,
+          "projects_id" integer
+        );
+        DO $$ BEGIN
+          ALTER TABLE "profile_rels" ADD CONSTRAINT "profile_rels_parent_fk" 
+          FOREIGN KEY ("parent_id") REFERENCES "public"."profile"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN
+          ALTER TABLE "profile_rels" ADD CONSTRAINT "profile_rels_projects_fk" 
+          FOREIGN KEY ("projects_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION WHEN duplicate_object THEN null; END $$;
+        CREATE INDEX IF NOT EXISTS "profile_rels_order_idx" ON "profile_rels" USING btree ("order");
+        CREATE INDEX IF NOT EXISTS "profile_rels_parent_idx" ON "profile_rels" USING btree ("parent_id");
+        CREATE INDEX IF NOT EXISTS "profile_rels_path_idx" ON "profile_rels" USING btree ("path");
+        CREATE INDEX IF NOT EXISTS "profile_rels_projects_id_idx" ON "profile_rels" USING btree ("projects_id");
       `).catch(() => {})
     }
   } catch (err) {
+    checkedUrls.delete(connectionString)
     const errorMsg = err instanceof Error ? err.message : String(err)
     console.warn('[DB Auto-Init] Note:', errorMsg)
   } finally {

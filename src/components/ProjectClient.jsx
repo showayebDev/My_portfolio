@@ -36,6 +36,14 @@ const tapeColors = [
 export default function ProjectClient({ initialProjects = [], initialProfile = {} }) {
   const router = useRouter();
 
+  const featuredIds = React.useMemo(() => {
+    return new Set(
+      (initialProfile?.featuredProjects || []).map((p) =>
+        typeof p === "object" ? p?.id : p
+      )
+    );
+  }, [initialProfile]);
+
   const handlePrefetch = (name, imgSrc) => {
     prefetchProject(router, name, imgSrc);
   };
@@ -46,12 +54,11 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
 
   const projectData = (initialProjects || [])
     .filter((p) => p._status !== "draft")
-    .sort((a, b) => (b.sortOrder ?? b.sort_order ?? 0) - (a.sortOrder ?? a.sort_order ?? 0))
     .map((p) => ({
       ...p,
       name: p.slug || p.name,
       img:
-        (typeof p.image === "object" && p.image?.url)
+        typeof p.image === "object" && p.image?.url
           ? p.image.url
           : p.imageUrl || p.img || null,
       buttons: parseButtonsSafely(p.buttons),
@@ -66,7 +73,7 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
   const githubUrl =
     (github && github.url?.trim()) ||
     (initialProfile?.exploreMoreGitHubUrl &&
-    initialProfile.exploreMoreGitHubUrl !== "https://github.com"
+      initialProfile.exploreMoreGitHubUrl !== "https://github.com"
       ? initialProfile.exploreMoreGitHubUrl
       : (github?.url || "https://github.com"));
 
@@ -164,23 +171,21 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
                   >
                     {/* Collage Exhibition Card */}
                     <div
-                      className={`collage-card p-4 sm:p-5 min-h-[380px] h-full flex flex-col justify-between relative overflow-visible ${
-                        isAlt ? "hover:rotate-1" : "hover:-rotate-1"
-                      }`}
+                      className={`collage-card p-4 sm:p-5 min-h-[380px] h-full flex flex-col justify-between relative overflow-visible ${isAlt ? "hover:rotate-1" : "hover:-rotate-1"
+                        }`}
                     >
                       {/* Corner Washi Tape */}
                       <div
-                        className={`washi-tape ${tapeColor} !w-[65px] !h-[16px] !top-[-8px] !right-[16px] !transform ${
-                          isAlt ? "!rotate-4" : "!-rotate-4"
-                        }`}
+                        className={`washi-tape ${tapeColor} !w-[65px] !h-[16px] !top-[-8px] !right-[16px] !transform ${isAlt ? "!rotate-4" : "!-rotate-4"
+                          }`}
                       />
 
                       {/* Top: Stage / Specimen Badge + Polaroid Photo */}
                       <div>
                         {/* Card Top Row: Star Badge */}
                         <div className="flex justify-end items-center min-h-[18px] mb-2 px-1">
-                          {project.featured !== false && (
-                            <span className="text-amber-500 text-xs font-bold">★</span>
+                          {(featuredIds.has(project.id) || project.featured === true) && (
+                            <span className="text-amber-500 text-xs font-bold" title="Featured Project">★</span>
                           )}
                         </div>
 
@@ -188,28 +193,28 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
                         <div className="flex justify-center mb-3">
                           <div className="polaroid-frame !p-2 !pb-3">
                             <div className="w-48 h-48 sm:w-52 sm:h-52 aspect-square overflow-hidden border border-[var(--border-color)] bg-[var(--card-kraft-color)] relative rounded flex items-center justify-center">
-                            {imgSrc ? (
-                              <Image
-                                className="w-full h-full object-contain transition-transform duration-500 ease-in-out group-hover:scale-105"
-                                src={imgSrc}
-                                alt={project.title}
-                                width={500}
-                                height={300}
-                                placeholder="blur"
-                                blurDataURL={
-                                  project.blurDataURL ||
-                                  "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAABQAQCdASoKAAoABUB8JZQABAAAAP7uHqfoJXiW+ZLl0iBxIYAAAA=="
-                                }
-                                quality={PROJECT_HERO_IMAGE_CONFIG.quality}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-4xl">
-                                🎨
-                              </div>
-                            )}
+                              {imgSrc ? (
+                                <Image
+                                  className="w-full h-full object-contain transition-transform duration-500 ease-in-out group-hover:scale-105"
+                                  src={imgSrc}
+                                  alt={project.title}
+                                  width={500}
+                                  height={300}
+                                  placeholder="blur"
+                                  blurDataURL={
+                                    project.blurDataURL ||
+                                    "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAABQAQCdASoKAAoABUB8JZQABAAAAP7uHqfoJXiW+ZLl0iBxIYAAAA=="
+                                  }
+                                  quality={PROJECT_HERO_IMAGE_CONFIG.quality}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-4xl">
+                                  🎨
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
                         {/* Title and Short Details */}
                         <div className="px-1 text-left">

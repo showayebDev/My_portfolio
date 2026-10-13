@@ -14,8 +14,6 @@ export default async function Home() {
       ? profile.showPercent
       : process.env.NEXT_PUBLIC_SHOW_PERCENT === "true";
 
-  const featuredProjects = projects.filter((p) => p.featured !== false);
-
   return (
     <div className="relative min-h-screen overflow-visible">
       {/* Background Decorative Collage Tape & Stamp Accents */}
@@ -28,7 +26,7 @@ export default async function Home() {
         <ProfileCard profile={profile} />
         <main className="flex-1 space-y-8" id="about">
           <About educationData={education} />
-          <Projects projectData={featuredProjects.length > 0 ? featuredProjects : projects} />
+          <Projects projectData={projects} />
           <Skills
             skillsData={skills}
             categoriesData={categories}

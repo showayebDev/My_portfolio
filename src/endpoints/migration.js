@@ -19,6 +19,7 @@ import { Skills } from '../collections/Skills.js'
 import { SkillCategories } from '../collections/SkillCategories.js'
 import { Education } from '../collections/Education.js'
 import { Profile } from '../globals/Profile.js'
+import { ensurePostgresSchema } from '../lib/autoInitPostgres.js'
 
 /**
  * Creates an S3 Client for the given credentials
@@ -498,19 +499,39 @@ export async function getTargetPayload(targetUrl) {
 
   const instanceKey = `target_${Buffer.from(cleanUrl).toString('base64url').slice(0, 32)}`
 
+  if (isPostgres) {
+    await ensurePostgresSchema(cleanUrl)
+  }
+
   const targetConfig = await buildConfig({
     secret: process.env.PAYLOAD_SECRET || 'migration-dynamic-secret-key-min-32-chars-long',
     collections: [Users, Media, Projects, Skills, SkillCategories, Education],
     globals: [Profile],
     editor: lexicalEditor(),
     db: isPostgres
-      ? postgresAdapter({
-          pool: {
-            connectionString: cleanUrl,
-            connectionTimeoutMillis: 10000,
-          },
-          push: true,
-        })
+      ? (() => {
+          const adapterObj = postgresAdapter({
+            pool: {
+              connectionString: cleanUrl,
+              ssl: {
+                rejectUnauthorized: false,
+              },
+              connectionTimeoutMillis: 10000,
+            },
+            push: false,
+          })
+          const origInit = adapterObj.init
+          adapterObj.init = function ({ payload }) {
+            const adapter = origInit({ payload })
+            const origConnect = adapter.connect
+            adapter.connect = async function (options) {
+              await ensurePostgresSchema(cleanUrl)
+              return origConnect.call(this, options)
+            }
+            return adapter
+          }
+          return adapterObj
+        })()
       : mongooseAdapter({
           url: cleanUrl,
           connectOptions: {
@@ -518,33 +539,7 @@ export async function getTargetPayload(targetUrl) {
             connectTimeoutMS: 10000,
           },
         }),
-    plugins: [
-      ...(Boolean(process.env.S3_BUCKET || process.env.R2_BUCKET)
-        ? [
-            s3Storage({
-              collections: {
-                media: {
-                  disablePayloadAccessControl: true,
-                },
-              },
-              bucket: process.env.S3_BUCKET || process.env.R2_BUCKET || '',
-              config: {
-                credentials: {
-                  accessKeyId: process.env.S3_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID || '',
-                  secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY || '',
-                },
-                region: process.env.S3_REGION || process.env.R2_REGION || 'auto',
-                ...(process.env.S3_ENDPOINT || process.env.R2_ENDPOINT
-                  ? { endpoint: process.env.S3_ENDPOINT || process.env.R2_ENDPOINT }
-                  : {}),
-                forcePathStyle: (process.env.S3_ENDPOINT || process.env.R2_ENDPOINT)
-                  ? process.env.S3_FORCE_PATH_STYLE !== 'false'
-                  : process.env.S3_FORCE_PATH_STYLE === 'true',
-              },
-            }),
-          ]
-        : []),
-    ],
+    plugins: [],
   })
 
   const instance = await getPayload({ key: instanceKey, config: targetConfig })
@@ -568,6 +563,7 @@ export async function executeDumpImport(targetPayload, dump) {
     categories: {},
     media: {},
     skills: {},
+    projects: {},
   }
 
   const stats = {
@@ -593,25 +589,47 @@ export async function executeDumpImport(targetPayload, dump) {
         })
 
         if (existing.docs.length === 0) {
-          await targetPayload.create({
-            collection: 'users',
-            data: {
-              email: u.email,
-              hash: u.hash,
-              salt: u.salt,
-            },
-          })
-          stats.users++
-        } else {
-          if (u.hash && u.salt) {
-            await targetPayload.update({
+          if (targetPayload.db?.create) {
+            await targetPayload.db.create({
               collection: 'users',
-              id: existing.docs[0].id,
               data: {
+                email: u.email,
                 hash: u.hash,
                 salt: u.salt,
               },
             })
+          } else {
+            await targetPayload.create({
+              collection: 'users',
+              data: {
+                email: u.email,
+                hash: u.hash,
+                salt: u.salt,
+              },
+            })
+          }
+          stats.users++
+        } else {
+          if (u.hash && u.salt) {
+            if (targetPayload.db?.updateOne) {
+              await targetPayload.db.updateOne({
+                collection: 'users',
+                where: { id: { equals: existing.docs[0].id } },
+                data: {
+                  hash: u.hash,
+                  salt: u.salt,
+                },
+              })
+            } else {
+              await targetPayload.update({
+                collection: 'users',
+                id: existing.docs[0].id,
+                data: {
+                  hash: u.hash,
+                  salt: u.salt,
+                },
+              })
+            }
           }
           stats.users++
         }
@@ -683,7 +701,7 @@ export async function executeDumpImport(targetPayload, dump) {
   // 2. Media Metadata & Records
   if (Array.isArray(collections['media'])) {
     for (const item of collections['media']) {
-      const oldId = item.id
+      const oldId = item.id || item._id
       try {
         const existing = await targetPayload.find({
           collection: 'media',
@@ -697,40 +715,41 @@ export async function executeDumpImport(targetPayload, dump) {
         })
 
         if (existing.docs.length > 0) {
-          idMap.media[oldId] = existing.docs[0].id
+          const targetId = existing.docs[0].id
+          idMap.media[oldId] = targetId
+          if (item.filename) idMap.media[item.filename] = targetId
           stats.media++
         } else {
-          // Attempt to retrieve existing file bytes from storage bucket
-          let fileObj = null
-          try {
-            const fetched = await fetchSourceFile(item)
-            if (fetched?.bytes) {
-              fileObj = {
-                data: Buffer.from(fetched.bytes),
-                mimetype: fetched.contentType || item.mimeType || 'application/octet-stream',
-                name: item.filename,
-                size: fetched.bytes.length,
-              }
-            }
-          } catch {
-            fileObj = {
-              data: Buffer.from(''),
-              mimetype: item.mimeType || 'application/octet-stream',
-              name: item.filename,
-              size: item.filesize || 0,
-            }
+          const mediaData = {
+            alt: item.alt || item.filename,
+            prefix: item.prefix || 'media',
+            filename: item.filename,
+            mimeType: item.mimeType || 'application/octet-stream',
+            filesize: item.filesize || 0,
+            width: item.width || null,
+            height: item.height || null,
+            url: item.url || null,
           }
 
-          const created = await targetPayload.create({
-            collection: 'media',
-            data: {
-              alt: item.alt || item.filename,
-              prefix: item.prefix || 'media',
-            },
-            file: fileObj,
-          })
-          idMap.media[oldId] = created.id
-          stats.media++
+          let created = null
+          if (targetPayload.db?.create) {
+            created = await targetPayload.db.create({
+              collection: 'media',
+              data: mediaData,
+            })
+          } else {
+            created = await targetPayload.create({
+              collection: 'media',
+              data: mediaData,
+            })
+          }
+
+          if (created) {
+            const targetId = created.id
+            idMap.media[oldId] = targetId
+            if (item.filename) idMap.media[item.filename] = targetId
+            stats.media++
+          }
         }
       } catch (/** @type {any} */ mediaErr) {
         console.warn(`[Media Import] Skipped media ${item.filename}:`, mediaErr?.message || mediaErr)
@@ -741,11 +760,11 @@ export async function executeDumpImport(targetPayload, dump) {
   // 3. Skills
   if (Array.isArray(collections['skills'])) {
     for (const item of collections['skills']) {
-      const oldId = item.id
+      const oldId = item.id || item._id
       try {
         const rawCategories = Array.isArray(item.categories) ? item.categories : []
         let mappedCategories = rawCategories.map((/** @type {any} */ c) => {
-          const catId = typeof c === 'object' && c !== null ? c?.id : c
+          const catId = typeof c === 'object' && c !== null ? c?.id || c?._id : c
           const catSlug = typeof c === 'object' && c !== null ? c?.slug : null
           return idMap.categories[catId] || (catSlug ? idMap.categories[catSlug] : null) || null
         }).filter(Boolean)
@@ -754,7 +773,7 @@ export async function executeDumpImport(targetPayload, dump) {
           mappedCategories = [fallbackCategoryId]
         }
 
-        const rawIconId = typeof item.icon === 'object' && item.icon !== null ? item.icon?.id : item.icon
+        const rawIconId = typeof item.icon === 'object' && item.icon !== null ? item.icon?.id || item.icon?._id : item.icon
         const mappedIcon = rawIconId && idMap.media[rawIconId] ? idMap.media[rawIconId] : undefined
 
         const existing = await targetPayload.find({
@@ -799,8 +818,9 @@ export async function executeDumpImport(targetPayload, dump) {
   // 4. Projects
   if (Array.isArray(collections['projects'])) {
     for (const item of collections['projects']) {
+      const oldId = item.id || item._id
       try {
-        const rawImageId = typeof item.image === 'object' && item.image !== null ? item.image?.id : item.image
+        const rawImageId = typeof item.image === 'object' && item.image !== null ? item.image?.id || item.image?._id : item.image
         const mappedImage = rawImageId && idMap.media[rawImageId] ? idMap.media[rawImageId] : undefined
 
         const existing = await targetPayload.find({
@@ -815,25 +835,29 @@ export async function executeDumpImport(targetPayload, dump) {
           description: item.description,
           ...(mappedImage ? { image: mappedImage } : {}),
           imageUrl: item.imageUrl || '',
-          featured: item.featured ?? true,
-          sortOrder: item.sortOrder ?? 0,
           _status: item._status || 'published',
           buttons: Array.isArray(item.buttons) ? item.buttons : [],
           readmeContent: item.readmeContent || item.details || '',
         }
 
         if (existing.docs.length > 0) {
-          await targetPayload.update({
+          const updated = await targetPayload.update({
             collection: 'projects',
             id: existing.docs[0].id,
             data: projectData,
           })
+          const targetId = updated.id
+          idMap.projects[oldId] = targetId
+          if (item.slug) idMap.projects[item.slug] = targetId
           stats.projects++
         } else {
-          await targetPayload.create({
+          const created = await targetPayload.create({
             collection: 'projects',
             data: projectData,
           })
+          const targetId = created.id
+          idMap.projects[oldId] = targetId
+          if (item.slug) idMap.projects[item.slug] = targetId
           stats.projects++
         }
       } catch (/** @type {any} */ projErr) {
@@ -846,7 +870,7 @@ export async function executeDumpImport(targetPayload, dump) {
   if (Array.isArray(collections['education'])) {
     for (const item of collections['education']) {
       try {
-        const rawLogoId = typeof item.logo === 'object' && item.logo !== null ? item.logo?.id : item.logo
+        const rawLogoId = typeof item.logo === 'object' && item.logo !== null ? item.logo?.id || item.logo?._id : item.logo
         const mappedLogo = rawLogoId && idMap.media[rawLogoId] ? idMap.media[rawLogoId] : undefined
 
         const existing = await targetPayload.find({
@@ -893,7 +917,7 @@ export async function executeDumpImport(targetPayload, dump) {
   if (globals?.profile) {
     try {
       const p = globals.profile
-      const rawAvatarId = typeof p.avatar === 'object' && p.avatar !== null ? p.avatar?.id : p.avatar
+      const rawAvatarId = typeof p.avatar === 'object' && p.avatar !== null ? p.avatar?.id || p.avatar?._id : p.avatar
       const mappedAvatar = rawAvatarId && idMap.media[rawAvatarId] ? idMap.media[rawAvatarId] : undefined
 
       const cleanProfileData = { ...p }
@@ -906,6 +930,44 @@ export async function executeDumpImport(targetPayload, dump) {
         cleanProfileData.avatar = mappedAvatar
       } else {
         delete cleanProfileData.avatar
+      }
+
+      // Map featuredProjects (hasMany relationship)
+      if (Array.isArray(cleanProfileData.featuredProjects)) {
+        cleanProfileData.featuredProjects = cleanProfileData.featuredProjects
+          .map((/** @type {any} */ item) => {
+            const oldId = typeof item === 'object' && item !== null ? item.id || item._id : item
+            const slug = typeof item === 'object' && item !== null ? item.slug : null
+            return idMap.projects[oldId] || (slug ? idMap.projects[slug] : null) || null
+          })
+          .filter(Boolean)
+      } else {
+        // Fallback for older dumps where projects had featured: true
+        const legacyFeatured = (collections['projects'] || [])
+          .filter((/** @type {any} */ prj) => prj.featured !== false)
+          .map((/** @type {any} */ prj) => idMap.projects[prj.id || prj._id] || (prj.slug ? idMap.projects[prj.slug] : null))
+          .filter(Boolean)
+        cleanProfileData.featuredProjects = legacyFeatured
+      }
+
+      // Map allProjectsOrder (hasMany relationship)
+      if (Array.isArray(cleanProfileData.allProjectsOrder)) {
+        cleanProfileData.allProjectsOrder = cleanProfileData.allProjectsOrder
+          .map((/** @type {any} */ item) => {
+            const oldId = typeof item === 'object' && item !== null ? item.id || item._id : item
+            const slug = typeof item === 'object' && item !== null ? item.slug : null
+            return idMap.projects[oldId] || (slug ? idMap.projects[slug] : null) || null
+          })
+          .filter(Boolean)
+      } else {
+        // Fallback for older dumps: preserve old sortOrder
+        const sortedProjects = [...(collections['projects'] || [])].sort(
+          (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+        )
+        const legacyOrder = sortedProjects
+          .map((prj) => idMap.projects[prj.id || prj._id] || (prj.slug ? idMap.projects[prj.slug] : null))
+          .filter(Boolean)
+        cleanProfileData.allProjectsOrder = legacyOrder
       }
 
       await targetPayload.updateGlobal({

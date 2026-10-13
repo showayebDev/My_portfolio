@@ -6,9 +6,9 @@ export const Projects = {
   slug: 'projects',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'featured', '_status', 'sortOrder'],
+    defaultColumns: ['title', 'slug', '_status', 'createdAt'],
   },
-  defaultSort: '-sortOrder',
+  defaultSort: '-createdAt',
   versions: {
     drafts: true,
   },
@@ -83,27 +83,7 @@ export const Projects = {
                 },
               ],
             },
-            {
-              type: 'row',
-              fields: [
-                {
-                  name: 'featured',
-                  type: 'checkbox',
-                  label: 'Featured on Homepage',
-                  defaultValue: true,
-                },
-                {
-                  name: 'sortOrder',
-                  type: 'number',
-                  label: 'Sort Order (Highest first / Descending)',
-                  defaultValue: 0,
-                  admin: {
-                    description:
-                      'Higher numbers appear first (e.g. 8 > 7 > 1). Use Publish / Unpublish (Draft) status to show or hide from the website.',
-                  },
-                },
-              ],
-            },
+
             {
               name: 'buttons',
               type: 'array',

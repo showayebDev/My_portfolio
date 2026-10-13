@@ -106,6 +106,33 @@ export const Profile = {
           ],
         },
         {
+          label: 'Projects Ordering',
+          fields: [
+            {
+              name: 'featuredProjects',
+              type: 'relationship',
+              relationTo: 'projects',
+              hasMany: true,
+              label: 'Homepage Featured Projects (Drag & drop)',
+              admin: {
+                description:
+                  'Select and drag-and-drop the projects you want displayed on the HOMEPAGE in your exact desired order. If left empty, all published projects will be displayed automatically.',
+              },
+            },
+            {
+              name: 'allProjectsOrder',
+              type: 'relationship',
+              relationTo: 'projects',
+              hasMany: true,
+              label: 'All Projects Page Order (Drag & drop for /project page)',
+              admin: {
+                description:
+                  'Select and drag-and-drop projects to set your custom display order on the /project page. Any remaining projects not added here will automatically appear after them, ordered newest first.',
+              },
+            },
+          ],
+        },
+        {
           label: 'Contact & Socials',
           fields: [
             {

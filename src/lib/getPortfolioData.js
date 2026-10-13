@@ -30,10 +30,22 @@ async function fetchPortfolioDataFromDb() {
   try {
     profile = await payload.findGlobal({
       slug: 'profile',
-      depth: 1,
+      depth: 2,
     })
   } catch (e) {
     console.warn('Failed to load Profile global:', e.message)
+  }
+
+  // Sanitize profile relationships so cache remains lightweight (~3-5 KB)
+  if (Array.isArray(profile?.featuredProjects)) {
+    profile.featuredProjects = profile.featuredProjects
+      .filter((p) => p && typeof p === 'object')
+      .map(({ readmeContent, ...cardData }) => cardData)
+  }
+  if (Array.isArray(profile?.allProjectsOrder)) {
+    profile.allProjectsOrder = profile.allProjectsOrder
+      .filter((p) => p && typeof p === 'object')
+      .map(({ readmeContent, ...cardData }) => cardData)
   }
 
   let educationDocs = []
@@ -78,30 +90,47 @@ async function fetchPortfolioDataFromDb() {
   }
 
   let projectsDocs = []
-  try {
-    const projectsRes = await payload.find({
-      collection: 'projects',
-      where: {
-        _status: {
-          not_equals: 'draft',
-        },
-        featured: {
-          not_equals: false,
-        },
-      },
-      sort: '-sortOrder',
-      limit: 100,
-      depth: 1,
-    })
-    projectsDocs = (projectsRes.docs || [])
-      .filter((p) => p._status !== 'draft' && p.featured !== false)
-      .map(({ readmeContent, ...cardData }) => cardData)
-  } catch (e) {
-    console.warn('Failed to load Projects collection:', e.message)
+  // 1. Prioritize drag-and-drop ordered featured projects from Globals -> Profile & Settings
+  if (Array.isArray(profile?.featuredProjects) && profile.featuredProjects.length > 0) {
+    projectsDocs = profile.featuredProjects.filter(
+      (p) => p && typeof p === 'object' && p._status !== 'draft'
+    )
   }
 
+  // 2. Fallback: If no projects selected in Globals, query all published projects sorted by newest first (-createdAt)
+  if (projectsDocs.length === 0) {
+    try {
+      const projectsRes = await payload.find({
+        collection: 'projects',
+        where: {
+          _status: {
+            not_equals: 'draft',
+          },
+        },
+        sort: '-createdAt',
+        limit: 100,
+        depth: 1,
+      })
+      projectsDocs = (projectsRes.docs || [])
+        .filter((p) => p._status !== 'draft')
+        .map(({ readmeContent, ...cardData }) => cardData)
+    } catch (e) {
+      console.warn('Failed to load Projects collection:', e.message)
+    }
+  }
+
+  const sanitizedProfile = profile
+    ? {
+        ...profile,
+        allProjectsOrder: undefined,
+        featuredProjects: (profile.featuredProjects || []).map((p) => ({
+          id: typeof p === 'object' && p !== null ? p.id : p,
+        })),
+      }
+    : {}
+
   return {
-    profile: profile || {},
+    profile: sanitizedProfile,
     education: educationDocs,
     skills: skillsDocs,
     categories: categoriesDocs,
@@ -110,16 +139,20 @@ async function fetchPortfolioDataFromDb() {
 }
 
 /**
- * Fetch portfolio data with Redis cache-aside (1 hour TTL).
+ * Fetch portfolio data with Redis cache-aside.
+ * TTL is controlled via REDIS_CACHE_TTL_SECONDS in .env (0 = Permanent until edited).
  * Checks Redis first; if miss, fetches from DB, saves to Redis, and returns.
  * If Redis is disabled (USE_REDIS=false) or errors, cleanly falls back to DB.
  */
 export async function getPortfolioData() {
-  return rememberCache('portfolio:all', 3600, fetchPortfolioDataFromDb)
+  return rememberCache('portfolio:all', fetchPortfolioDataFromDb)
 }
 
 /**
  * Direct database query for all published projects.
+ * Smart Hybrid Ordering:
+ * 1. Featured projects (from Globals -> Profile & Settings) in exact user drag-and-drop order.
+ * 2. Remaining projects sorted automatically by newest first (-createdAt).
  * Excludes heavy readmeContent (markdown docs) so the list cache stays lightweight (~3-5 KB instead of 50+ KB).
  */
 async function fetchAllProjectsFromDb() {
@@ -128,7 +161,8 @@ async function fetchAllProjectsFromDb() {
     return { projects: [], profile: {} }
   }
 
-  let projectsDocs = []
+  // 1. Fetch all published projects sorted by newest first (-createdAt)
+  let allPublishedDocs = []
   try {
     const projectsRes = await payload.find({
       collection: 'projects',
@@ -137,38 +171,87 @@ async function fetchAllProjectsFromDb() {
           not_equals: 'draft',
         },
       },
-      sort: '-sortOrder',
+      sort: '-createdAt',
       limit: 100,
       depth: 1,
     })
-    projectsDocs = (projectsRes.docs || [])
+    allPublishedDocs = (projectsRes.docs || [])
       .filter((p) => p._status !== 'draft')
       .map(({ readmeContent, ...cardData }) => cardData)
   } catch (e) {
     console.warn('Failed to load Projects collection:', e.message)
   }
 
+  // 2. Fetch Profile global with depth: 2 to retrieve featuredProjects with populated data
   let profile = null
   try {
     profile = await payload.findGlobal({
       slug: 'profile',
-      depth: 1,
+      depth: 2,
     })
   } catch (e) {
     console.warn('Failed to load Profile global:', e.message)
   }
 
+  // Sanitize profile relationships so cache remains lightweight (~3-5 KB)
+  if (Array.isArray(profile?.featuredProjects)) {
+    profile.featuredProjects = profile.featuredProjects
+      .filter((p) => p && typeof p === 'object')
+      .map(({ readmeContent, ...cardData }) => cardData)
+  }
+  if (Array.isArray(profile?.allProjectsOrder)) {
+    profile.allProjectsOrder = profile.allProjectsOrder
+      .filter((p) => p && typeof p === 'object')
+      .map(({ readmeContent, ...cardData }) => cardData)
+  }
+
+  // 3. Smart Hybrid Ordering for /project page:
+  // Priority 1: If allProjectsOrder is configured in Globals, use that exact drag-and-drop order first, followed by remaining (-createdAt).
+  // Priority 2: Otherwise if featuredProjects is set, use featured projects first, followed by remaining (-createdAt).
+  // Priority 3: All published projects sorted by newest first (-createdAt).
+  let orderedProjects = []
+  if (Array.isArray(profile?.allProjectsOrder) && profile.allProjectsOrder.length > 0) {
+    const customList = profile.allProjectsOrder.filter(
+      (p) => p && typeof p === 'object' && p._status !== 'draft'
+    )
+    const customIdSet = new Set(customList.map((p) => p.id))
+    const remainingList = allPublishedDocs.filter((p) => !customIdSet.has(p.id))
+
+    orderedProjects = [...customList, ...remainingList]
+  } else if (Array.isArray(profile?.featuredProjects) && profile.featuredProjects.length > 0) {
+    const featuredList = profile.featuredProjects.filter(
+      (p) => p && typeof p === 'object' && p._status !== 'draft'
+    )
+    const featuredIdSet = new Set(featuredList.map((p) => p.id))
+    const remainingList = allPublishedDocs.filter((p) => !featuredIdSet.has(p.id))
+
+    orderedProjects = [...featuredList, ...remainingList]
+  } else {
+    orderedProjects = allPublishedDocs
+  }
+
+  const sanitizedProfile = profile
+    ? {
+        ...profile,
+        allProjectsOrder: undefined,
+        featuredProjects: (profile.featuredProjects || []).map((p) => ({
+          id: typeof p === 'object' && p !== null ? p.id : p,
+        })),
+      }
+    : {}
+
   return {
-    projects: projectsDocs,
-    profile: profile || {},
+    projects: orderedProjects,
+    profile: sanitizedProfile,
   }
 }
 
 /**
- * Fetch all projects with Redis caching (1 hour TTL).
+ * Fetch all projects with Redis caching.
+ * TTL is controlled via REDIS_CACHE_TTL_SECONDS in .env (0 = Permanent until edited).
  */
 export async function getAllProjects() {
-  return rememberCache('portfolio:projects:all', 3600, fetchAllProjectsFromDb)
+  return rememberCache('portfolio:projects:all', fetchAllProjectsFromDb)
 }
 
 /**
@@ -224,10 +307,11 @@ async function fetchProjectBySlugFromDb(slug) {
 }
 
 /**
- * Fetch a single project by slug with Redis caching (1 hour TTL).
+ * Fetch a single project by slug with Redis caching.
+ * TTL is controlled via REDIS_CACHE_TTL_SECONDS in .env (0 = Permanent until edited).
  */
 export async function getProjectBySlug(slug) {
   if (!slug) return null
   const cacheKey = `portfolio:project:${String(slug).toLowerCase()}`
-  return rememberCache(cacheKey, 3600, () => fetchProjectBySlugFromDb(slug))
+  return rememberCache(cacheKey, () => fetchProjectBySlugFromDb(slug))
 }
