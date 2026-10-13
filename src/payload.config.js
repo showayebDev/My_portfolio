@@ -6,6 +6,7 @@ import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { s3Storage } from '@payloadcms/storage-s3'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import sharp from 'sharp'
 
 import { Users } from './collections/Users.js'
 import { Media } from './collections/Media.js'
@@ -85,6 +86,7 @@ const trustedDomains = Array.from(
 )
 
 export default buildConfig({
+  sharp,
   serverURL: siteUrl || undefined,
   cors: trustedDomains.length > 0 ? trustedDomains : '*',
   csrf: trustedDomains,

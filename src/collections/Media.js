@@ -1,6 +1,6 @@
-// @ts-check
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import path from 'path'
+import sharp from 'sharp'
 
 /** @type {S3Client | null} */
 let cachedS3Client = null
@@ -75,9 +75,47 @@ export const Media = {
       label: 'Alt Text',
     },
   ],
+  hooks: {
+    beforeChange: [
+      async ({ req, data }) => {
+        if (
+          req.file &&
+          req.file.mimetype &&
+          (req.file.mimetype === 'image/png' ||
+            req.file.mimetype === 'image/jpeg' ||
+            req.file.mimetype === 'image/jpg')
+        ) {
+          try {
+            const webpBuffer = await sharp(req.file.data)
+              .webp({ quality: 82, effort: 6 })
+              .toBuffer()
+            const ext = path.extname(req.file.name)
+            const baseName = path.basename(req.file.name, ext)
+            const newName = `${baseName}.webp`
+            req.file.name = newName
+            req.file.data = webpBuffer
+            req.file.size = webpBuffer.length
+            req.file.mimetype = 'image/webp'
+            if (data) {
+              data.filename = newName
+              data.mimeType = 'image/webp'
+              data.filesize = webpBuffer.length
+            }
+          } catch (e) {
+            console.warn('[Media WebP Conversion Hook Error]:', e.message)
+          }
+        }
+        return data
+      },
+    ],
+  },
   upload: {
     crop: false,
     focalPoint: false,
+    formatOptions: {
+      format: 'webp',
+      options: { quality: 82 },
+    },
     handlers: [
       async (req, { params }) => {
         const filename = params?.filename
