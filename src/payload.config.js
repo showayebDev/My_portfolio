@@ -178,12 +178,11 @@ export default buildConfig({
     const isPostgres = dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://')
 
     if (isPostgres) {
+      const isLocal = dbUrl.includes('sslmode=disable') || dbUrl.includes('@postgres:')
       const adapterObj = postgresAdapter({
         pool: {
           connectionString: dbUrl,
-          ssl: {
-            rejectUnauthorized: false,
-          },
+          ...(isLocal ? {} : { ssl: { rejectUnauthorized: false } }),
         },
         push: false,
       })

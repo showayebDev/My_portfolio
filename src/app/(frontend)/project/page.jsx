@@ -1,7 +1,7 @@
 import { getAllProjects } from "@/lib/getPortfolioData";
 import ProjectClient from "@/components/ProjectClient";
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata() {
   const { profile } = await getAllProjects();

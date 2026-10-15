@@ -4,7 +4,7 @@ import Projects from "@/components/Projects";
 import Skills from "@/components/Skills";
 import { getPortfolioData } from "@/lib/getPortfolioData";
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   const { profile, education, skills, categories, projects } = await getPortfolioData();
