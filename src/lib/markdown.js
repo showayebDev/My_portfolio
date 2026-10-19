@@ -68,7 +68,7 @@ const renderer = {
   },
 };
 
-marked.use({ renderer, gfm: true, breaks: true });
+marked.use({ renderer, gfm: true, breaks: false });
 
 export function renderMarkdown(content) {
   if (!content || typeof content !== "string") return "";

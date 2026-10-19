@@ -486,6 +486,25 @@ h1, h2, h3, h4, .collage-serif {
   opacity: 0.85;
 }
 
+.markdown-body a:has(> img) {
+  display: inline-block;
+  text-decoration: none !important;
+  vertical-align: middle;
+  margin: 2px 2px;
+}
+
+.markdown-body a:has(> img):hover {
+  text-decoration: none !important;
+  opacity: 0.85;
+}
+
+.markdown-body img {
+  display: inline-block !important;
+  vertical-align: middle;
+  max-width: 100%;
+  box-sizing: content-box;
+}
+
 .markdown-body blockquote {
   border-left: 4px solid var(--tape-amber) !important;
   background-color: var(--card-kraft-color) !important;
