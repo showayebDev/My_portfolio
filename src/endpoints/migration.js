@@ -6,6 +6,7 @@ import {
   ListObjectsV2Command,
 } from '@aws-sdk/client-s3'
 import JSZip from 'jszip'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { buildConfig, getPayload } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
@@ -312,6 +313,352 @@ export async function handleDownloadZip(req) {
   } catch (/** @type {any} */ err) {
     return Response.json(
       { error: err.message || 'Failed to generate ZIP archive.' },
+      { status: 500 }
+    )
+  }
+}
+
+/** @type {Record<string, string>} */
+const EXT_TO_MIME = {
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.ico': 'image/x-icon',
+  '.pdf': 'application/pdf',
+  '.zip': 'application/zip',
+  '.json': 'application/json',
+  '.txt': 'text/plain',
+}
+
+/** @param {string} [filename] */
+function getMimeType(filename) {
+  const name = filename || ''
+  const dotIndex = name.lastIndexOf('.')
+  if (dotIndex === -1) return 'application/octet-stream'
+  const ext = name.slice(dotIndex).toLowerCase()
+  return EXT_TO_MIME[ext] || 'application/octet-stream'
+}
+
+/**
+ * POST /api/migration/upload-zip
+ * Extracts and uploads all media files from a ZIP archive directly to the active storage bucket
+ * @param {import('payload').PayloadRequest} req
+ */
+export async function handleUploadZip(req) {
+  const authErr = await ensureAdmin(req)
+  if (authErr) return authErr
+
+  try {
+    const formData = await req.formData()
+    const file = formData.get('file')
+
+    if (!file || typeof file === 'string') {
+      return Response.json({ error: 'Please select a valid .zip file.' }, { status: 400 })
+    }
+
+    const arrayBuffer = await file.arrayBuffer()
+    const zip = await JSZip.loadAsync(arrayBuffer)
+    const sourceClient = getSourceS3Client()
+    const bucket = process.env.S3_BUCKET || process.env.R2_BUCKET
+
+    if (!bucket) {
+      return Response.json(
+        { error: 'Storage bucket is not configured in environment (S3_BUCKET / R2_BUCKET).' },
+        { status: 500 }
+      )
+    }
+
+    let uploadedCount = 0
+    const errors = []
+    const validPrefixes = ['projects', 'icons', 'profile', 'media']
+
+    for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
+      if (
+        zipEntry.dir ||
+        relativePath.startsWith('__MACOSX') ||
+        relativePath.includes('.DS_Store') ||
+        relativePath.endsWith('.DS_Store') ||
+        relativePath === 'README_BACKUP.txt'
+      ) {
+        continue
+      }
+
+      try {
+        const fileBytes = await zipEntry.async('nodebuffer')
+        const normalizedPath = relativePath.replace(/\\/g, '/')
+        const parts = normalizedPath.split('/').filter(Boolean)
+
+        let prefix = 'media'
+        let filename = parts[parts.length - 1]
+
+        if (parts.length > 1 && validPrefixes.includes(parts[0])) {
+          prefix = parts[0]
+        }
+
+        const s3Key = prefix ? `${prefix}/${filename}` : filename
+        const mimeType = getMimeType(filename)
+
+        // 1. Upload file directly to S3 / Cloudflare R2 bucket
+        await sourceClient.send(
+          new PutObjectCommand({
+            Bucket: bucket,
+            Key: s3Key,
+            Body: fileBytes,
+            ContentType: mimeType,
+          })
+        )
+
+        // 2. Check if Media document already exists in database
+        const existing = await req.payload.find({
+          collection: 'media',
+          where: {
+            and: [
+              { filename: { equals: filename } },
+              { prefix: { equals: prefix } },
+            ],
+          },
+          limit: 1,
+        })
+
+        const altText = filename.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
+
+        if (existing.docs.length > 0) {
+          await req.payload.update({
+            collection: 'media',
+            id: existing.docs[0].id,
+            data: {
+              filesize: fileBytes.length,
+              mimeType,
+            },
+          })
+        } else {
+          await req.payload.create({
+            collection: 'media',
+            data: {
+              filename,
+              prefix,
+              alt: altText || 'Uploaded asset',
+              filesize: fileBytes.length,
+              mimeType,
+            },
+          })
+        }
+
+        uploadedCount++
+      } catch (/** @type {any} */ fileErr) {
+        errors.push({ file: relativePath, error: fileErr?.message || String(fileErr) })
+      }
+    }
+
+    return Response.json({
+      success: true,
+      message: `Successfully extracted and uploaded ${uploadedCount} media file(s) to bucket "${bucket}"!`,
+      uploadedCount,
+      errors: errors.slice(0, 10),
+    })
+  } catch (/** @type {any} */ err) {
+    return Response.json(
+      { error: err.message || 'Failed to extract and upload ZIP archive.' },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * POST /api/migration/presign-upload
+ * Generates a pre-signed S3 upload URL for direct browser-to-S3 uploads (bypasses server payload limits)
+ * @param {import('payload').PayloadRequest} req
+ */
+export async function handlePresignUpload(req) {
+  const authErr = await ensureAdmin(req)
+  if (authErr) return authErr
+
+  try {
+    /** @type {any} */
+    const body = await req.json()
+    const { filename, contentType, prefix } = body
+
+    if (!filename) {
+      return Response.json({ error: 'Filename is required.' }, { status: 400 })
+    }
+
+    const bucket = process.env.S3_BUCKET || process.env.R2_BUCKET
+    if (!bucket) {
+      return Response.json({ error: 'Storage bucket is not configured in environment.' }, { status: 500 })
+    }
+
+    const safePrefix = prefix || 'archives'
+    const s3Key = `${safePrefix}/${filename}`
+    const finalMime = contentType || getMimeType(filename)
+
+    const sourceClient = getSourceS3Client()
+    const command = new PutObjectCommand({
+      Bucket: bucket,
+      Key: s3Key,
+      ContentType: finalMime,
+    })
+
+    // URL valid for 15 minutes (900 seconds)
+    let uploadUrl = await getSignedUrl(sourceClient, command, { expiresIn: 900 })
+
+    // If internal Docker network hostname (e.g. http://s3:9000), rewrite for host browser access
+    if (uploadUrl.includes('//s3:9000')) {
+      uploadUrl = uploadUrl.replace('//s3:9000', '//localhost:9000')
+    }
+
+    const publicUrlBase = (process.env.S3_PUBLIC_URL || process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
+    const publicUrl = publicUrlBase ? `${publicUrlBase}/${s3Key}` : `/api/media/file/${encodeURIComponent(filename)}?prefix=${encodeURIComponent(safePrefix)}`
+
+    return Response.json({
+      success: true,
+      uploadUrl,
+      publicUrl,
+      key: s3Key,
+      bucket,
+      prefix: safePrefix,
+      filename,
+      contentType: finalMime,
+    })
+  } catch (/** @type {any} */ err) {
+    return Response.json(
+      { error: err.message || 'Failed to generate pre-signed upload URL.' },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * POST /api/migration/unpack-zip
+ * Unpacks an already uploaded ZIP file located in the S3 bucket into the media collection
+ * @param {import('payload').PayloadRequest} req
+ */
+export async function handleUnpackUploadedZip(req) {
+  const authErr = await ensureAdmin(req)
+  if (authErr) return authErr
+
+  try {
+    /** @type {any} */
+    const body = await req.json()
+    const { s3Key } = body
+
+    if (!s3Key) {
+      return Response.json({ error: 's3Key is required.' }, { status: 400 })
+    }
+
+    const bucket = process.env.S3_BUCKET || process.env.R2_BUCKET
+    if (!bucket) {
+      return Response.json({ error: 'Storage bucket is not configured.' }, { status: 500 })
+    }
+
+    const sourceClient = getSourceS3Client()
+    const s3Res = await sourceClient.send(
+      new GetObjectCommand({
+        Bucket: bucket,
+        Key: s3Key,
+      })
+    )
+
+    if (!s3Res.Body) {
+      return Response.json({ error: 'ZIP file body is empty in storage.' }, { status: 404 })
+    }
+
+    const zipBytes = await s3Res.Body.transformToByteArray()
+    const zip = await JSZip.loadAsync(zipBytes)
+
+    let uploadedCount = 0
+    const errors = []
+    const validPrefixes = ['projects', 'icons', 'profile', 'media']
+
+    for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
+      if (
+        zipEntry.dir ||
+        relativePath.startsWith('__MACOSX') ||
+        relativePath.includes('.DS_Store') ||
+        relativePath.endsWith('.DS_Store') ||
+        relativePath === 'README_BACKUP.txt'
+      ) {
+        continue
+      }
+
+      try {
+        const fileBytes = await zipEntry.async('nodebuffer')
+        const normalizedPath = relativePath.replace(/\\/g, '/')
+        const parts = normalizedPath.split('/').filter(Boolean)
+
+        let prefix = 'media'
+        let filename = parts[parts.length - 1]
+
+        if (parts.length > 1 && validPrefixes.includes(parts[0])) {
+          prefix = parts[0]
+        }
+
+        const targetS3Key = prefix ? `${prefix}/${filename}` : filename
+        const mimeType = getMimeType(filename)
+
+        // Upload extracted file to S3
+        await sourceClient.send(
+          new PutObjectCommand({
+            Bucket: bucket,
+            Key: targetS3Key,
+            Body: fileBytes,
+            ContentType: mimeType,
+          })
+        )
+
+        // Upsert Media record
+        const existing = await req.payload.find({
+          collection: 'media',
+          where: {
+            and: [
+              { filename: { equals: filename } },
+              { prefix: { equals: prefix } },
+            ],
+          },
+          limit: 1,
+        })
+
+        const altText = filename.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
+
+        if (existing.docs.length > 0) {
+          await req.payload.update({
+            collection: 'media',
+            id: existing.docs[0].id,
+            data: {
+              filesize: fileBytes.length,
+              mimeType,
+            },
+          })
+        } else {
+          await req.payload.create({
+            collection: 'media',
+            data: {
+              filename,
+              prefix,
+              alt: altText || 'Uploaded asset',
+              filesize: fileBytes.length,
+              mimeType,
+            },
+          })
+        }
+
+        uploadedCount++
+      } catch (/** @type {any} */ fileErr) {
+        errors.push({ file: relativePath, error: fileErr?.message || String(fileErr) })
+      }
+    }
+
+    return Response.json({
+      success: true,
+      message: `Successfully extracted and restored ${uploadedCount} file(s) from ZIP archive!`,
+      uploadedCount,
+      errors: errors.slice(0, 5),
+    })
+  } catch (/** @type {any} */ err) {
+    return Response.json(
+      { error: err.message || 'Failed to unpack ZIP archive from storage.' },
       { status: 500 }
     )
   }

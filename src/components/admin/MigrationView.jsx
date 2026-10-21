@@ -17,6 +17,12 @@ export const MigrationView = () => {
   // ZIP Download State
   const [zipLoading, setZipLoading] = useState(false)
   const [zipMessage, setZipMessage] = useState(null)
+  // ZIP Upload State (Pre-signed direct S3 upload)
+  const [zipUploadFile, setZipUploadFile] = useState(null)
+  const [zipUploadLoading, setZipUploadLoading] = useState(false)
+  const [zipUploadProgress, setZipUploadProgress] = useState(0)
+  const [autoUnpackZip, setAutoUnpackZip] = useState(true)
+  const [zipUploadResult, setZipUploadResult] = useState(null)
   // Direct Bucket Transfer State
   const [destBucket, setDestBucket] = useState('')
   const [destEndpoint, setDestEndpoint] = useState('')
@@ -106,6 +112,126 @@ export const MigrationView = () => {
       setZipMessage(`❌ Error: ${err.message}`)
     } finally {
       setZipLoading(false)
+    }
+  }
+  // Handle Pre-signed URL Direct S3 Upload & Unpack
+  const handleUploadZip = async () => {
+    if (!zipUploadFile) return
+    try {
+      setZipUploadLoading(true)
+      setZipUploadResult(null)
+      setZipUploadProgress(5)
+
+      let directUploadWorked = false
+
+      // Step 1: Attempt Pre-signed direct S3 upload
+      try {
+        const presignRes = await fetch('/api/migration/presign-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: zipUploadFile.name,
+            contentType: zipUploadFile.type || 'application/zip',
+            prefix: 'archives',
+          }),
+        })
+
+        const presignData = await presignRes.json()
+        if (presignRes.ok && presignData.uploadUrl) {
+          // Direct PUT to S3 using XMLHttpRequest for progress
+          await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest()
+            xhr.open('PUT', presignData.uploadUrl, true)
+            xhr.setRequestHeader('Content-Type', zipUploadFile.type || 'application/zip')
+
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                const percent = Math.max(5, Math.min(95, Math.round((e.loaded / e.total) * 95)))
+                setZipUploadProgress(percent)
+              }
+            }
+
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(true)
+              } else {
+                reject(new Error(`S3 direct upload responded with HTTP ${xhr.status}`))
+              }
+            }
+
+            xhr.onerror = () => {
+              reject(new Error('S3 direct PUT network error (possibly CORS)'))
+            }
+
+            xhr.send(zipUploadFile)
+          })
+
+          setZipUploadProgress(95)
+          directUploadWorked = true
+
+          // If auto-unpack is selected and it's a zip file:
+          if (autoUnpackZip && zipUploadFile.name.toLowerCase().endsWith('.zip')) {
+            const unpackRes = await fetch('/api/migration/unpack-zip', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                s3Key: presignData.key,
+              }),
+            })
+
+            const unpackData = await unpackRes.json()
+            if (!unpackRes.ok || !unpackData.success) {
+              throw new Error(unpackData.error || 'Failed to unpack media files from uploaded archive.')
+            }
+
+            setZipUploadProgress(100)
+            setZipUploadResult({
+              success: true,
+              message: `⚡ Uploaded directly to S3 via Pre-signed URL! Restored ${unpackData.uploadedCount} media file(s) into database.`,
+            })
+          } else {
+            setZipUploadProgress(100)
+            setZipUploadResult({
+              success: true,
+              message: `⚡ Uploaded directly to S3 via Pre-signed URL! File is stored at "${presignData.key}".`,
+            })
+          }
+        }
+      } catch (presignErr) {
+        console.warn('Pre-signed direct upload failed or blocked by CORS, falling back to server-side stream:', presignErr)
+      }
+
+      // Fallback: If direct PUT didn't work (e.g. strict CORS on remote bucket), use standard multipart upload
+      if (!directUploadWorked) {
+        setZipUploadProgress(50)
+        const formData = new FormData()
+        formData.append('file', zipUploadFile)
+
+        const res = await fetch('/api/migration/upload-zip', {
+          method: 'POST',
+          body: formData,
+        })
+
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Failed to extract and upload ZIP archive.')
+        }
+
+        setZipUploadProgress(100)
+        setZipUploadResult({ success: true, message: data.message, count: data.uploadedCount })
+      }
+
+      setZipUploadFile(null)
+      // Refresh status counts
+      fetch('/api/migration/status')
+        .then((r) => r.json())
+        .then((d) => setStatus(d))
+        .catch(() => {})
+    } catch (err) {
+      setZipUploadResult({ success: false, error: err.message })
+    } finally {
+      setZipUploadLoading(false)
+      setTimeout(() => setZipUploadProgress(0), 3000)
     }
   }
   // Handle Test Connection
@@ -622,6 +748,177 @@ export const MigrationView = () => {
                 }}
               >
                 {zipMessage}
+              </div>
+            )}
+          </div>
+
+          {/* Card 1.5: Upload & Restore Media from ZIP via Pre-signed URL */}
+          <div
+            style={{
+              background: 'var(--theme-elevation-50, #1c1c1c)',
+              border: '1px solid var(--theme-elevation-150, #2f2f2f)',
+              borderRadius: '12px',
+              padding: '24px',
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>
+                  📥 Direct S3 Upload via Pre-signed URL (Any File & ZIP)
+                </h3>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    color: '#10b981',
+                    border: '1px solid #10b981',
+                    borderRadius: '4px',
+                    padding: '2px 8px',
+                  }}
+                >
+                  ⚡ Zero Size Limits (Pre-signed S3 / R2)
+                </span>
+              </div>
+              <p
+                style={{
+                  margin: '8px 0 16px 0',
+                  color: 'var(--theme-elevation-500, #999)',
+                  fontSize: '14px',
+                  maxWidth: '720px',
+                }}
+              >
+                Upload any large file or <code>.zip</code> archive directly from your browser to your active storage bucket (<code>{status?.storage?.bucket || 'my-portfolio'}</code>) using temporary S3 Pre-signed URLs. This completely bypasses server body limits, proxy bottlenecks, and serverless size restrictions.
+              </p>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '12px',
+                padding: '16px',
+                background: 'var(--theme-elevation-100, #252525)',
+                borderRadius: '8px',
+                border: '1px dashed var(--theme-elevation-250, #3f3f3f)',
+              }}
+            >
+              <input
+                type="file"
+                accept=".zip,application/zip,image/*,application/pdf"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setZipUploadFile(e.target.files[0])
+                    setZipUploadResult(null)
+                  }
+                }}
+                disabled={zipUploadLoading}
+                style={{
+                  fontSize: '14px',
+                  color: 'var(--theme-elevation-800, #eee)',
+                  flex: '1 1 250px',
+                }}
+              />
+
+              <button
+                onClick={handleUploadZip}
+                disabled={!zipUploadFile || zipUploadLoading}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: !zipUploadFile || zipUploadLoading ? '#4b5563' : '#10b981',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: !zipUploadFile || zipUploadLoading ? 'not-allowed' : 'pointer',
+                  opacity: !zipUploadFile || zipUploadLoading ? 0.6 : 1,
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                }}
+              >
+                {zipUploadLoading
+                  ? `⏳ Uploading... (${zipUploadProgress}%)`
+                  : '⚡ Direct Upload via Pre-signed URL'}
+              </button>
+            </div>
+
+            <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="checkbox"
+                id="autoUnpackCheckbox"
+                checked={autoUnpackZip}
+                onChange={(e) => setAutoUnpackZip(e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+              <label
+                htmlFor="autoUnpackCheckbox"
+                style={{
+                  fontSize: '13px',
+                  color: 'var(--theme-elevation-600, #aaa)',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+              >
+                ⚡ Automatically unpack ZIP archive and restore assets into media gallery (<code>projects/</code>, <code>icons/</code>, <code>profile/</code>, <code>media/</code>)
+              </label>
+            </div>
+
+            {zipUploadLoading && (
+              <div style={{ marginTop: '16px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '13px',
+                    marginBottom: '6px',
+                    color: 'var(--theme-elevation-600, #aaa)',
+                  }}
+                >
+                  <span>Direct S3 Upload in progress...</span>
+                  <span style={{ fontWeight: 600, color: '#10b981' }}>{zipUploadProgress}%</span>
+                </div>
+                <div
+                  style={{
+                    width: '100%',
+                    height: '8px',
+                    background: 'var(--theme-elevation-200, #333)',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${zipUploadProgress}%`,
+                      height: '100%',
+                      background: '#10b981',
+                      transition: 'width 0.2s ease',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {zipUploadResult && (
+              <div
+                style={{
+                  marginTop: '16px',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  background: zipUploadResult.success
+                    ? 'rgba(16, 185, 129, 0.1)'
+                    : 'rgba(239, 68, 68, 0.1)',
+                  color: zipUploadResult.success ? '#10b981' : '#ef4444',
+                  border: `1px solid ${zipUploadResult.success ? '#10b981' : '#ef4444'}`,
+                }}
+              >
+                {zipUploadResult.success
+                  ? `✅ ${zipUploadResult.message}`
+                  : `❌ Error: ${zipUploadResult.error}`}
               </div>
             )}
           </div>
