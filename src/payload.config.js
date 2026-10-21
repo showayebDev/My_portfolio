@@ -29,6 +29,7 @@ import {
   handleTestDatabase,
   handleDirectMigrateDb,
 } from './endpoints/migration.js'
+import { s3ClientUploadCustomizer } from './endpoints/s3ClientUpload.js'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -201,44 +202,43 @@ export default buildConfig({
   })(),
   logger: isProduction ? appLogger : undefined,
   plugins: [
-    ...(Boolean(process.env.S3_BUCKET || process.env.R2_BUCKET)
-      ? [
-          s3Storage({
-            collections: {
-              media: {
-                ...(process.env.S3_PUBLIC_URL || process.env.R2_PUBLIC_URL
-                  ? {
-                      disablePayloadAccessControl: true,
-                      generateFileURL: ({ filename, prefix }) => {
-                        const key = prefix ? `${prefix}/${filename}` : filename
-                        const base = (process.env.S3_PUBLIC_URL || process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
-                        return `${base}/${key}`
-                      },
-                    }
-                  : {
-                      generateFileURL: ({ filename, prefix }) => {
-                        const params = prefix ? `?prefix=${encodeURIComponent(prefix)}` : ''
-                        return `/api/media/file/${encodeURIComponent(filename)}${params}`
-                      },
-                    }),
-              },
-            },
-            bucket: process.env.S3_BUCKET || process.env.R2_BUCKET || '',
-            config: {
-              credentials: {
-                accessKeyId: process.env.S3_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID || '',
-                secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY || '',
-              },
-              region: process.env.S3_REGION || process.env.R2_REGION || 'auto',
-              ...(process.env.S3_ENDPOINT || process.env.R2_ENDPOINT
-                ? { endpoint: process.env.S3_ENDPOINT || process.env.R2_ENDPOINT }
-                : {}),
-              forcePathStyle: (process.env.S3_ENDPOINT || process.env.R2_ENDPOINT)
-                ? process.env.S3_FORCE_PATH_STYLE !== 'false'
-                : process.env.S3_FORCE_PATH_STYLE === 'true',
-            },
-          }),
-        ]
-      : []),
+    s3Storage({
+      collections: {
+        media: {
+          ...(process.env.S3_PUBLIC_URL || process.env.R2_PUBLIC_URL
+            ? {
+                disablePayloadAccessControl: true,
+                generateFileURL: ({ filename, prefix }) => {
+                  const key = prefix ? `${prefix}/${filename}` : filename
+                  const base = (process.env.S3_PUBLIC_URL || process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
+                  return `${base}/${key}`
+                },
+              }
+            : {
+                generateFileURL: ({ filename, prefix }) => {
+                  const params = prefix ? `?prefix=${encodeURIComponent(prefix)}` : ''
+                  return `/api/media/file/${encodeURIComponent(filename)}${params}`
+                },
+              }),
+        },
+      },
+      clientUploads: true,
+      bucket: process.env.S3_BUCKET || process.env.R2_BUCKET || 'my-portfolio',
+      enabled: Boolean(process.env.S3_BUCKET || process.env.R2_BUCKET),
+      config: {
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY || '',
+        },
+        region: process.env.S3_REGION || process.env.R2_REGION || 'auto',
+        ...(process.env.S3_ENDPOINT || process.env.R2_ENDPOINT
+          ? { endpoint: process.env.S3_ENDPOINT || process.env.R2_ENDPOINT }
+          : {}),
+        forcePathStyle: (process.env.S3_ENDPOINT || process.env.R2_ENDPOINT)
+          ? process.env.S3_FORCE_PATH_STYLE !== 'false'
+          : process.env.S3_FORCE_PATH_STYLE === 'true',
+      },
+    }),
+    s3ClientUploadCustomizer(),
   ],
 })

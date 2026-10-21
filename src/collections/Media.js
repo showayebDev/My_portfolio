@@ -1,5 +1,6 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import path from 'path'
+import { Readable } from 'stream'
 import sharp from 'sharp'
 
 /** @type {S3Client | null} */
@@ -32,6 +33,17 @@ const MIME_MAP = {
   '.webp': 'image/webp',
   '.gif': 'image/gif',
   '.ico': 'image/x-icon',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.mkv': 'video/x-matroska',
+  '.mov': 'video/quicktime',
+  '.avi': 'video/x-msvideo',
+  '.mp3': 'audio/mpeg',
+  '.wav': 'audio/wav',
+  '.pdf': 'application/pdf',
+  '.zip': 'application/zip',
+  '.tar': 'application/x-tar',
+  '.gz': 'application/gzip',
 }
 
 /** @param {string} [filename] */
@@ -78,8 +90,12 @@ export const Media = {
   hooks: {
     beforeChange: [
       async ({ req, data }) => {
+        // Skip Sharp conversion for direct client uploads or when raw buffer is not present
         if (
           req.file &&
+          !req.file.clientUploadContext &&
+          req.file.data &&
+          req.file.data.length > 0 &&
           req.file.mimetype &&
           (req.file.mimetype === 'image/png' ||
             req.file.mimetype === 'image/jpeg' ||
@@ -122,8 +138,23 @@ export const Media = {
         const bucket = process.env.S3_BUCKET || process.env.R2_BUCKET
         if (!bucket || !filename) return null
 
-        const prefix = params?.prefix || req.searchParams?.get('prefix') || ''
+        let prefix = params?.prefix || req.searchParams?.get('prefix') || ''
+        if (!prefix && req.payload) {
+          try {
+            const found = await req.payload.find({
+              collection: 'media',
+              where: { filename: { equals: filename } },
+              limit: 1,
+            })
+            if (found?.docs?.[0]) {
+              const d = found.docs[0]
+              prefix = d._objectKey && d.prefix ? `${d.prefix}/${d._objectKey}` : (d.prefix || '')
+            }
+          } catch (_) {}
+        }
+
         const s3Key = prefix ? `${prefix}/${filename}` : filename
+        const range = req.headers?.get ? req.headers.get('range') : null
 
         try {
           const s3 = getS3Client()
@@ -131,6 +162,7 @@ export const Media = {
             new GetObjectCommand({
               Bucket: bucket,
               Key: s3Key,
+              ...(range ? { Range: range } : {}),
             })
           )
 
@@ -140,14 +172,17 @@ export const Media = {
               return new Response(null, { status: 304 })
             }
 
-            const bytes = await s3Res.Body.transformToByteArray()
             const contentType = s3Res.ContentType || getMime(filename)
+            const isPartial = Boolean(range && s3Res.ContentRange)
+            const stream = Readable.toWeb(/** @type {any} */ (s3Res.Body))
 
-            return new Response(/** @type {any} */ (bytes), {
-              status: 200,
+            return new Response(/** @type {any} */ (stream), {
+              status: isPartial ? 206 : 200,
               headers: {
                 'Content-Type': contentType,
-                'Content-Length': String(bytes.length),
+                'Accept-Ranges': 'bytes',
+                ...(s3Res.ContentLength != null ? { 'Content-Length': String(s3Res.ContentLength) } : {}),
+                ...(s3Res.ContentRange ? { 'Content-Range': s3Res.ContentRange } : {}),
                 ...(s3Res.ETag ? { ETag: s3Res.ETag } : {}),
                 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
               },

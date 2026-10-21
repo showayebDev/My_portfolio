@@ -494,7 +494,24 @@ export async function handlePresignUpload(req) {
     const s3Key = `${safePrefix}/${filename}`
     const finalMime = contentType || getMimeType(filename)
 
-    const sourceClient = getSourceS3Client()
+    // For local Docker MinIO, the client signing the URL must use the host accessible by the browser (localhost:9000)
+    // so that the Host header in the SigV4 signature matches what the browser actually sends!
+    let signingEndpoint = process.env.S3_ENDPOINT || process.env.R2_ENDPOINT || ''
+    if (signingEndpoint.includes('//s3:9000')) {
+      signingEndpoint = signingEndpoint.replace('//s3:9000', '//localhost:9000')
+    }
+
+    const signingClient = signingEndpoint
+      ? createS3Client({
+          bucket,
+          accessKeyId: process.env.S3_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY || '',
+          endpoint: signingEndpoint,
+          region: process.env.S3_REGION || process.env.R2_REGION || 'auto',
+          forcePathStyle: true,
+        })
+      : getSourceS3Client()
+
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: s3Key,
@@ -502,12 +519,7 @@ export async function handlePresignUpload(req) {
     })
 
     // URL valid for 15 minutes (900 seconds)
-    let uploadUrl = await getSignedUrl(sourceClient, command, { expiresIn: 900 })
-
-    // If internal Docker network hostname (e.g. http://s3:9000), rewrite for host browser access
-    if (uploadUrl.includes('//s3:9000')) {
-      uploadUrl = uploadUrl.replace('//s3:9000', '//localhost:9000')
-    }
+    const uploadUrl = await getSignedUrl(signingClient, command, { expiresIn: 900 })
 
     const publicUrlBase = (process.env.S3_PUBLIC_URL || process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
     const publicUrl = publicUrlBase ? `${publicUrlBase}/${s3Key}` : `/api/media/file/${encodeURIComponent(filename)}?prefix=${encodeURIComponent(safePrefix)}`

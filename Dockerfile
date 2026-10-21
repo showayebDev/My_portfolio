@@ -26,6 +26,7 @@ ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV PAYLOAD_SECRET=build_secret_temp_for_static_analysis
+ENV S3_BUCKET=my-portfolio
 
 # Build the Next.js app
 RUN \
