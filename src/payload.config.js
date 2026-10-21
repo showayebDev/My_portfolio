@@ -16,6 +16,7 @@ import { SkillCategories } from './collections/SkillCategories.js'
 import { Education } from './collections/Education.js'
 import { Profile } from './globals/Profile.js'
 import { ensurePostgresSchema } from './lib/autoInitPostgres.js'
+import { ensureS3Bucket } from './lib/autoInitS3.js'
 import {
   handleGetStatus,
   handleTestBucket,
@@ -135,6 +136,8 @@ export default buildConfig({
     { path: '/migration/direct-migrate-db', method: 'post', handler: handleDirectMigrateDb },
   ],
   onInit: async (payload) => {
+    await ensureS3Bucket()
+
     if (process.env.NODE_ENV === 'development') {
       try {
         const { totalDocs } = await payload.find({
