@@ -1,10 +1,10 @@
 import { getAllProjects } from "@/lib/getPortfolioData";
-import { getSiteUrl } from "@/lib/siteUrl";
 
 export const revalidate = 60; // Revalidate every 60 seconds (or instantly on demand)
 
 export default async function sitemap() {
-  const siteUrl = getSiteUrl();
+  const rawSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').trim().replace(/\/$/, '');
+  const siteUrl = rawSiteUrl && !/^https?:\/\//i.test(rawSiteUrl) ? `https://${rawSiteUrl}` : rawSiteUrl;
   const today = new Date();
 
   // Static routes

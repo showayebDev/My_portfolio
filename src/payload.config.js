@@ -60,27 +60,15 @@ const appLogger = /** @type {any} */ ({
   fatal: createLog('fatal', console.error),
   silent: () => {},
 })
-const siteUrl = (
-  process.env.NEXT_PUBLIC_SERVER_URL ||
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '') ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
-  ''
-).replace(/\/$/, '')
+const rawSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim().replace(/\/$/, '')
+const siteUrl = rawSiteUrl && !/^https?:\/\//i.test(rawSiteUrl) ? `https://${rawSiteUrl}` : rawSiteUrl
 
 const trustedDomains = Array.from(
   new Set(
     [
       'http://localhost:3000',
       'http://127.0.0.1:3000',
-      'https://my-app.showayeb.workers.dev',
-      'https://payload-portfolio-wine.vercel.app',
       siteUrl,
-      process.env.NEXT_PUBLIC_SITE_URL ? process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '') : '',
-      process.env.NEXT_PUBLIC_SERVER_URL ? process.env.NEXT_PUBLIC_SERVER_URL.replace(/\/$/, '') : '',
-      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
-      process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '',
-      process.env.VERCEL_BRANCH_URL ? `https://${process.env.VERCEL_BRANCH_URL}` : '',
     ].filter(Boolean)
   )
 )
