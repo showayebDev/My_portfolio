@@ -179,13 +179,14 @@ Access the CMS admin panel at [http://localhost:3000/admin](http://localhost:300
 
 ### Method 3: Standalone App Docker (Cloud DB & S3)
 
-If you use remote cloud databases (Neon/Supabase) and Cloudflare R2:
+If you use remote cloud databases (Neon/Supabase) and Cloudflare R2, you can run the pre-built image directly from Docker Hub without building from source:
 
 ```bash
+docker pull showayebdev/my_portfolio:latest
 docker compose up -d
 ```
 
-This builds and launches only the `app` container connected to your external services specified in `.env`.
+This launches the `app` container connected to your external services specified in `.env`.
 
 ---
 

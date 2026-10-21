@@ -77,14 +77,14 @@ services:
   # 4. Next.js + Payload CMS Application - PUBLIC GATEWAY
   # ============================================================
   app:
+    image: showayebdev/my_portfolio:latest
     build:
       context: .
       dockerfile: Dockerfile
     container_name: nextjs-payload-full-app
     restart: always
-    # Accessible via Dokploy Traefik domain routing (container port 3000)
-    expose:
-      - '3000'
+    ports:
+      - '3000:3000'
     depends_on:
       - postgres
       - create-bucket

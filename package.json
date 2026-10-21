@@ -17,7 +17,10 @@
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
-    "test": "vitest run"
+    "test": "vitest run",
+    "docker:build": "docker build -t showayebdev/my_portfolio:latest .",
+    "docker:push": "docker push showayebdev/my_portfolio:latest",
+    "docker:publish": "npm run docker:build && npm run docker:push"
   },
   "dependencies": {
     "@payloadcms/db-mongodb": "^3.90.2",
