@@ -8,7 +8,7 @@ import Button from "@/components/button";
 import AnimatedContent from "@/context/AnimatedContent/AnimatedContent";
 import FadeContent from "@/context/FadeContent/FadeContent";
 import { BsGithub } from "react-icons/bs";
-import { prefetchProject, prefetchRoute, markImageCached, PROJECT_HERO_IMAGE_CONFIG } from "@/lib/prefetch";
+import { prefetchProject, markImageCached, PROJECT_HERO_IMAGE_CONFIG } from "@/lib/prefetch";
 
 function parseButtonsSafely(buttons) {
   if (Array.isArray(buttons)) return buttons;
@@ -48,10 +48,6 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
     prefetchProject(router, name, imgSrc);
   };
 
-  const handlePrefetchHome = () => {
-    prefetchRoute(router, "/");
-  };
-
   const projectData = (initialProjects || [])
     .filter((p) => p._status !== "draft")
     .map((p) => ({
@@ -86,8 +82,6 @@ export default function ProjectClient({ initialProjects = [], initialProfile = {
           <Link
             href="/"
             prefetch={false}
-            onMouseEnter={handlePrefetchHome}
-            onTouchStart={handlePrefetchHome}
             className="hover:text-[var(--link-color)] transition-colors hover:underline flex items-center gap-1.5"
           >
             <span>◄</span>

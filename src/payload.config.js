@@ -208,19 +208,30 @@ export default buildConfig({
     s3Storage({
       collections: {
         media: {
-          ...(process.env.S3_PUBLIC_URL || process.env.R2_PUBLIC_URL
+          ...(process.env.R2_PUBLIC_URL
             ? {
                 disablePayloadAccessControl: true,
                 generateFileURL: ({ filename, prefix }) => {
                   const key = prefix ? `${prefix}/${filename}` : filename
-                  const base = (process.env.S3_PUBLIC_URL || process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
+                  const base = (process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
+                  return `${base}/${key}`
+                },
+              }
+            : process.env.S3_PUBLIC_URL &&
+              !process.env.S3_PUBLIC_URL.includes('localhost:9000') &&
+              !process.env.S3_PUBLIC_URL.includes('s3:9000')
+            ? {
+                disablePayloadAccessControl: true,
+                generateFileURL: ({ filename, prefix }) => {
+                  const key = prefix ? `${prefix}/${filename}` : filename
+                  const base = (process.env.S3_PUBLIC_URL || '').replace(/\/$/, '')
                   return `${base}/${key}`
                 },
               }
             : {
                 generateFileURL: ({ filename, prefix }) => {
-                  const params = prefix ? `?prefix=${encodeURIComponent(prefix)}` : ''
-                  return `/api/media/file/${encodeURIComponent(filename)}${params}`
+                  const key = prefix ? `${prefix}/${filename}` : filename
+                  return `/my-portfolio/${key}`
                 },
               }),
         },

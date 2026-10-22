@@ -5,7 +5,7 @@ import { getPortfolioData } from "@/lib/getPortfolioData";
 import NextTopLoader from "nextjs-toploader";
 import BuildInvalidator from "@/components/BuildInvalidator";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 const montserrat = Montserrat({
   subsets: ["latin"],

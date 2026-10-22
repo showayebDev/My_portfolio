@@ -1,4 +1,6 @@
 // @ts-check
+import fs from 'node:fs'
+import path from 'node:path'
 import { withPayload } from '@payloadcms/next/withPayload'
 
 /** @type {import('next').NextConfig} */
@@ -9,12 +11,29 @@ const nextConfig = {
       bodySizeLimit: '500mb',
     },
   },
+  generateBuildId: async () => {
+    try {
+      const versionFile = path.join(process.cwd(), 'public', 'version.json')
+      if (fs.existsSync(versionFile)) {
+        const data = JSON.parse(fs.readFileSync(versionFile, 'utf-8'))
+        if (data.buildId) return String(data.buildId)
+      }
+    } catch {}
+    return null
+  },
   images: {
-    unoptimized: true,
+    dangerouslyAllowLocalIP: true,
     qualities: [75, 90],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
         hostname: '**',
       },
     ],
@@ -25,6 +44,7 @@ const nextConfig = {
     ],
   },
 
+
   async headers() {
     return [
       {
@@ -33,6 +53,33 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          },
+        ],
+      },
+      {
+        source: '/my-portfolio/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/:path*.(svg|jpg|jpeg|png|webp|avif|ico|gif|woff|woff2|ttf|eot)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/api/media/file/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },

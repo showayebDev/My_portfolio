@@ -9,7 +9,7 @@ import { getProjectBySlug, getAllProjects } from "@/lib/getPortfolioData";
 import { PROJECT_HERO_IMAGE_CONFIG } from "@/lib/prefetch";
 import { renderMarkdown } from "@/lib/markdown";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {

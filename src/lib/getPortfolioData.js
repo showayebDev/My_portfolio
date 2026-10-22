@@ -1,6 +1,51 @@
 import { getPayload } from 'payload'
 import config from '../payload.config.js'
 
+export function normalizeMediaUrl(url) {
+  if (!url || typeof url !== 'string') return url
+  // Rewrite hardcoded local MinIO host addresses to local relative path
+  if (url.includes('localhost:9000/my-portfolio/')) {
+    return url.replace(/^https?:\/\/localhost:9000\/my-portfolio\//, '/my-portfolio/')
+  }
+  if (url.includes('127.0.0.1:9000/my-portfolio/')) {
+    return url.replace(/^https?:\/\/127.0.0.1:9000\/my-portfolio\//, '/my-portfolio/')
+  }
+  if (url.includes('s3:9000/my-portfolio/')) {
+    return url.replace(/^https?:\/\/s3:9000\/my-portfolio\//, '/my-portfolio/')
+  }
+  return url
+}
+
+export function sanitizeDocMedia(doc) {
+  if (!doc || typeof doc !== 'object') return doc
+  if (doc.image) {
+    if (typeof doc.image === 'object' && doc.image !== null) {
+      if (doc.image.url) doc.image.url = normalizeMediaUrl(doc.image.url)
+    } else if (typeof doc.image === 'string') {
+      doc.image = normalizeMediaUrl(doc.image)
+    }
+  }
+  if (doc.imageUrl) doc.imageUrl = normalizeMediaUrl(doc.imageUrl)
+  if (doc.img) doc.img = normalizeMediaUrl(doc.img)
+  if (doc.avatar) {
+    if (typeof doc.avatar === 'object' && doc.avatar !== null) {
+      if (doc.avatar.url) doc.avatar.url = normalizeMediaUrl(doc.avatar.url)
+    } else if (typeof doc.avatar === 'string') {
+      doc.avatar = normalizeMediaUrl(doc.avatar)
+    }
+  }
+  if (doc.avatarUrl) doc.avatarUrl = normalizeMediaUrl(doc.avatarUrl)
+  if (doc.icon) {
+    if (typeof doc.icon === 'object' && doc.icon !== null) {
+      if (doc.icon.url) doc.icon.url = normalizeMediaUrl(doc.icon.url)
+    } else if (typeof doc.icon === 'string') {
+      doc.icon = normalizeMediaUrl(doc.icon)
+    }
+  }
+  if (doc.iconUrl) doc.iconUrl = normalizeMediaUrl(doc.iconUrl)
+  return doc
+}
+
 async function getSafePayload() {
   try {
     const payloadConfig = await config
@@ -39,12 +84,12 @@ async function fetchPortfolioDataFromDb() {
   if (Array.isArray(profile?.featuredProjects)) {
     profile.featuredProjects = profile.featuredProjects
       .filter((p) => p && typeof p === 'object')
-      .map(({ readmeContent: _readmeContent, ...cardData }) => cardData)
+      .map(({ readmeContent: _readmeContent, ...cardData }) => sanitizeDocMedia(cardData))
   }
   if (Array.isArray(profile?.allProjectsOrder)) {
     profile.allProjectsOrder = profile.allProjectsOrder
       .filter((p) => p && typeof p === 'object')
-      .map(({ readmeContent: _readmeContent, ...cardData }) => cardData)
+      .map(({ readmeContent: _readmeContent, ...cardData }) => sanitizeDocMedia(cardData))
   }
 
   let educationDocs = []
@@ -68,9 +113,9 @@ async function fetchPortfolioDataFromDb() {
       limit: 100,
       depth: 1,
     })
-    skillsDocs = (skillsRes.docs || []).filter(
-      (skill) => skill.showInFrontend !== false
-    )
+    skillsDocs = (skillsRes.docs || [])
+      .filter((skill) => skill.showInFrontend !== false)
+      .map(sanitizeDocMedia)
   } catch (e) {
     console.warn('Failed to load Skills collection:', e.message)
   }
@@ -91,9 +136,9 @@ async function fetchPortfolioDataFromDb() {
   let projectsDocs = []
   // 1. Prioritize drag-and-drop ordered featured projects from Globals -> Profile & Settings
   if (Array.isArray(profile?.featuredProjects) && profile.featuredProjects.length > 0) {
-    projectsDocs = profile.featuredProjects.filter(
-      (p) => p && typeof p === 'object' && p._status !== 'draft'
-    )
+    projectsDocs = profile.featuredProjects
+      .filter((p) => p && typeof p === 'object' && p._status !== 'draft')
+      .map(sanitizeDocMedia)
   }
 
   // 2. Fallback: If no projects selected in Globals, query all published projects sorted by newest first (-createdAt)
@@ -112,20 +157,20 @@ async function fetchPortfolioDataFromDb() {
       })
       projectsDocs = (projectsRes.docs || [])
         .filter((p) => p._status !== 'draft')
-        .map(({ readmeContent: _readmeContent, ...cardData }) => cardData)
+        .map(({ readmeContent: _readmeContent, ...cardData }) => sanitizeDocMedia(cardData))
     } catch (e) {
       console.warn('Failed to load Projects collection:', e.message)
     }
   }
 
   const sanitizedProfile = profile
-    ? {
+    ? sanitizeDocMedia({
         ...profile,
         allProjectsOrder: undefined,
         featuredProjects: (profile.featuredProjects || []).map((p) => ({
           id: typeof p === 'object' && p !== null ? p.id : p,
         })),
-      }
+      })
     : {}
 
   return {
@@ -227,17 +272,17 @@ async function fetchAllProjectsFromDb() {
   }
 
   const sanitizedProfile = profile
-    ? {
+    ? sanitizeDocMedia({
         ...profile,
         allProjectsOrder: undefined,
         featuredProjects: (profile.featuredProjects || []).map((p) => ({
           id: typeof p === 'object' && p !== null ? p.id : p,
         })),
-      }
+      })
     : {}
 
   return {
-    projects: orderedProjects,
+    projects: orderedProjects.map(sanitizeDocMedia),
     profile: sanitizedProfile,
   }
 }
@@ -275,7 +320,7 @@ async function fetchProjectBySlugFromDb(slug) {
       if (doc._status === 'draft') {
         return null
       }
-      return doc
+      return sanitizeDocMedia(doc)
     }
 
     // Try finding case-insensitively across projects
@@ -292,7 +337,7 @@ async function fetchProjectBySlugFromDb(slug) {
       if (matched._status === 'draft') {
         return null
       }
-      return matched
+      return sanitizeDocMedia(matched)
     }
   } catch (e) {
     console.warn(`Failed to find project with slug ${slug}:`, e.message)

@@ -133,12 +133,13 @@ export const Media = {
       options: { quality: 82 },
     },
     handlers: [
-      async (req, { params }) => {
-        const filename = params?.filename
+      async (req, context) => {
+        const resolvedParams = context?.params instanceof Promise ? await context.params : context?.params || req.routeParams
+        const filename = resolvedParams?.filename
         const bucket = process.env.S3_BUCKET || process.env.R2_BUCKET
         if (!bucket || !filename) return null
 
-        let prefix = params?.prefix || req.searchParams?.get('prefix') || ''
+        let prefix = resolvedParams?.prefix || req.searchParams?.get('prefix') || ''
         if (!prefix && req.payload) {
           try {
             const found = await req.payload.find({

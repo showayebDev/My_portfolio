@@ -8,18 +8,27 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 const publicDir = path.join(rootDir, "public");
 
-let buildId = "";
+// 1. Try environment variables from Render / Git CI
+let buildId = (
+  process.env.RENDER_GIT_COMMIT ||
+  process.env.COMMIT_SHA ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.GIT_COMMIT ||
+  ""
+).trim();
 
-// 1. Try to get git commit hash
-try {
-  buildId = execSync("git rev-parse HEAD", {
-    cwd: rootDir,
-    stdio: ["ignore", "pipe", "ignore"],
-  })
-    .toString()
-    .trim();
-} catch {
-  // Git command failed or not a git repository
+// 2. Try to get git commit hash if not available in env
+if (!buildId) {
+  try {
+    buildId = execSync("git rev-parse HEAD", {
+      cwd: rootDir,
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+  } catch {
+    // Git command failed or not a git repository
+  }
 }
 
 // 2. Fallback to unique build timestamp if git is unavailable

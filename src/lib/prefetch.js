@@ -77,9 +77,6 @@ export const preloadHeroImage = (imgSrc, customConfig = {}) => {
     return;
   }
 
-  // Mark cached immediately to prevent rapid/concurrent duplicate triggers
-  markImageCached(imgSrc);
-
   if (process.env.NODE_ENV !== "production") {
     console.log(`[Prefetch] 🖼️ Preloading hero image: "${imgSrc}"`);
   }
@@ -111,16 +108,26 @@ export const preloadHeroImage = (imgSrc, customConfig = {}) => {
     }
     img.src = targetSrc;
 
+    const onComplete = () => markImageCached(imgSrc);
+
     if (typeof img.decode === "function") {
-      img.decode().catch(() => {});
+      img.decode().then(onComplete).catch(onComplete);
+    } else {
+      img.onload = onComplete;
+      img.onerror = onComplete;
     }
   } catch {
     // Fallback for non-standard image URLs (e.g. data URLs or special external protocols)
     try {
       const fallbackImg = new Image();
       fallbackImg.src = imgSrc;
-    } catch {}
+      fallbackImg.onload = () => markImageCached(imgSrc);
+      fallbackImg.onerror = () => markImageCached(imgSrc);
+    } catch {
+      markImageCached(imgSrc);
+    }
   }
+
 };
 
 /**
@@ -143,25 +150,43 @@ export const prefetchRoute = (router, href) => {
     console.log(`[Prefetch] ⚡ Prefetching route: "${href}"`);
   }
 
-  // Next.js router.prefetch handles route prefetching & cache management natively
+  // 1. Request full route prefetch in Next.js router
   if (router && typeof router.prefetch === "function") {
     try {
-      router.prefetch(href);
-    } catch {}
+      router.prefetch(href, { kind: 'full' });
+    } catch {
+      try {
+        router.prefetch(href);
+      } catch {}
+    }
   }
+
+  // 2. Fetch full RSC payload containing complete page data, HTML and Markdown content
+  try {
+    fetch(href, {
+      headers: {
+        RSC: '1',
+      },
+    }).catch(() => {});
+  } catch {}
 };
 
 /**
- * Prefetches a project's Next.js route and exact hero image on hover.
+ * Prefetches a project's Next.js route data and hero image on hover.
+ * Ensures that clicking the card transitions to the project page instantly with all data pre-cached.
  */
 export const prefetchProject = (router, name, imgSrc, options = {}) => {
-  if (!name || typeof window === "undefined") return;
+  if (typeof window === "undefined") return;
 
-  const routePath = `/project/${name}`;
-  prefetchRoute(router, routePath);
+  // 1. Prefetch the Next.js App Router route data for instant zero-delay navigation
+  if (name && router && typeof router.prefetch === "function") {
+    const routePath = `/project/${name}`;
+    prefetchRoute(router, routePath);
+  }
 
-  if (imgSrc && !options.skipImagePreload) {
-    preloadHeroImage(imgSrc, options.imageConfig);
+  // 2. Preload the project's hero image for instant rendering without layout shift
+  if (imgSrc && !options?.skipImagePreload) {
+    preloadHeroImage(imgSrc, options?.imageConfig);
   }
 };
 

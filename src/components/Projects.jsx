@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AnimatedContent from "@/context/AnimatedContent/AnimatedContent";
-import { prefetchProject, prefetchRoute, markImageCached } from "@/lib/prefetch";
+import { prefetchProject, markImageCached } from "@/lib/prefetch";
 
 const tapeColors = [
   "washi-tape-amber",
@@ -20,10 +20,6 @@ const Projects = ({ projectData = [] }) => {
 
   const handlePrefetch = (name, imgSrc) => {
     prefetchProject(router, name, imgSrc);
-  };
-
-  const handlePrefetchAll = () => {
-    prefetchRoute(router, "/project");
   };
 
   return (
@@ -51,8 +47,6 @@ const Projects = ({ projectData = [] }) => {
           <Link
             href="/project"
             prefetch={false}
-            onMouseEnter={handlePrefetchAll}
-            onTouchStart={handlePrefetchAll}
             className="postage-stamp bg-[var(--card-kraft-color)] hover:bg-[var(--card-bg-color)] border-dashed border-[var(--border-color)] text-xs font-bold uppercase tracking-wider text-[var(--link-color)] transition-transform hover:scale-105"
           >
             🎟️ VIEW ARCHIVE →
