@@ -1,7 +1,10 @@
 node_modules
-.next
+payload-cms/node_modules
+payload-cms/.next
+astro/node_modules
+astro/dist
+astro/.astro
 .git
 .env*
-Dockerfile
 docker-compose*.yml
 README.md

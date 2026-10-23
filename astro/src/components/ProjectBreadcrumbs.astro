@@ -1,0 +1,27 @@
+---
+interface Props {
+  projectTitle: string;
+}
+
+const { projectTitle } = Astro.props;
+---
+
+<div class="flex items-center flex-wrap gap-2 text-xs collage-mono font-bold text-[var(--secondary-text-color)] mb-6 py-2 px-3 bg-[var(--card-note-color)] border border-[var(--border-color)] rounded-lg shadow-sm w-fit anim-fade-in">
+  <a
+    href="/"
+    class="hover:text-[var(--link-color)] transition-colors hover:underline"
+  >
+    HOME
+  </a>
+  <span class="text-[var(--border-subtle)]">⟶</span>
+  <a
+    href="/project"
+    class="hover:text-[var(--link-color)] transition-colors hover:underline"
+  >
+    PROJECTS
+  </a>
+  <span class="text-[var(--border-subtle)]">⟶</span>
+  <span class="text-[var(--text-color)] bg-[var(--card-kraft-color)] px-2 py-0.5 rounded border border-[var(--border-subtle)] truncate max-w-[200px] sm:max-w-none">
+    {projectTitle}
+  </span>
+</div>

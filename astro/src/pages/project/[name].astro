@@ -1,0 +1,148 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Button from '../../components/Button.astro';
+import ProjectBreadcrumbs from '../../components/ProjectBreadcrumbs.astro';
+import MarkdownView from '../../components/MarkdownView.astro';
+import { getAllProjects, getProjectBySlug, getProfile } from '../../lib/api.js';
+import { renderMarkdown } from '../../lib/markdown.js';
+
+export async function getStaticPaths() {
+  const { projects } = await getAllProjects();
+  return (projects || []).map((p: any) => ({
+    params: { name: p.slug || p.name },
+  }));
+}
+
+const { name } = Astro.params;
+const [project, profile] = await Promise.all([
+  getProjectBySlug(name),
+  getProfile(),
+]);
+
+if (!project) {
+  return Astro.redirect('/404');
+}
+
+const defaultTheme = profile?.theme || "dark";
+
+function parseButtons(buttons: any) {
+  if (Array.isArray(buttons)) return buttons;
+  if (typeof buttons === "string") {
+    try {
+      const parsed = JSON.parse(buttons);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {}
+  }
+  return [];
+}
+
+const buttons = parseButtons(project.buttons);
+const rawMarkdown = project.readmeContent || "";
+const renderedHtml = renderMarkdown(rawMarkdown);
+
+const imgSrc = (typeof project.image === "object" && project.image?.url)
+  ? project.image.url
+  : project.imageUrl || project.img || null;
+
+const title = `${project.title} – Projects`;
+const description = project.description || "";
+---
+
+<Layout title={title} description={description} defaultTheme={defaultTheme}>
+  <div class="container mx-auto px-4 py-8 max-w-7xl min-h-screen anim-fade-up">
+    <!-- Breadcrumb -->
+    <ProjectBreadcrumbs projectTitle={project.title} />
+
+    <div class="flex flex-col lg:flex-row gap-8 items-start">
+      <!-- Left: Compact Sticky Project Dossier Card -->
+      <div class="w-full lg:w-[325px] xl:w-[340px] shrink-0 lg:sticky top-6 self-start space-y-4">
+        <div class="collage-card p-4 sm:p-5 md:p-6 lg:p-4 relative overflow-visible shadow-sm">
+          <!-- Washi Tape -->
+          <div class="washi-tape washi-tape-center washi-tape-coral !w-[70px] !h-[18px] !-top-2"></div>
+
+          <div class="flex flex-col md:flex-row lg:flex-col gap-5 md:gap-7 lg:gap-3.5 items-center md:items-start lg:items-center">
+            <!-- Part 1: Polaroid Photo Frame -->
+            {imgSrc && (
+              <div class="shrink-0 flex justify-center w-full md:w-auto lg:w-full">
+                <div class="polaroid-frame !p-2 !pb-3 sm:!p-2.5 sm:!pb-3.5">
+                  <div class="w-48 h-48 sm:w-52 sm:h-52 md:w-56 md:h-56 lg:w-52 lg:h-52 aspect-square overflow-hidden border border-[var(--border-color)] bg-[var(--card-kraft-color)] relative rounded flex items-center justify-center">
+                    <img
+                      src={imgSrc}
+                      alt={project.title}
+                      class="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
+                      loading="eager"
+                    />
+                  </div>
+                  <div class="polaroid-caption !text-sm md:!text-base lg:!text-sm !mt-1.5 truncate max-w-[200px] md:max-w-[220px] lg:max-w-[200px]">
+                    {project.title}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <!-- Part 2: Project Details & Action Buttons -->
+            <div class="flex-1 w-full min-w-0 flex flex-col justify-between self-stretch">
+              <!-- Description Note -->
+              <div class="mb-4 lg:mb-3 p-3.5 md:p-4 lg:p-2.5 bg-[var(--card-note-color)] rounded-xl border border-[var(--border-color)] text-xs md:text-sm lg:text-[11px] text-[var(--secondary-text-color)] font-medium leading-relaxed">
+                <div class="text-[10px] md:text-[11px] lg:text-[10px] uppercase font-bold tracking-wider text-[var(--link-color)] collage-mono mb-1.5 flex items-center gap-1.5">
+                  <span>✦</span>
+                  <span>PROJECT OVERVIEW</span>
+                </div>
+                <p class="line-clamp-4 md:line-clamp-none lg:line-clamp-3 hover:line-clamp-none transition-all">
+                  {project.description}
+                </p>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-1 gap-2.5 w-full mt-auto">
+                {buttons.map((btn: any) => {
+                  const isGitHub = (btn.name || "").toLowerCase().includes("github");
+                  const isSingle = buttons.length === 1;
+                  return (
+                    <Button
+                      text={btn.name}
+                      link={btn.link}
+                      className={`tactile-btn flex items-center justify-center gap-1.5 px-3.5 py-2.5 text-xs font-bold w-full text-center transition-all duration-200 ${
+                        isSingle ? "sm:col-span-2 md:col-span-2 lg:col-span-1" : ""
+                      } ${
+                        isGitHub
+                          ? "tactile-btn-primary"
+                          : "bg-[var(--card-kraft-color)] hover:bg-[var(--card-bg-color)]"
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Technical Field Report Document -->
+      <div class="w-full flex-1 min-w-0">
+        <div class="relative">
+          <!-- Top Washi Tape on Document -->
+          <div class="washi-tape washi-tape-corner-left washi-tape-cyan !w-[75px] !-top-3 !left-6"></div>
+
+          <!-- Header Ribbon -->
+          <div class="flex items-center justify-between mb-4 px-2">
+            <span class="dymo-label text-[10px]">
+              ✦ ARCHIVAL DOCUMENTATION // SPECIFICATION ✦
+            </span>
+            <span class="collage-handwritten text-lg font-bold text-[var(--link-color)]">
+              Field Notes & Guide
+            </span>
+          </div>
+
+          {renderedHtml ? (
+            <MarkdownView html={renderedHtml} />
+          ) : (
+            <div class="collage-card p-8 text-center text-[var(--secondary-text-color)] collage-mono text-sm">
+              No archival README document filed for this exhibit.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

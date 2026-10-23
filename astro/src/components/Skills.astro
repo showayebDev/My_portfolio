@@ -1,0 +1,181 @@
+---
+interface Props {
+  skillsData?: any[];
+  categoriesData?: any[];
+  showPercent?: boolean;
+}
+
+const {
+  skillsData = [],
+  categoriesData = [],
+  showPercent = false,
+} = Astro.props;
+
+const categories = [
+  { id: "all", label: "All Skills" },
+  ...(categoriesData.length > 0
+    ? categoriesData.map((cat) => ({
+        id: cat.slug || cat.id || (cat.name ? cat.name.toLowerCase().replace(/\s+/g, "-") : ""),
+        label: cat.name || cat.slug,
+      }))
+    : [
+        { id: "front-end", label: "Front-end" },
+        { id: "back-end", label: "Back-end" },
+        { id: "framework", label: "Framework" },
+        { id: "language", label: "Language" },
+        { id: "database", label: "Database" },
+        { id: "auth-services", label: "Auth/Services" },
+        { id: "tools", label: "Tools" },
+      ]),
+];
+
+const skills = skillsData.filter((s) => s.showInFrontend !== false);
+
+function getCategoryIds(cats: any): string[] {
+  if (!cats) return [];
+  const list = Array.isArray(cats) ? cats : [cats];
+  return list.map((c) => {
+    if (typeof c === "object" && c !== null) {
+      return (c.slug || c.id || c.name || "").toString().toLowerCase().replace(/\s+/g, "-");
+    }
+    return String(c).toLowerCase().replace(/\s+/g, "-");
+  });
+}
+---
+
+<section class="collage-card p-6 sm:p-7 relative overflow-visible anim-fade-up anim-delay-200" id="experience">
+  <!-- Washi Tape Accent -->
+  <div class="washi-tape washi-tape-corner-right washi-tape-sage"></div>
+
+  <!-- Section Header -->
+  <div class="flex flex-wrap justify-between items-center gap-3 mb-6 pb-3 border-b-2 border-dashed border-[var(--border-subtle)]">
+    <div class="flex items-center gap-2.5">
+      <span class="dymo-label">
+        ✦ SKILLS ✦
+      </span>
+    </div>
+    <span class="collage-handwritten text-xl font-bold text-[var(--link-color)] -rotate-1">
+      Swatches & Proven Tools
+    </span>
+  </div>
+
+  <!-- Category Tabs -->
+  <div class="flex flex-wrap gap-2 mb-8 overflow-x-auto pb-2 border-b border-[var(--border-subtle)]" id="skill-tabs">
+    {categories.map((cat, idx) => (
+      <button
+        type="button"
+        data-cat-target={cat.id}
+        class={`skill-cat-btn px-3.5 py-1.5 rounded-lg text-xs collage-mono font-bold tracking-wider uppercase transition-all cursor-pointer border ${
+          idx === 0
+            ? "active-tab bg-[var(--btn-2-bg)] text-[var(--btn-2-text)] border-[var(--border-color)] shadow-sm -rotate-1 scale-105"
+            : "bg-[var(--card-note-color)] text-[var(--secondary-text-color)] border-[var(--border-subtle)] hover:bg-[var(--card-kraft-color)] hover:text-[var(--text-color)]"
+        }`}
+      >
+        {cat.label}
+      </button>
+    ))}
+  </div>
+
+  <!-- Skills Grid: Die-Cut Stickers -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 justify-items-center content-start items-start min-h-[260px]" id="skills-grid">
+    {skills.map((skill, index) => {
+      const catIds = getCategoryIds(skill.categories).join(" ");
+      const iconSrc = (typeof skill.icon === "object" && skill.icon?.url)
+        ? skill.icon.url
+        : skill.iconUrl || skill.src || "";
+      const percent = Number(skill.percent) || 0;
+
+      const tiltClass =
+        index % 4 === 0
+          ? "hover:-rotate-2"
+          : index % 4 === 1
+          ? "hover:rotate-2"
+          : index % 4 === 2
+          ? "hover:rotate-3"
+          : "hover:-rotate-3";
+
+      return (
+        <div
+          class={`skill-item skill-sticker w-full max-w-[130px] h-fit self-start ${tiltClass} transition-all duration-300`}
+          data-skill-cats={catIds}
+          style={`--skill-color: ${skill.color || "#f59e0b"}`}
+        >
+          {showPercent ? (
+            <div
+              class="skill-sticker-ring mb-3"
+              style={`--skill-percent: ${percent}%`}
+            >
+              <div class="skill-sticker-inner">
+                {iconSrc ? (
+                  <img
+                    src={iconSrc}
+                    alt={skill.name}
+                    width="32"
+                    height="32"
+                    class="w-8 h-8 object-contain select-none transition-transform duration-300 hover:scale-110"
+                    loading="lazy"
+                  />
+                ) : (
+                  <span class="text-xs">⚡</span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div class="w-14 h-14 rounded-full border border-[var(--border-subtle)] bg-[var(--card-note-color)] p-2.5 flex items-center justify-center mb-3 shadow-inner hover:rotate-6 transition-transform">
+              {iconSrc ? (
+                <img
+                  src={iconSrc}
+                  alt={skill.name}
+                  width="34"
+                  height="34"
+                  class="w-8.5 h-8.5 object-contain select-none transition-transform duration-300 hover:scale-110"
+                  loading="lazy"
+                />
+              ) : (
+                <span class="text-xs">⚡</span>
+              )}
+            </div>
+          )}
+
+          <span class="collage-mono text-xs font-bold text-[var(--text-color)] text-center tracking-tight">
+            {skill.name}
+          </span>
+
+          {showPercent && (
+            <span class="collage-handwritten text-sm font-bold text-[var(--link-color)] mt-0.5">
+              {percent}% approved
+            </span>
+          )}
+        </div>
+      );
+    })}
+  </div>
+</section>
+
+<script is:inline>
+  const tabButtons = document.querySelectorAll('.skill-cat-btn');
+  const skillItems = document.querySelectorAll('.skill-item');
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-cat-target');
+      
+      tabButtons.forEach(b => {
+        b.classList.remove('active-tab', 'bg-[var(--btn-2-bg)]', 'text-[var(--btn-2-text)]', 'border-[var(--border-color)]', 'shadow-sm', '-rotate-1', 'scale-105');
+        b.classList.add('bg-[var(--card-note-color)]', 'text-[var(--secondary-text-color)]', 'border-[var(--border-subtle)]');
+      });
+
+      btn.classList.remove('bg-[var(--card-note-color)]', 'text-[var(--secondary-text-color)]', 'border-[var(--border-subtle)]');
+      btn.classList.add('active-tab', 'bg-[var(--btn-2-bg)]', 'text-[var(--btn-2-text)]', 'border-[var(--border-color)]', 'shadow-sm', '-rotate-1', 'scale-105');
+
+      skillItems.forEach(item => {
+        const cats = item.getAttribute('data-skill-cats') || '';
+        if (target === 'all' || cats.includes(target)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>

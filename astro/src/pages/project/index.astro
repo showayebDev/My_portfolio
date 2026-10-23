@@ -1,0 +1,238 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Button from '../../components/Button.astro';
+import { getAllProjects } from '../../lib/api.js';
+
+const { projects, profile } = await getAllProjects();
+
+const title = profile?.name ? `Projects – ${profile.name}` : "Projects – Portfolio";
+const description = profile?.siteDescription || "Browse my recent open source software, web applications, and developer tools.";
+const defaultTheme = profile?.theme || "dark";
+
+const tapeColors = [
+  "washi-tape-amber",
+  "washi-tape-sage",
+  "washi-tape-cyan",
+  "washi-tape-coral",
+  "washi-tape-lavender",
+  "washi-tape-rose",
+];
+
+const featuredIds = new Set(
+  (profile?.featuredProjects || []).map((p: any) =>
+    typeof p === "object" ? p?.id : p
+  )
+);
+
+const socials = Array.isArray(profile?.socials) ? profile.socials : [];
+const github = socials.find(
+  (s: any) =>
+    s.platform?.toLowerCase() === "github" ||
+    s.name?.toLowerCase() === "github"
+);
+const githubUrl =
+  (github && github.url?.trim()) ||
+  (profile?.exploreMoreGitHubUrl &&
+    profile.exploreMoreGitHubUrl !== "https://github.com"
+    ? profile.exploreMoreGitHubUrl
+    : (github?.url || "https://github.com"));
+
+function parseButtons(buttons: any) {
+  if (Array.isArray(buttons)) return buttons;
+  if (typeof buttons === "string") {
+    try {
+      const parsed = JSON.parse(buttons);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {}
+  }
+  return [];
+}
+---
+
+<Layout title={title} description={description} defaultTheme={defaultTheme}>
+  <div id="projects" class="relative overflow-visible flex flex-col py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto min-h-screen">
+    <!-- Top Header Bar: Archival Breadcrumb -->
+    <div class="flex items-center justify-between gap-4 mb-8 anim-fade-in">
+      <div class="flex items-center flex-wrap gap-2 text-xs collage-mono font-bold text-[var(--secondary-text-color)] py-2 px-3.5 bg-[var(--card-note-color)] border border-[var(--border-color)] rounded-xl shadow-sm">
+        <a
+          href="/"
+          class="hover:text-[var(--link-color)] transition-colors hover:underline flex items-center gap-1.5"
+        >
+          <span>◄</span>
+          <span>HOME</span>
+        </a>
+        <span class="text-[var(--border-subtle)]">⟶</span>
+        <span class="text-[var(--text-color)] bg-[var(--card-kraft-color)] px-2.5 py-0.5 rounded border border-[var(--border-subtle)] uppercase">
+          PROJECTS
+        </span>
+      </div>
+    </div>
+
+    <!-- Exhibition Main Header -->
+    <div class="text-center mb-10 relative anim-fade-up">
+      <!-- Top Washi Tape -->
+      <div class="washi-tape washi-tape-center washi-tape-amber !w-[110px]"></div>
+
+      <div class="inline-block mb-3 pt-2">
+        <span class="dymo-label text-xs sm:text-sm">
+          ✦ PROJECTS ✦
+        </span>
+      </div>
+      <h1 class="collage-serif text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[var(--text-color)] tracking-tight">
+        Curated Works & Quests
+      </h1>
+      <p class="collage-handwritten text-xl sm:text-2xl font-bold text-[var(--link-color)] mt-2">
+        Inspect recent builds, source code, and live software deployments
+      </p>
+    </div>
+
+    <!-- Projects Grid -->
+    <div class="w-full anim-fade-up anim-delay-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-stretch">
+        {projects.map((project: any, index: number) => {
+          const slug = project.slug || project.name;
+          const imgSrc = (typeof project.image === "object" && project.image?.url)
+            ? project.image.url
+            : project.imageUrl || project.img || null;
+          const tapeColor = tapeColors[index % tapeColors.length];
+          const isAlt = index % 2 === 1;
+          const buttons = parseButtons(project.buttons);
+          const isFeatured = featuredIds.has(project.id) || project.featured === true;
+
+          return (
+            <div class="w-full">
+              <!-- Collage Exhibition Card -->
+              <div
+                class={`collage-card p-4 sm:p-5 min-h-[380px] h-full flex flex-col justify-between relative overflow-visible ${
+                  isAlt ? "hover:rotate-1" : "hover:-rotate-1"
+                }`}
+              >
+                <!-- Corner Washi Tape -->
+                <div
+                  class={`washi-tape ${tapeColor} !w-[65px] !h-[16px] !top-[-8px] !right-[16px] !transform ${
+                    isAlt ? "!rotate-4" : "!-rotate-4"
+                  }`}
+                ></div>
+
+                <!-- Top: Specimen Badge + Polaroid Photo + Details Link -->
+                <a
+                  href={`/project/${slug}`}
+                  class="block group cursor-pointer flex-1"
+                >
+                  <div class="flex justify-end items-center min-h-[18px] mb-2 px-1">
+                    {isFeatured && (
+                      <span class="text-amber-500 text-xs font-bold" title="Featured Project">★</span>
+                    )}
+                  </div>
+
+                  <!-- Polaroid Image Frame -->
+                  <div class="flex justify-center mb-3">
+                    <div class="polaroid-frame !p-2 !pb-3">
+                      <div class="w-48 h-48 sm:w-52 sm:h-52 aspect-square overflow-hidden border border-[var(--border-color)] bg-[var(--card-kraft-color)] relative rounded flex items-center justify-center">
+                        {imgSrc ? (
+                          <img
+                            class="w-full h-full object-contain transition-transform duration-500 ease-in-out group-hover:scale-105"
+                            src={imgSrc}
+                            alt={project.title}
+                            width="500"
+                            height="300"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div class="w-full h-full flex items-center justify-center text-4xl">
+                            🎨
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Title and Short Details -->
+                  <div class="px-1 text-left">
+                    <h4 class="collage-serif text-lg font-bold text-[var(--text-color)] group-hover:text-[var(--link-color)] transition-colors line-clamp-1">
+                      {project.title}
+                    </h4>
+                    <p class="text-xs text-[var(--secondary-text-color)] line-clamp-2 mt-1.5 font-medium leading-relaxed">
+                      {project.description}
+                    </p>
+                  </div>
+                </a>
+
+                <!-- Bottom Action Badges -->
+                <div class="flex items-center gap-2 flex-wrap pt-3 mt-4 border-t-2 border-dashed border-[var(--border-subtle)] relative z-10">
+                  {buttons.length > 0 ? (
+                    buttons.map((btn: any) => (
+                      <Button
+                        text={btn.name}
+                        link={btn.link}
+                        className="tactile-btn px-3 py-1.5 text-xs font-bold flex items-center gap-1.5"
+                      />
+                    ))
+                  ) : (
+                    <a
+                      href={`/project/${slug}`}
+                      class="tactile-btn px-3 py-1.5 text-xs font-bold text-[var(--secondary-text-color)] hover:text-[var(--link-color)] transition-colors"
+                    >
+                      VIEW DETAILS ⟶
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <!-- Master GitHub Code Vault Showcase (Full-Width Bottom Banner) -->
+      <div class="mt-12 w-full anim-fade-up anim-delay-200">
+        <a
+          href={githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="block group"
+        >
+          <div class="collage-card collage-kraft p-6 sm:p-8 relative overflow-visible hover:shadow-xl transition-all">
+            <!-- Washi Tapes on Top Corners -->
+            <div class="washi-tape washi-tape-corner-left washi-tape-amber !w-[90px]"></div>
+            <div class="washi-tape washi-tape-corner-right washi-tape-sage !w-[90px]"></div>
+
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+              <!-- Left: GitHub Insignia Stamp + Text -->
+              <div class="flex flex-col md:flex-row items-center gap-5">
+                <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-[var(--border-color)] bg-[var(--card-bg-color)] flex items-center justify-center shadow-md shrink-0 relative group-hover:scale-105 group-hover:-rotate-6 transition-transform">
+                  <svg class="w-10 h-10 text-[var(--text-color)] group-hover:text-[var(--link-color)] transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                  </svg>
+                  <div class="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-[var(--stamp-red)] text-white text-[10px] flex items-center justify-center font-bold border border-[var(--border-color)]">
+                    BONUS
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-center md:justify-start gap-2 mb-1.5">
+                    <span class="dymo-label text-[10px]">
+                      ✦ REPOSITORY VAULT ✦
+                    </span>
+                  </div>
+                  <h3 class="collage-serif text-2xl sm:text-3xl font-bold text-[var(--text-color)]">
+                    Explore Complete Open Source Vault
+                  </h3>
+                  <p class="text-xs sm:text-sm text-[var(--secondary-text-color)] mt-1 max-w-xl font-medium">
+                    Visit my GitHub profile for full repositories, code experiments, packages, and developer utilities.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Right: Tactile Vault Action Button -->
+              <div class="shrink-0">
+                <span class="tactile-btn tactile-btn-primary inline-flex items-center gap-2 px-6 py-3 text-xs sm:text-sm uppercase tracking-wider font-extrabold group-hover:scale-105 transition-transform">
+                  <span>[ VISIT GITHUB VAULT ↗ ]</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>

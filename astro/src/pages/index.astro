@@ -1,0 +1,37 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProfileCard from '../components/ProfileCard.astro';
+import About from '../components/About.astro';
+import Projects from '../components/Projects.astro';
+import Skills from '../components/Skills.astro';
+import { getPortfolioData } from '../lib/api.js';
+
+const { profile, education, skills, categories, projects } = await getPortfolioData();
+
+const title = profile?.siteTitle || (profile?.name ? `${profile.name} – Portfolio` : "Portfolio");
+const description = profile?.siteDescription || "Welcome to my portfolio! Discover my skills, projects, and work in web development.";
+const defaultTheme = profile?.theme || "dark";
+const showPercent = typeof profile?.showPercent === "boolean" ? profile.showPercent : false;
+---
+
+<Layout title={title} description={description} defaultTheme={defaultTheme}>
+  <div class="relative min-h-screen overflow-visible">
+    <!-- Background Decorative Collage Tape Accent -->
+    <div class="hidden xl:block fixed top-6 right-8 pointer-events-none select-none z-0">
+      <div class="washi-tape washi-tape-sage !w-[100px] !h-[24px] rotate-12 shadow-sm"></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 px-4 md:px-8 lg:px-12 py-8 relative z-10">
+      <ProfileCard profile={profile} />
+      <main class="flex-1 space-y-8" id="about">
+        <About educationData={education} />
+        <Projects projectData={projects} />
+        <Skills
+          skillsData={skills}
+          categoriesData={categories}
+          showPercent={showPercent}
+        />
+      </main>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,54 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getProfile } from '../lib/api.js';
+
+const profile = await getProfile();
+const defaultTheme = profile?.theme || "dark";
+---
+
+<Layout title="404: Page Not Found – Portfolio" description="The requested page could not be located." defaultTheme={defaultTheme}>
+  <div class="min-h-[85vh] flex items-center justify-center px-4 py-12 anim-fade-up">
+    <div class="relative max-w-md w-full collage-card p-8 sm:p-10 text-center shadow-lg border border-[var(--border-color)] overflow-visible">
+      <!-- Decorative washi tape accent -->
+      <div class="washi-tape washi-tape-center washi-tape-coral !w-[100px] !h-[20px]"></div>
+
+      <!-- 404 Typography -->
+      <div class="select-none mt-2">
+        <div class="text-7xl sm:text-8xl font-black font-serif tracking-tight text-[var(--text-color)]">
+          404
+        </div>
+        <span class="collage-handwritten text-xl sm:text-2xl text-[var(--link-color)] block mt-1 font-bold">
+          Page Not Found
+        </span>
+      </div>
+
+      <!-- Description -->
+      <p class="text-sm text-[var(--secondary-text-color)] mt-3 leading-relaxed">
+        The exhibit or document you are looking for doesn't exist or has been relocated in the archives.
+      </p>
+
+      <!-- Minimal Action Buttons -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
+        <a
+          href="/"
+          class="tactile-btn tactile-btn-primary w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold shadow-sm hover:scale-[1.02] transition-transform"
+        >
+          <span>◄ Back to Home</span>
+        </a>
+
+        <button
+          type="button"
+          onclick="window.history.back()"
+          class="tactile-btn w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold hover:bg-[var(--card-kraft-color)] transition-colors cursor-pointer"
+        >
+          <span>Go Back</span>
+        </button>
+      </div>
+
+      <!-- Minimal error code indicator -->
+      <div class="mt-8 pt-5 border-t border-dashed border-[var(--border-subtle)] text-[11px] collage-mono text-[var(--secondary-text-color)]">
+        HTTP 404 • Resource Not Located
+      </div>
+    </div>
+  </div>
+</Layout>
