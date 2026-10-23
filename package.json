@@ -4,7 +4,6 @@
   "private": true,
   "description": "Portfolio Monorepo: Astro SSG Frontend & Payload CMS Backend",
   "scripts": {
-    "start": "npm run start --prefix payload-cms",
     "start:cms": "npm run start --prefix payload-cms",
     "start:astro": "npm run preview --prefix astro",
     "dev:cms": "npm run dev --prefix payload-cms",
