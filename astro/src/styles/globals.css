@@ -485,6 +485,103 @@ h1, h2, h3, h4, .collage-serif {
   text-decoration-thickness: 1px;
 }
 
+.markdown-body a:has(img) {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Markdown Images, Badges, & Shields */
+.markdown-body img {
+  display: inline-block !important;
+  vertical-align: middle;
+  max-width: 100%;
+  height: auto;
+  box-sizing: content-box;
+  margin: 3px 2px;
+  border-radius: 4px;
+}
+
+.markdown-body p[align="center"],
+.markdown-body div[align="center"] {
+  text-align: center !important;
+}
+
+.markdown-body p[align="center"] img,
+.markdown-body div[align="center"] img {
+  display: inline-block !important;
+  vertical-align: middle;
+  margin: 3px 3px;
+}
+
+/* Blockquote */
+.markdown-body blockquote {
+  border-left: 4px solid var(--link-color) !important;
+  background-color: var(--card-note-color);
+  color: var(--secondary-text-color) !important;
+  padding: 14px 20px !important;
+  margin: 18px 0 !important;
+  border-radius: 0 10px 10px 0;
+  font-style: italic;
+}
+
+.markdown-body blockquote p {
+  margin: 0 !important;
+  line-height: 1.65;
+}
+
+/* Horizontal Rule */
+.markdown-body hr {
+  border: 0;
+  border-top: 2px dashed var(--border-subtle) !important;
+  margin: 24px 0 !important;
+  height: 0;
+}
+
+/* Lists */
+.markdown-body ul {
+  list-style-type: disc !important;
+  padding-left: 24px !important;
+  margin: 14px 0 !important;
+}
+
+.markdown-body ol {
+  list-style-type: decimal !important;
+  padding-left: 24px !important;
+  margin: 14px 0 !important;
+}
+
+.markdown-body li {
+  margin-bottom: 6px;
+}
+
+.markdown-body li > p {
+  margin-bottom: 6px;
+}
+
+/* Tables */
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 0.9rem;
+  overflow-x: auto;
+  display: block;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--border-color);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.markdown-body th {
+  background-color: var(--card-kraft-color);
+  font-weight: 700;
+}
+
 .markdown-body pre {
   background-color: #f5eedf !important;
   color: #231f1c !important;
