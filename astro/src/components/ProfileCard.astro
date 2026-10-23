@@ -1,0 +1,370 @@
+---
+interface Props {
+  profile?: any;
+}
+
+const { profile = {} } = Astro.props;
+
+const name = profile.name || "";
+const greeting = profile.greeting || "";
+const bio = profile.bio || "";
+const status = profile.status ? profile.status.trim() : "";
+const job = profile.job || "";
+const location = profile.location || "";
+
+const showJob = profile.showJob !== false && profile.showJob !== 0;
+const showLocation = profile.showLocation !== false && profile.showLocation !== 0;
+const showExperience = profile.showExperience !== false && profile.showExperience !== 0;
+
+const rawExperience = profile.experience;
+const currentYear = new Date().getFullYear();
+let experience = "";
+
+if (rawExperience !== undefined && rawExperience !== null && String(rawExperience).trim() !== "") {
+  const parsedYear = parseInt(String(rawExperience).trim(), 10);
+  if (!isNaN(parsedYear) && parsedYear > 1900 && parsedYear <= currentYear) {
+    experience = `${currentYear - parsedYear}+ Years`;
+  } else {
+    experience = String(rawExperience);
+  }
+}
+
+const avatarSrc = (typeof profile.avatar === "object" && profile.avatar?.url)
+  ? profile.avatar.url
+  : profile.avatarUrl || null;
+
+const email = profile.email || "";
+const socials = Array.isArray(profile.socials) ? profile.socials : [];
+const hasQuickInfo = Boolean((showJob && job) || (showLocation && location) || (showExperience && experience));
+
+const configTheme = profile.theme || "dark";
+const showToggle = configTheme !== "dark" && configTheme !== "light";
+---
+
+<aside class="w-full lg:w-1/3 xl:w-1/4 space-y-8 anim-fade-up" id="profile">
+  <section class="collage-card p-6 sm:p-7 md:p-8 lg:p-7 flex flex-col items-center text-center relative overflow-visible">
+    <!-- Top Washi Tape Strips -->
+    <div class="washi-tape washi-tape-center washi-tape-amber"></div>
+    <div class="washi-tape washi-tape-corner-right washi-tape-sage"></div>
+
+    <!-- Header Row: Theme Toggle + DYMO Tape Label -->
+    <div class="flex justify-between items-center w-full mb-6 pt-1 text-[var(--secondary-text-color)]">
+      {showToggle ? (
+        <button
+          id="theme-toggle-btn"
+          class="die-cut-sticker p-2 hover:bg-[var(--card-kraft-color)] cursor-pointer"
+          title="Toggle Theme"
+          type="button"
+          data-config={configTheme}
+          aria-label="Toggle Theme"
+        >
+          {/* Laptop / System icon */}
+          <span id="theme-icon-auto" class="hidden">
+            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+          </span>
+          {/* Moon icon for dark */}
+          <span id="theme-icon-dark" class="hidden">
+            <svg class="w-4 h-4 text-amber-200" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>
+            </svg>
+          </span>
+          {/* Sun icon for light */}
+          <span id="theme-icon-light" class="hidden">
+            <svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2a1 1 0 011 1v2a1 1 0 11-2 0V3a1 1 0 011-1zm0 15a5 5 0 100-10 5 5 0 000 10zm0 2a1 1 0 011 1v2a1 1 0 11-2 0v-2a1 1 0 011-1zm-9-8a1 1 0 011-1h2a1 1 0 110 2H4a1 1 0 01-1-1zm15 0a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1zm-11.364-5.636a1 1 0 011.414 0l1.414 1.414a1 1 0 01-1.414 1.414L6.636 4.778a1 1 0 010-1.414zm10.607 10.607a1 1 0 011.414 0l1.414 1.414a1 1 0 01-1.414 1.414l-1.414-1.414a1 1 0 010-1.414zm-10.607 0a1 1 0 010 1.414l-1.414 1.414a1 1 0 01-1.414-1.414l1.414-1.414a1 1 0 011.414 0zm10.607-10.607a1 1 0 010 1.414l-1.414 1.414a1 1 0 11-1.414-1.414l1.414-1.414a1 1 0 011.414 0z"/>
+            </svg>
+          </span>
+        </button>
+      ) : (
+        <div class="w-8 h-8"></div>
+      )}
+
+      <div class="dymo-label">
+        <span>✦ PROFILE ✦</span>
+      </div>
+
+      <div class="w-8 h-8"></div>
+    </div>
+
+    <!-- Profile Body: 2 columns on tablet, single column on mobile & desktop -->
+    <div class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6 md:gap-8 items-start">
+      <!-- Section 1: Visual Identity & Bio -->
+      <div class="flex flex-col items-center text-center w-full">
+        <!-- Status Postage Stamp Badge -->
+        {status && (
+          <div class="mb-5 postage-stamp bg-[var(--card-kraft-color)] border-dashed border-[var(--border-color)]">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block"></span>
+            <span class="font-bold text-[11px] uppercase tracking-wider text-[var(--text-color)]">
+              {status}
+            </span>
+          </div>
+        )}
+
+        <!-- Vintage Polaroid Avatar -->
+        <div class="mb-6 relative group">
+          <div class="washi-tape washi-tape-center washi-tape-coral !w-[60px] !h-[16px] !top-[-8px]"></div>
+
+          <div class="polaroid-frame">
+            <div class="w-32 h-32 overflow-hidden border border-[var(--border-color)] bg-[var(--card-kraft-color)] flex items-center justify-center">
+              {avatarSrc ? (
+                <img
+                  alt={name || "Profile"}
+                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  src={avatarSrc}
+                  width="140"
+                  height="140"
+                  loading="eager"
+                />
+              ) : (
+                <span class="text-4xl text-[var(--secondary-text-color)] select-none">
+                  {name ? name.charAt(0).toUpperCase() : "👤"}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <!-- Name & Greeting Typography -->
+        {(greeting || name) && (
+          <div class="mb-2">
+            <p class="collage-handwritten text-xl text-[var(--link-color)] font-bold -rotate-1">
+              {greeting || "Hello there!"}
+            </p>
+            <h1 class="collage-serif text-2xl font-extrabold text-[var(--text-color)] mt-0.5">
+              {name}
+            </h1>
+          </div>
+        )}
+
+        <!-- Bio in Archival Index Paper Scrap -->
+        {bio && (
+          <div class="w-full mt-3 p-3.5 bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl shadow-inner relative text-left">
+            <div class="absolute -top-2.5 right-4 px-2 py-0.5 bg-[var(--card-bg-color)] border border-[var(--border-color)] rounded text-[9px] collage-mono font-bold uppercase tracking-wider text-[var(--secondary-text-color)]">
+              NOTE
+            </div>
+            <p class="text-xs text-[var(--text-color)] leading-relaxed font-medium">
+              {bio}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <!-- Section 2: Quick Info & Postal Dispatch / Socials -->
+      <div class="flex flex-col w-full md:border-l md:border-dashed md:border-[var(--border-subtle)] md:pl-8 lg:border-l-0 lg:pl-0 md:justify-center">
+        <!-- Quick Info Field Entries -->
+        {hasQuickInfo && (
+          <div class="w-full mt-6 md:mt-0 pt-5 md:pt-0 border-t-2 md:border-t-0 lg:border-t-2 lg:pt-5 lg:mt-6 border-dashed border-[var(--border-subtle)] space-y-2.5 text-xs">
+            {showJob && job && (
+              <div class="flex justify-between items-center bg-[var(--card-note-color)] px-3 py-2 rounded-lg border border-[var(--border-subtle)]">
+                <span class="collage-mono text-[10px] uppercase font-bold text-[var(--secondary-text-color)]">
+                  [ROLE]
+                </span>
+                <span class="text-[var(--text-color)] font-bold">
+                  {job}
+                </span>
+              </div>
+            )}
+            {showLocation && location && (
+              <div class="flex justify-between items-center bg-[var(--card-note-color)] px-3 py-2 rounded-lg border border-[var(--border-subtle)]">
+                <span class="collage-mono text-[10px] uppercase font-bold text-[var(--secondary-text-color)]">
+                  [BASE]
+                </span>
+                <span class="text-[var(--text-color)] font-bold">
+                  {location}
+                </span>
+              </div>
+            )}
+            {showExperience && experience && (
+              <div class="flex justify-between items-center bg-[var(--card-note-color)] px-3 py-2 rounded-lg border border-[var(--border-subtle)]">
+                <span class="collage-mono text-[10px] uppercase font-bold text-[var(--secondary-text-color)]">
+                  [EXP]
+                </span>
+                <span class="text-[var(--text-color)] font-bold">
+                  {experience}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <!-- Postal Dispatch & Social Stickers -->
+        {(socials.length > 0 || email) && (
+          <div class={`w-full ${hasQuickInfo ? "mt-7 md:mt-6 pt-4 border-t-2 border-dashed border-[var(--border-subtle)]" : "mt-6 md:mt-0 pt-4 md:pt-0 border-t-2 md:border-t-0 lg:border-t-2 lg:pt-4 lg:mt-6 border-dashed border-[var(--border-subtle)]"}`}>
+            <div class="flex items-center justify-center mb-4">
+              <span class="dymo-label bg-[var(--stamp-red)] text-white text-[10px]">
+                DISPATCH // REACH ME
+              </span>
+            </div>
+
+            <div class="w-full space-y-2 text-xs">
+              {socials.map((social) => {
+                const platformLower = (social.platform || "").toLowerCase();
+                let username = social.name;
+                try {
+                  const cleanUrl = (social.url || "").replace(/\/$/, "");
+                  const parts = cleanUrl.split("/");
+                  const lastPart = parts[parts.length - 1] || social.name;
+                  if (["github", "facebook", "linkedin", "whatsapp"].includes(platformLower)) {
+                    username = lastPart;
+                  } else if (["instagram", "twitter", "telegram"].includes(platformLower)) {
+                    username = lastPart.startsWith("@") ? lastPart : "@" + lastPart;
+                  }
+                } catch (_e) {}
+
+                return (
+                  <a
+                    href={social.url || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex justify-between items-center p-2.5 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl transition-all duration-200 group hover:translate-x-1 shadow-sm"
+                  >
+                    <div class="flex items-center gap-2.5">
+                      <span class="w-7 h-7 rounded-lg bg-[var(--card-bg-color)] border border-[var(--border-color)] flex items-center justify-center text-sm text-[var(--text-color)] group-hover:rotate-6 transition-transform">
+                        🔗
+                      </span>
+                      <span class="font-bold text-[var(--text-color)]">
+                        {social.platform}
+                      </span>
+                    </div>
+                    <span class="collage-mono text-[11px] text-[var(--secondary-text-color)] group-hover:text-[var(--link-color)] transition-colors truncate max-w-[120px] md:max-w-[180px] lg:max-w-[120px]">
+                      {username}
+                    </span>
+                  </a>
+                );
+              })}
+
+              {email && (
+                <a
+                  href={`mailto:${email}`}
+                  class="flex justify-between items-center p-2.5 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl transition-all duration-200 group hover:translate-x-1 shadow-sm"
+                >
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-7 h-7 rounded-lg bg-[var(--card-bg-color)] border border-[var(--border-color)] flex items-center justify-center text-sm text-[var(--stamp-red)] group-hover:rotate-6 transition-transform">
+                      ✉️
+                    </span>
+                    <span class="font-bold text-[var(--text-color)]">
+                      Email
+                    </span>
+                  </div>
+                  <span class="collage-mono text-[11px] text-[var(--secondary-text-color)] group-hover:text-[var(--link-color)] transition-colors truncate max-w-[120px] md:max-w-[180px] lg:max-w-[120px]">
+                    {email}
+                  </span>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+</aside>
+
+<script is:inline>
+  (function() {
+    const btn = document.getElementById('theme-toggle-btn');
+    if (!btn) return;
+
+    const config = btn.getAttribute('data-config') || 'dark';
+    const iconAuto = document.getElementById('theme-icon-auto');
+    const iconDark = document.getElementById('theme-icon-dark');
+    const iconLight = document.getElementById('theme-icon-light');
+
+    function updateUI(themeMode) {
+      if (iconAuto) iconAuto.classList.add('hidden');
+      if (iconDark) iconDark.classList.add('hidden');
+      if (iconLight) iconLight.classList.add('hidden');
+
+      if (config === 'auto') {
+        if (themeMode === 'auto') {
+          if (iconAuto) iconAuto.classList.remove('hidden');
+          btn.title = 'Theme: System Auto (Click to switch)';
+        } else if (themeMode === 'light') {
+          if (iconLight) iconLight.classList.remove('hidden');
+          btn.title = 'Theme: Light (Click to switch)';
+        } else {
+          if (iconDark) iconDark.classList.remove('hidden');
+          btn.title = 'Theme: Dark (Click to switch)';
+        }
+      } else {
+        if (themeMode === 'light') {
+          if (iconLight) iconLight.classList.remove('hidden');
+          btn.title = 'Switch to Dark Mode';
+        } else {
+          if (iconDark) iconDark.classList.remove('hidden');
+          btn.title = 'Switch to Light Mode';
+        }
+      }
+    }
+
+    function getInitialMode() {
+      if (config === 'auto') {
+        const stored = localStorage.getItem('theme');
+        return (stored === 'light' || stored === 'dark') ? stored : 'auto';
+      }
+      if (config === 'a_light') {
+        const stored = localStorage.getItem('theme');
+        return stored === 'dark' ? 'dark' : 'light';
+      }
+      if (config === 'a_dark') {
+        const stored = localStorage.getItem('theme');
+        return stored === 'light' ? 'light' : 'dark';
+      }
+      return 'dark';
+    }
+
+    let currentMode = getInitialMode();
+    updateUI(currentMode);
+
+    function applyActiveTheme(mode) {
+      const html = document.documentElement;
+      let effective = mode;
+      if (mode === 'auto') {
+        effective = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      }
+      html.classList.remove('light', 'dark');
+      html.classList.add(effective);
+    }
+
+    btn.addEventListener('click', function() {
+      if (config === 'auto') {
+        if (currentMode === 'auto') {
+          currentMode = 'light';
+        } else if (currentMode === 'light') {
+          currentMode = 'dark';
+        } else {
+          currentMode = 'auto';
+        }
+
+        if (currentMode === 'auto') {
+          localStorage.removeItem('theme');
+        } else {
+          localStorage.setItem('theme', currentMode);
+        }
+      } else {
+        currentMode = currentMode === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('theme', currentMode);
+      }
+
+      applyActiveTheme(currentMode);
+      updateUI(currentMode);
+    });
+
+    if (config === 'auto') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
+      const handleMediaChange = function() {
+        if (currentMode === 'auto') {
+          applyActiveTheme('auto');
+        }
+      };
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', handleMediaChange);
+      } else if (mediaQuery.addListener) {
+        mediaQuery.addListener(handleMediaChange);
+      }
+    }
+  })();
+</script>
