@@ -45,6 +45,7 @@ services:
       - HOST=0.0.0.0
       - PORT=4321
       - PAYLOAD_URL=http://app:3000
+      - PUBLIC_SITE_URL=${PUBLIC_SITE_URL:-http://localhost:4321}
     depends_on:
       app:
         condition: service_healthy
