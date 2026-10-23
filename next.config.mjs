@@ -100,6 +100,21 @@ const nextConfig = {
         destination: '/admin/reset/:token',
         permanent: false,
       },
+      {
+        source: '/docs',
+        destination: '/api/docs',
+        permanent: false,
+      },
+      {
+        source: '/swagger',
+        destination: '/api/docs',
+        permanent: false,
+      },
+      {
+        source: '/api/swagger',
+        destination: '/api/docs',
+        permanent: false,
+      },
     ]
   },
 

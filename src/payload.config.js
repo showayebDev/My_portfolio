@@ -6,6 +6,7 @@ import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { s3Storage } from '@payloadcms/storage-s3'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { openapi, swaggerUI } from 'payload-oapi'
 import sharp from 'sharp'
 
 import { Users } from './collections/Users.js'
@@ -36,6 +37,9 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 const isProduction = process.env.NODE_ENV === 'production'
+const isSwaggerEnabled = process.env.ENABLE_SWAGGER
+  ? process.env.ENABLE_SWAGGER === 'true'
+  : !isProduction
 
 /**
  * @param {string} level
@@ -89,7 +93,10 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
     components: {
-      afterNavLinks: ['@/components/admin/MigrationNavLink#MigrationNavLink'],
+      afterNavLinks: [
+        '@/components/admin/MigrationNavLink#MigrationNavLink',
+        '@/components/admin/ApiDocsNavLink#ApiDocsNavLink',
+      ],
       views: {
         migration: {
           Component: '@/components/admin/MigrationAdminView#MigrationAdminView',
@@ -254,5 +261,21 @@ export default buildConfig({
       },
     }),
     s3ClientUploadCustomizer(),
+    openapi({
+      openapiVersion: '3.0',
+      metadata: {
+        title: 'Portfolio API',
+        version: '1.0.0',
+        description: 'Interactive API documentation for Portfolio CMS',
+      },
+      filters: {
+        hideInternalCollections: true,
+      },
+      enabled: isSwaggerEnabled,
+    }),
+    swaggerUI({
+      docsUrl: '/docs',
+      enabled: isSwaggerEnabled,
+    }),
   ],
 })

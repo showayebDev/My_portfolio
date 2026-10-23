@@ -121,7 +121,7 @@ describe("prefetch runtime & cache invalidation", () => {
       prefetchRoute(mockRouter, "/project/test-slug");
 
       expect(mockRouter.prefetch).toHaveBeenCalledTimes(1);
-      expect(mockRouter.prefetch).toHaveBeenCalledWith("/project/test-slug");
+      expect(mockRouter.prefetch).toHaveBeenCalledWith("/project/test-slug", { kind: "full" });
     });
 
     it("should safely handle null router or missing prefetch method", () => {
@@ -177,7 +177,7 @@ describe("prefetch runtime & cache invalidation", () => {
 
       prefetchProject(mockRouter, "my-app", "/app-hero.png");
 
-      expect(mockRouter.prefetch).toHaveBeenCalledWith("/project/my-app");
+      expect(mockRouter.prefetch).toHaveBeenCalledWith("/project/my-app", { kind: "full" });
       expect(createdImage).not.toBeNull();
 
       delete globalThis.Image;
@@ -198,7 +198,7 @@ describe("prefetch runtime & cache invalidation", () => {
 
       prefetchProject(mockRouter, "my-app", "/app-hero.png", { skipImagePreload: true });
 
-      expect(mockRouter.prefetch).toHaveBeenCalledWith("/project/my-app");
+      expect(mockRouter.prefetch).toHaveBeenCalledWith("/project/my-app", { kind: "full" });
       expect(createdImage).toBeNull();
 
       delete globalThis.Image;
