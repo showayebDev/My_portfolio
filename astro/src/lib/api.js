@@ -23,6 +23,14 @@ export function sanitizeDocMedia(doc) {
   const clone = { ...doc };
   if (clone.image && typeof clone.image === 'object' && clone.image.url) {
     clone.image.url = normalizeMediaUrl(clone.image.url);
+  } else if (typeof clone.image === 'string') {
+    clone.image = normalizeMediaUrl(clone.image);
+  }
+  if (clone.imageUrl && typeof clone.imageUrl === 'string') {
+    clone.imageUrl = normalizeMediaUrl(clone.imageUrl);
+  }
+  if (clone.img && typeof clone.img === 'string') {
+    clone.img = normalizeMediaUrl(clone.img);
   }
   if (clone.avatar && typeof clone.avatar === 'object' && clone.avatar.url) {
     clone.avatar.url = normalizeMediaUrl(clone.avatar.url);

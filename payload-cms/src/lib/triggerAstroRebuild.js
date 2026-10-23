@@ -5,24 +5,36 @@ import fs from 'fs';
 let isRebuilding = false;
 let queuedRebuild = false;
 
+let webhookTimeout = null;
+
 /**
- * Triggers an Astro SSG rebuild either via remote webhook (Cloudflare Pages, Vercel, Netlify)
+ * Triggers an Astro SSG rebuild either via remote webhook (Cloudflare Workers/Pages, Vercel, Netlify)
  * or by executing a local background build of the astro directory.
  * Includes debouncing and queueing so rapid edits don't trigger overlapping builds.
  */
 export async function triggerAstroRebuild(reason = 'content updated') {
-  const webhookUrl = process.env.ASTRO_REBUILD_WEBHOOK_URL;
+  const webhookUrl =
+    process.env.CLOUDFLARE_DEPLOY_HOOK_URL ||
+    process.env.ASTRO_REBUILD_WEBHOOK_URL;
 
   // 1. If remote deploy hook URL is defined, send POST to trigger remote CI/CD
   if (webhookUrl) {
-    try {
-      console.log(`[Payload Webhook] 🚀 Triggering remote Astro rebuild (${reason})...`);
-      const res = await fetch(webhookUrl, { method: 'POST' });
-      console.log(`[Payload Webhook] ✅ Remote rebuild response: HTTP ${res.status}`);
-      return;
-    } catch (err) {
-      console.warn('[Payload Webhook] ⚠️ Remote webhook call failed:', err?.message || err);
-    }
+    if (webhookTimeout) clearTimeout(webhookTimeout);
+    webhookTimeout = setTimeout(async () => {
+      try {
+        console.log(`[Payload Webhook] 🚀 Triggering Cloudflare deploy hook (${reason})...`);
+        const res = await fetch(webhookUrl, { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          console.log(`[Payload Webhook] ✅ Cloudflare rebuild triggered successfully! HTTP ${res.status}:`, data);
+        } else {
+          console.warn(`[Payload Webhook] ⚠️ Cloudflare deploy hook HTTP ${res.status}:`, data);
+        }
+      } catch (err) {
+        console.warn('[Payload Webhook] ⚠️ Cloudflare deploy hook call failed:', err?.message || err);
+      }
+    }, 1500);
+    return;
   }
 
   // 2. Otherwise execute local Astro build

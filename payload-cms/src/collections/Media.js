@@ -2,6 +2,7 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import path from 'path'
 import { Readable } from 'stream'
 import sharp from 'sharp'
+import { revalidateAll } from '../lib/revalidate.js'
 
 /** @type {S3Client | null} */
 let cachedS3Client = null
@@ -122,6 +123,16 @@ export const Media = {
           }
         }
         return data
+      },
+    ],
+    afterChange: [
+      async () => {
+        await revalidateAll()
+      },
+    ],
+    afterDelete: [
+      async () => {
+        await revalidateAll()
       },
     ],
   },
