@@ -1,7 +1,11 @@
 import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = ({ site }) => {
-  const baseUrl = (site ? site.toString() : (process.env.PUBLIC_SITE_URL || 'http://localhost:4321')).replace(/\/$/, '');
+  const baseUrl = (
+    import.meta.env.PUBLIC_SITE_URL ||
+    process.env.PUBLIC_SITE_URL ||
+    (site ? site.toString() : 'https://showayeb.dev')
+  ).replace(/\/$/, '');
   const sitemapUrl = `${baseUrl}/sitemap.xml`;
 
   const robotsTxt = `User-agent: *

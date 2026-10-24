@@ -1,3 +1,5 @@
+import { resolveLocalMedia, downloadAndLocalizeMedia, getLocalMediaPath, ensureFaviconDownloaded } from './media.js';
+
 const INTERNAL_URL = (
   process.env.PAYLOAD_URL ||
   import.meta.env.PAYLOAD_URL ||
@@ -12,10 +14,40 @@ const PUBLIC_URL = (
   INTERNAL_URL
 ).replace(/\/$/, '');
 
-function normalizeMediaUrl(url) {
+async function normalizeMediaUrlAsync(url) {
   if (!url || typeof url !== 'string') return url;
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  return `${PUBLIC_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  return await downloadAndLocalizeMedia(url);
+}
+
+export function normalizeMediaUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  return resolveLocalMedia(url);
+}
+
+export async function sanitizeDocMediaAsync(doc) {
+  if (!doc || typeof doc !== 'object') return doc;
+  const clone = { ...doc };
+  if (clone.image && typeof clone.image === 'object' && clone.image.url) {
+    clone.image.url = await normalizeMediaUrlAsync(clone.image.url);
+  } else if (typeof clone.image === 'string') {
+    clone.image = await normalizeMediaUrlAsync(clone.image);
+  }
+  if (clone.imageUrl && typeof clone.imageUrl === 'string') {
+    clone.imageUrl = await normalizeMediaUrlAsync(clone.imageUrl);
+  }
+  if (clone.img && typeof clone.img === 'string') {
+    clone.img = await normalizeMediaUrlAsync(clone.img);
+  }
+  if (clone.avatar && typeof clone.avatar === 'object' && clone.avatar.url) {
+    clone.avatar.url = await normalizeMediaUrlAsync(clone.avatar.url);
+  }
+  if (clone.icon && typeof clone.icon === 'object' && clone.icon.url) {
+    clone.icon.url = await normalizeMediaUrlAsync(clone.icon.url);
+  }
+  if (clone.logo && typeof clone.logo === 'object' && clone.logo.url) {
+    clone.logo.url = await normalizeMediaUrlAsync(clone.logo.url);
+  }
+  return clone;
 }
 
 export function sanitizeDocMedia(doc) {
@@ -60,20 +92,22 @@ export async function fetchFromApi(endpoint) {
 }
 
 export async function getProfile() {
-  const data = await fetchFromApi('/api/globals/profile');
-  return data ? sanitizeDocMedia(data) : {};
+  const [data] = await Promise.all([
+    fetchFromApi('/api/globals/profile'),
+    ensureFaviconDownloaded(),
+  ]);
+  return data ? await sanitizeDocMediaAsync(data) : {};
 }
 
 export async function getEducation() {
   const data = await fetchFromApi('/api/education?sort=-sortOrder&limit=100');
-  return (data?.docs || []).map(sanitizeDocMedia);
+  return await Promise.all((data?.docs || []).map(sanitizeDocMediaAsync));
 }
 
 export async function getSkills() {
   const data = await fetchFromApi('/api/skills?sort=sortOrder&limit=100');
-  return (data?.docs || [])
-    .filter((s) => s.showInFrontend !== false)
-    .map(sanitizeDocMedia);
+  const filtered = (data?.docs || []).filter((s) => s.showInFrontend !== false);
+  return await Promise.all(filtered.map(sanitizeDocMediaAsync));
 }
 
 export async function getSkillCategories() {
@@ -87,24 +121,21 @@ export async function getAllProjects() {
     fetchFromApi('/api/projects?where[_status][not_equals]=draft&sort=-createdAt&limit=100'),
   ]);
 
-  const allPublished = (projectsRes?.docs || [])
-    .filter((p) => p._status !== 'draft')
-    .map(sanitizeDocMedia);
+  const rawPublished = (projectsRes?.docs || []).filter((p) => p._status !== 'draft');
+  const allPublished = await Promise.all(rawPublished.map(sanitizeDocMediaAsync));
 
   let orderedProjects = allPublished;
 
   // Respect drag-and-drop order from Profile Globals
   if (Array.isArray(profile?.allProjectsOrder) && profile.allProjectsOrder.length > 0) {
-    const customList = profile.allProjectsOrder
-      .filter((p) => p && typeof p === 'object' && p._status !== 'draft')
-      .map(sanitizeDocMedia);
+    const rawCustom = profile.allProjectsOrder.filter((p) => p && typeof p === 'object' && p._status !== 'draft');
+    const customList = await Promise.all(rawCustom.map(sanitizeDocMediaAsync));
     const customIdSet = new Set(customList.map((p) => p.id));
     const remaining = allPublished.filter((p) => !customIdSet.has(p.id));
     orderedProjects = [...customList, ...remaining];
   } else if (Array.isArray(profile?.featuredProjects) && profile.featuredProjects.length > 0) {
-    const featuredList = profile.featuredProjects
-      .filter((p) => p && typeof p === 'object' && p._status !== 'draft')
-      .map(sanitizeDocMedia);
+    const rawFeatured = profile.featuredProjects.filter((p) => p && typeof p === 'object' && p._status !== 'draft');
+    const featuredList = await Promise.all(rawFeatured.map(sanitizeDocMediaAsync));
     const featuredIdSet = new Set(featuredList.map((p) => p.id));
     const remaining = allPublished.filter((p) => !featuredIdSet.has(p.id));
     orderedProjects = [...featuredList, ...remaining];
@@ -127,9 +158,8 @@ export async function getPortfolioData() {
 
   let featured = [];
   if (Array.isArray(profile?.featuredProjects) && profile.featuredProjects.length > 0) {
-    featured = profile.featuredProjects
-      .filter((p) => p && typeof p === 'object' && p._status !== 'draft')
-      .map(sanitizeDocMedia);
+    const rawFeatured = profile.featuredProjects.filter((p) => p && typeof p === 'object' && p._status !== 'draft');
+    featured = await Promise.all(rawFeatured.map(sanitizeDocMediaAsync));
   }
   if (!featured.length) {
     featured = projectsData.projects.slice(0, 6);
@@ -149,7 +179,7 @@ export async function getProjectBySlug(slug) {
   const data = await fetchFromApi(`/api/projects?where[slug][equals]=${encodeURIComponent(slug)}&limit=1`);
   if (data?.docs?.length > 0) {
     const doc = data.docs[0];
-    return doc._status !== 'draft' ? sanitizeDocMedia(doc) : null;
+    return doc._status !== 'draft' ? await sanitizeDocMediaAsync(doc) : null;
   }
 
   // Fallback: search case-insensitively across projects
@@ -158,7 +188,7 @@ export async function getProjectBySlug(slug) {
     (p) => (p.slug || p.name)?.toLowerCase() === slug.toLowerCase()
   );
   if (matched && matched._status !== 'draft') {
-    return sanitizeDocMedia(matched);
+    return await sanitizeDocMediaAsync(matched);
   }
 
   return null;

@@ -9,7 +9,11 @@ interface SitemapEntry {
 }
 
 export const GET: APIRoute = async ({ site }) => {
-  const baseUrl = (site ? site.toString() : (process.env.PUBLIC_SITE_URL || 'http://localhost:4321')).replace(/\/$/, '');
+  const baseUrl = (
+    import.meta.env.PUBLIC_SITE_URL ||
+    process.env.PUBLIC_SITE_URL ||
+    (site ? site.toString() : 'https://showayeb.dev')
+  ).replace(/\/$/, '');
   const now = new Date().toISOString();
 
   const entries: SitemapEntry[] = [
