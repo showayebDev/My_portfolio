@@ -144,6 +144,12 @@ export const Profile = {
               name: 'socials',
               type: 'array',
               label: 'Social Profiles',
+              admin: {
+                initCollapsed: false,
+                components: {
+                  RowLabel: '@/components/admin/SocialRowLabel#SocialRowLabel',
+                },
+              },
               fields: [
                 {
                   name: 'platform',
@@ -159,21 +165,66 @@ export const Profile = {
                     'Discord',
                     'YouTube',
                     'Telegram',
+                    'Reddit',
+                    'Twitch',
+                    'TikTok',
+                    'Threads',
+                    'Medium',
+                    'Dribbble',
+                    'Behance',
+                    'Stack Overflow',
+                    'GitLab',
+                    'CodePen',
+                    'Spotify',
+                    'Patreon',
+                    'Steam',
+                    'Pinterest',
+                    'Website',
                     'Other',
                   ],
                   defaultValue: 'GitHub',
+                  admin: {
+                    description: 'Select social or contact platform. The official vector icon will be automatically rendered on your portfolio.',
+                  },
                 },
                 {
-                  name: 'name',
-                  type: 'text',
-                  label: 'Display Name / Handle',
-                  required: true,
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'name',
+                      type: 'text',
+                      label: 'Display Name / Handle',
+                      required: true,
+                    },
+                    {
+                      name: 'url',
+                      type: 'text',
+                      label: 'Profile URL',
+                      required: true,
+                    },
+                  ],
                 },
                 {
-                  name: 'url',
-                  type: 'text',
-                  label: 'Profile URL',
-                  required: true,
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'icon',
+                      type: 'upload',
+                      relationTo: 'media',
+                      label: 'Custom Icon Upload (Optional)',
+                      admin: {
+                        description: 'Optional custom icon (SVG, PNG) to override the default platform icon',
+                      },
+                    },
+                    {
+                      name: 'iconUrl',
+                      type: 'text',
+                      label: 'Custom Icon URL (Optional)',
+                      admin: {
+                        description: 'Optional icon URL or path (e.g. /icons/custom.svg or https://...)',
+                      },
+                    },
+                  ],
                 },
               ],
             },

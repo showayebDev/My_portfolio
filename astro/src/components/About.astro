@@ -55,8 +55,22 @@ if (!list.length) return null;
                   class="w-full h-full object-contain select-none rounded-full"
                   loading="lazy"
                 />
+              ) : edu.icon === "FaUniversity" ? (
+                <svg class="w-6 h-6 text-[var(--link-color)]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L2 7v3h20V7L12 2zm-8 9v7h3v-7H4zm6 0v7h4v-7h-4zm7 0v7h3v-7h-3zM2 20v2h20v-2H2z"/>
+                </svg>
+              ) : edu.icon === "FaSchool" ? (
+                <svg class="w-6 h-6 text-[var(--link-color)]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm0 15.5l-5-2.73v-4.14l5 2.73 5-2.73v4.14l-5 2.73z"/>
+                </svg>
+              ) : edu.icon === "FaBookReader" ? (
+                <svg class="w-6 h-6 text-[var(--link-color)]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm7 8c-.6 0-1.17.2-1.63.55L14 12.8V21l4.82-3.62c.36-.27.76-.38 1.18-.38 1.1 0 2 .9 2 2v1h2v-1c0-2.21-1.79-4-4-4zm-14 0c-2.21 0-4 1.79-4 4v1h2v-1c0-1.1.9-2 2-2 .42 0 .82.11 1.18.38L10 21v-8.2l-3.37-2.25C6.17 10.2 5.6 10 5 10z"/>
+                </svg>
               ) : (
-                <span class="text-xl">🎓</span>
+                <svg class="w-6 h-6 text-[var(--link-color)]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
+                </svg>
               )}
             </div>
 

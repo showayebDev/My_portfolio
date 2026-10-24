@@ -530,6 +530,9 @@ export interface Profile {
   email?: string | null;
   socials?:
     | {
+        /**
+         * Select social or contact platform. The official vector icon will be automatically rendered on your portfolio.
+         */
         platform:
           | 'GitHub'
           | 'Facebook'
@@ -540,9 +543,32 @@ export interface Profile {
           | 'Discord'
           | 'YouTube'
           | 'Telegram'
+          | 'Reddit'
+          | 'Twitch'
+          | 'TikTok'
+          | 'Threads'
+          | 'Medium'
+          | 'Dribbble'
+          | 'Behance'
+          | 'Stack Overflow'
+          | 'GitLab'
+          | 'CodePen'
+          | 'Spotify'
+          | 'Patreon'
+          | 'Steam'
+          | 'Pinterest'
+          | 'Website'
           | 'Other';
         name: string;
         url: string;
+        /**
+         * Optional custom icon (SVG, PNG) to override the default platform icon
+         */
+        icon?: (number | null) | Media;
+        /**
+         * Optional icon URL or path (e.g. /icons/custom.svg or https://...)
+         */
+        iconUrl?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -588,6 +614,8 @@ export interface ProfileSelect<T extends boolean = true> {
         platform?: T;
         name?: T;
         url?: T;
+        icon?: T;
+        iconUrl?: T;
         id?: T;
       };
   siteTitle?: T;

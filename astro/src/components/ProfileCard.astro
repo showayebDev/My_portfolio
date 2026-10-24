@@ -1,4 +1,6 @@
 ---
+import SocialIcon from "./SocialIcon.astro";
+
 interface Props {
   profile?: any;
 }
@@ -208,9 +210,9 @@ const showToggle = configTheme !== "dark" && configTheme !== "light";
                   const cleanUrl = (social.url || "").replace(/\/$/, "");
                   const parts = cleanUrl.split("/");
                   const lastPart = parts[parts.length - 1] || social.name;
-                  if (["github", "facebook", "linkedin", "whatsapp"].includes(platformLower)) {
+                  if (["github", "facebook", "linkedin", "whatsapp", "gitlab", "codepen", "spotify", "patreon", "steam", "pinterest", "reddit", "dribbble", "behance"].includes(platformLower)) {
                     username = lastPart;
-                  } else if (["instagram", "twitter", "telegram"].includes(platformLower)) {
+                  } else if (["instagram", "twitter", "x", "telegram", "threads", "tiktok", "youtube"].includes(platformLower)) {
                     username = lastPart.startsWith("@") ? lastPart : "@" + lastPart;
                   }
                 } catch (_e) {}
@@ -227,8 +229,13 @@ const showToggle = configTheme !== "dark" && configTheme !== "light";
                     class="flex justify-between items-center p-2.5 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl transition-all duration-200 group hover:translate-x-1 shadow-sm"
                   >
                     <div class="flex items-center gap-2.5">
-                      <span class="w-7 h-7 rounded-lg bg-[var(--card-bg-color)] border border-[var(--border-color)] flex items-center justify-center text-sm text-[var(--text-color)] group-hover:rotate-6 transition-transform">
-                        🔗
+                      <span class="w-7 h-7 rounded-lg bg-[var(--card-bg-color)] border border-[var(--border-color)] flex items-center justify-center text-sm group-hover:rotate-6 transition-transform shadow-sm">
+                        <SocialIcon
+                          platform={social.platform}
+                          icon={social.icon}
+                          iconUrl={social.iconUrl}
+                          className="w-4 h-4"
+                        />
                       </span>
                       <span class="font-bold text-[var(--text-color)]">
                         {social.platform}
@@ -247,8 +254,10 @@ const showToggle = configTheme !== "dark" && configTheme !== "light";
                   class="flex justify-between items-center p-2.5 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl transition-all duration-200 group hover:translate-x-1 shadow-sm"
                 >
                   <div class="flex items-center gap-2.5">
-                    <span class="w-7 h-7 rounded-lg bg-[var(--card-bg-color)] border border-[var(--border-color)] flex items-center justify-center text-sm text-[var(--stamp-red)] group-hover:rotate-6 transition-transform">
-                      ✉️
+                    <span class="w-7 h-7 rounded-lg bg-[var(--card-bg-color)] border border-[var(--border-color)] flex items-center justify-center text-sm text-[var(--stamp-red)] group-hover:rotate-6 transition-transform shadow-sm">
+                      <svg class="w-4 h-4 text-[var(--stamp-red)]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                      </svg>
                     </span>
                     <span class="font-bold text-[var(--text-color)]">
                       Email

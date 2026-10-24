@@ -47,6 +47,23 @@ export async function sanitizeDocMediaAsync(doc) {
   if (clone.logo && typeof clone.logo === 'object' && clone.logo.url) {
     clone.logo.url = await normalizeMediaUrlAsync(clone.logo.url);
   }
+  if (Array.isArray(clone.socials)) {
+    clone.socials = await Promise.all(
+      clone.socials.map(async (s) => {
+        if (!s || typeof s !== 'object') return s;
+        const item = { ...s };
+        if (item.icon && typeof item.icon === 'object' && item.icon.url) {
+          item.icon = { ...item.icon, url: await normalizeMediaUrlAsync(item.icon.url) };
+        } else if (typeof item.icon === 'string') {
+          item.icon = await normalizeMediaUrlAsync(item.icon);
+        }
+        if (item.iconUrl && typeof item.iconUrl === 'string') {
+          item.iconUrl = await normalizeMediaUrlAsync(item.iconUrl);
+        }
+        return item;
+      })
+    );
+  }
   return clone;
 }
 
@@ -72,6 +89,21 @@ export function sanitizeDocMedia(doc) {
   }
   if (clone.logo && typeof clone.logo === 'object' && clone.logo.url) {
     clone.logo.url = normalizeMediaUrl(clone.logo.url);
+  }
+  if (Array.isArray(clone.socials)) {
+    clone.socials = clone.socials.map((s) => {
+      if (!s || typeof s !== 'object') return s;
+      const item = { ...s };
+      if (item.icon && typeof item.icon === 'object' && item.icon.url) {
+        item.icon = { ...item.icon, url: normalizeMediaUrl(item.icon.url) };
+      } else if (typeof item.icon === 'string') {
+        item.icon = normalizeMediaUrl(item.icon);
+      }
+      if (item.iconUrl && typeof item.iconUrl === 'string') {
+        item.iconUrl = normalizeMediaUrl(item.iconUrl);
+      }
+      return item;
+    });
   }
   return clone;
 }

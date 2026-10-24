@@ -23,7 +23,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 DO $$ BEGIN
-  CREATE TYPE "public"."enum_profile_socials_platform" AS ENUM('GitHub', 'Facebook', 'LinkedIn', 'Instagram', 'Twitter', 'WhatsApp', 'Discord', 'YouTube', 'Telegram', 'Other');
+  CREATE TYPE "public"."enum_profile_socials_platform" AS ENUM('GitHub', 'Facebook', 'LinkedIn', 'Instagram', 'Twitter', 'WhatsApp', 'Discord', 'YouTube', 'Telegram', 'Reddit', 'Twitch', 'TikTok', 'Threads', 'Medium', 'Dribbble', 'Behance', 'Stack Overflow', 'GitLab', 'CodePen', 'Spotify', 'Patreon', 'Steam', 'Pinterest', 'Website', 'Other');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 DO $$ BEGIN
@@ -218,7 +218,9 @@ CREATE TABLE IF NOT EXISTS "profile_socials" (
   "id" varchar PRIMARY KEY NOT NULL,
   "platform" "enum_profile_socials_platform" DEFAULT 'GitHub' NOT NULL,
   "name" varchar NOT NULL,
-  "url" varchar NOT NULL
+  "url" varchar NOT NULL,
+  "icon_id" integer,
+  "icon_url" varchar
 );
 
 CREATE TABLE IF NOT EXISTS "profile" (
@@ -324,6 +326,10 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 DO $$ BEGIN
+  ALTER TABLE "profile_socials" ADD CONSTRAINT "profile_socials_icon_id_media_id_fk" FOREIGN KEY ("icon_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
   ALTER TABLE "profile" ADD CONSTRAINT "profile_avatar_id_media_id_fk" FOREIGN KEY ("avatar_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
@@ -386,6 +392,7 @@ CREATE INDEX IF NOT EXISTS "payload_migrations_updated_at_idx" ON "payload_migra
 CREATE INDEX IF NOT EXISTS "payload_migrations_created_at_idx" ON "payload_migrations" USING btree ("created_at");
 CREATE INDEX IF NOT EXISTS "profile_socials_order_idx" ON "profile_socials" USING btree ("_order");
 CREATE INDEX IF NOT EXISTS "profile_socials_parent_id_idx" ON "profile_socials" USING btree ("_parent_id");
+CREATE INDEX IF NOT EXISTS "profile_socials_icon_idx" ON "profile_socials" USING btree ("icon_id");
 CREATE INDEX IF NOT EXISTS "profile_avatar_idx" ON "profile" USING btree ("avatar_id");
 CREATE INDEX IF NOT EXISTS "profile_rels_order_idx" ON "profile_rels" USING btree ("order");
 CREATE INDEX IF NOT EXISTS "profile_rels_parent_idx" ON "profile_rels" USING btree ("parent_id");
@@ -489,6 +496,29 @@ export async function ensurePostgresSchema(connectionString) {
         CREATE INDEX IF NOT EXISTS "profile_rels_parent_idx" ON "profile_rels" USING btree ("parent_id");
         CREATE INDEX IF NOT EXISTS "profile_rels_path_idx" ON "profile_rels" USING btree ("path");
         CREATE INDEX IF NOT EXISTS "profile_rels_projects_id_idx" ON "profile_rels" USING btree ("projects_id");
+
+        ALTER TABLE "profile_socials" ADD COLUMN IF NOT EXISTS "icon_id" integer;
+        ALTER TABLE "profile_socials" ADD COLUMN IF NOT EXISTS "icon_url" varchar;
+        DO $$ BEGIN
+          ALTER TABLE "profile_socials" ADD CONSTRAINT "profile_socials_icon_id_media_id_fk" FOREIGN KEY ("icon_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+        EXCEPTION WHEN duplicate_object THEN null; END $$;
+        CREATE INDEX IF NOT EXISTS "profile_socials_icon_idx" ON "profile_socials" USING btree ("icon_id");
+
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Reddit'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Twitch'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'TikTok'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Threads'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Medium'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Dribbble'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Behance'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Stack Overflow'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'GitLab'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'CodePen'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Spotify'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Patreon'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Steam'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Pinterest'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Website'; EXCEPTION WHEN duplicate_object THEN null; END $$;
       `).catch(() => {})
     }
   } catch (err) {
