@@ -22,6 +22,9 @@ if (!process.env.PUBLIC_SITE_URL) {
 if (!process.env.PAYLOAD_URL && env.PAYLOAD_URL) {
   process.env.PAYLOAD_URL = env.PAYLOAD_URL;
 }
+if (!process.env.PAYLOAD_SECRET && env.PAYLOAD_SECRET) {
+  process.env.PAYLOAD_SECRET = env.PAYLOAD_SECRET;
+}
 
 function localMediaIntegration() {
   return {

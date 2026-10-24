@@ -7,14 +7,30 @@ interface Props {
   defaultTheme?: string;
   favicon?: string;
   image?: string;
+  imageAlt?: string;
+  imageWidth?: number | string;
+  imageHeight?: number | string;
+  type?: 'website' | 'article';
+  publishedTime?: string;
+  author?: string;
+  siteName?: string;
+  twitterHandle?: string;
 }
 
 const {
   title = "Showayeb Ahamed – Portfolio",
-  description = "Welcome to my portfolio! Discover my skills, projects, and work in web development.",
+  description = "Welcome to my portfolio! Discover my skills, projects, and work in web development and software engineering.",
   defaultTheme = "dark",
   favicon,
   image,
+  imageAlt,
+  imageWidth = 1200,
+  imageHeight = 630,
+  type = "website",
+  publishedTime,
+  author = "Showayeb Ahamed",
+  siteName = "Showayeb Ahamed",
+  twitterHandle = "@showayebdev",
 } = Astro.props;
 
 const initialThemeClass =
@@ -33,6 +49,38 @@ const getFaviconType = (url?: string) => {
 };
 
 const faviconType = getFaviconType(favicon);
+
+// Canonical and base site URL
+const siteUrl = (
+  Astro.site
+    ? Astro.site.toString()
+    : (import.meta.env.PUBLIC_SITE_URL || "https://showayeb.dev")
+).replace(/\/+$/, "");
+
+const canonicalUrl = new URL(Astro.url.pathname, siteUrl).href;
+
+// Ensure image is a valid absolute URL for social crawlers (WhatsApp, Facebook, Twitter, Telegram, Discord)
+function resolveAbsoluteImageUrl(img?: string): string {
+  if (!img) return `${siteUrl}/media/profile-pic.webp`;
+  if (/^https?:\/\//i.test(img)) return img;
+  const cleanPath = img.startsWith("/") ? img : `/${img}`;
+  return `${siteUrl}${cleanPath}`;
+}
+
+const ogImage = resolveAbsoluteImageUrl(image);
+
+function getMimeType(url: string): string {
+  const clean = url.split("?")[0].toLowerCase();
+  if (clean.endsWith(".png")) return "image/png";
+  if (clean.endsWith(".webp")) return "image/webp";
+  if (clean.endsWith(".svg")) return "image/svg+xml";
+  if (clean.endsWith(".gif")) return "image/gif";
+  if (clean.endsWith(".jpg") || clean.endsWith(".jpeg")) return "image/jpeg";
+  return "image/webp";
+}
+
+const ogImageType = getMimeType(ogImage);
+const ogImageAlt = imageAlt || title || siteName;
 ---
 
 <!doctype html>
@@ -56,12 +104,37 @@ const faviconType = getFaviconType(favicon);
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="author" content={author} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Open Graph / WhatsApp / Facebook / LinkedIn / Discord / Telegram -->
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content={siteName} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
-    {image && <meta property="og:image" content={image} />}
-    {image && <meta name="twitter:image" content={image} />}
-    <meta name="twitter:card" content={image ? "summary_large_image" : "summary"} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:secure_url" content={ogImage} />
+    <meta property="og:image:type" content={ogImageType} />
+    {imageWidth && <meta property="og:image:width" content={String(imageWidth)} />}
+    {imageHeight && <meta property="og:image:height" content={String(imageHeight)} />}
+    <meta property="og:image:alt" content={ogImageAlt} />
+    {type === "article" && publishedTime && (
+      <meta property="article:published_time" content={publishedTime} />
+    )}
+    {type === "article" && author && (
+      <meta property="article:author" content={author} />
+    )}
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    {twitterHandle && <meta name="twitter:site" content={twitterHandle} />}
+    {twitterHandle && <meta name="twitter:creator" content={twitterHandle} />}
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

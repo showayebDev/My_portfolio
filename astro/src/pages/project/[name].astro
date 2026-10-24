@@ -40,20 +40,42 @@ const buttons = parseButtons(project.buttons);
 const rawMarkdown = project.readmeContent || "";
 const renderedHtml = renderMarkdown(rawMarkdown);
 
+const avatarSrc = (typeof profile?.avatar === "object" && profile?.avatar?.url)
+  ? profile.avatar.url
+  : (typeof profile?.avatar === "string" ? profile.avatar : (profile?.avatarUrl || "/media/profile-pic.webp"));
+
 const imgSrc = (typeof project.image === "object" && project.image?.url)
   ? project.image.url
   : (typeof project.image === "string" ? project.image : project.imageUrl || project.img || null);
 
-const title = `${project.title} – Projects`;
-const description = project.description || "";
+const title = `${project.title} – ${profile?.name || "Showayeb Ahamed"}`;
+const description = project.description || `${project.title} – an open source project by ${profile?.name || "Showayeb Ahamed"}.`;
+
+const socials = Array.isArray(profile?.socials) ? profile.socials : [];
+const twitterSocial = socials.find(
+  (s: any) => s.platform?.toLowerCase() === "twitter" || s.name?.toLowerCase().includes("twitter") || s.name?.toLowerCase().includes("x")
+);
+let twitterHandle = "@showayebdev";
+if (twitterSocial?.name && twitterSocial.name.startsWith("@")) {
+  twitterHandle = twitterSocial.name;
+} else if (twitterSocial?.url) {
+  const match = twitterSocial.url.match(/(?:twitter\.com|x\.com)\/([^/?#]+)/i);
+  if (match) twitterHandle = `@${match[1]}`;
+}
 ---
 
 <Layout
   title={title}
   description={description}
   defaultTheme={defaultTheme}
-  favicon={imgSrc || undefined}
-  image={imgSrc || undefined}
+  favicon={imgSrc || avatarSrc || undefined}
+  image={imgSrc || avatarSrc || "/media/profile-pic.webp"}
+  imageAlt={`${project.title}`}
+  type="article"
+  publishedTime={project.createdAt || project.updatedAt || undefined}
+  author={profile?.name || "Showayeb Ahamed"}
+  siteName={profile?.name || "Showayeb Ahamed"}
+  twitterHandle={twitterHandle}
 >
   <div class="container mx-auto px-4 py-8 max-w-7xl min-h-screen anim-fade-up">
     <!-- Breadcrumb -->

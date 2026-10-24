@@ -47,9 +47,44 @@ function parseButtons(buttons: any) {
   }
   return [];
 }
+
+const avatarSrc = (typeof profile?.avatar === "object" && profile?.avatar?.url)
+  ? profile.avatar.url
+  : (typeof profile?.avatar === "string" ? profile.avatar : (profile?.avatarUrl || null));
+
+const firstProjectWithImage = (projects || []).find((p: any) => {
+  const img = (typeof p.image === "object" && p.image?.url) ? p.image.url : (p.imageUrl || p.img);
+  return Boolean(img);
+});
+
+const rawProjectImg = firstProjectWithImage
+  ? ((typeof firstProjectWithImage.image === "object" && firstProjectWithImage.image?.url) || firstProjectWithImage.imageUrl || firstProjectWithImage.img)
+  : (avatarSrc || "/media/profile-pic.webp");
+
+const projectsOgImage = rawProjectImg;
+
+const twitterSocial = socials.find(
+  (s: any) => s.platform?.toLowerCase() === "twitter" || s.name?.toLowerCase().includes("twitter") || s.name?.toLowerCase().includes("x")
+);
+let twitterHandle = "@showayebdev";
+if (twitterSocial?.name && twitterSocial.name.startsWith("@")) {
+  twitterHandle = twitterSocial.name;
+} else if (twitterSocial?.url) {
+  const match = twitterSocial.url.match(/(?:twitter\.com|x\.com)\/([^/?#]+)/i);
+  if (match) twitterHandle = `@${match[1]}`;
+}
 ---
 
-<Layout title={title} description={description} defaultTheme={defaultTheme}>
+<Layout
+  title={title}
+  description={description}
+  defaultTheme={defaultTheme}
+  image={projectsOgImage || avatarSrc || "/media/profile-pic.webp"}
+  imageAlt={`Projects portfolio by ${profile?.name || "Showayeb Ahamed"}`}
+  favicon={avatarSrc || undefined}
+  siteName={profile?.name || "Showayeb Ahamed"}
+  twitterHandle={twitterHandle}
+>
   <div id="projects" class="relative overflow-visible flex flex-col py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto min-h-screen">
     <!-- Top Header Bar: Archival Breadcrumb -->
     <div class="flex items-center justify-between gap-4 mb-8 anim-fade-in">

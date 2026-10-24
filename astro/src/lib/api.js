@@ -78,9 +78,9 @@ export function sanitizeDocMedia(doc) {
 
 // Server-only runtime secret resolution (never exposed or inlined into client bundles)
 const PAYLOAD_SECRET =
-  typeof process !== 'undefined' && process.env?.PAYLOAD_SECRET
-    ? process.env.PAYLOAD_SECRET
-    : '';
+  (typeof process !== 'undefined' && process.env?.PAYLOAD_SECRET) ||
+  (typeof import.meta !== 'undefined' && import.meta.env?.PAYLOAD_SECRET) ||
+  '';
 
 export async function fetchFromApi(endpoint) {
   const url = `${INTERNAL_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;

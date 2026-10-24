@@ -1,4 +1,8 @@
 // @ts-check
+import dns from 'node:dns'
+if (typeof dns?.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first')
+}
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { buildConfig } from 'payload'

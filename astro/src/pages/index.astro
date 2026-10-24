@@ -8,13 +8,38 @@ import { getPortfolioData } from '../lib/api.js';
 
 const { profile, education, skills, categories, projects } = await getPortfolioData();
 
-const title = profile?.siteTitle || (profile?.name ? `${profile.name} – Portfolio` : "Portfolio");
-const description = profile?.siteDescription || "Welcome to my portfolio! Discover my skills, projects, and work in web development.";
+const title = profile?.siteTitle || (profile?.name ? `${profile.name} – Portfolio` : "Showayeb Ahamed – Portfolio");
+const description = profile?.siteDescription || profile?.bio || "Welcome to my portfolio! Discover my skills, projects, and work in web development.";
 const defaultTheme = profile?.theme || "dark";
 const showPercent = typeof profile?.showPercent === "boolean" ? profile.showPercent : false;
+
+const avatarSrc = (typeof profile?.avatar === "object" && profile?.avatar?.url)
+  ? profile.avatar.url
+  : (typeof profile?.avatar === "string" ? profile.avatar : (profile?.avatarUrl || null));
+
+const socials = Array.isArray(profile?.socials) ? profile.socials : [];
+const twitterSocial = socials.find(
+  (s: any) => s.platform?.toLowerCase() === "twitter" || s.name?.toLowerCase().includes("twitter") || s.name?.toLowerCase().includes("x")
+);
+let twitterHandle = "@showayebdev";
+if (twitterSocial?.name && twitterSocial.name.startsWith("@")) {
+  twitterHandle = twitterSocial.name;
+} else if (twitterSocial?.url) {
+  const match = twitterSocial.url.match(/(?:twitter\.com|x\.com)\/([^/?#]+)/i);
+  if (match) twitterHandle = `@${match[1]}`;
+}
 ---
 
-<Layout title={title} description={description} defaultTheme={defaultTheme}>
+<Layout
+  title={title}
+  description={description}
+  defaultTheme={defaultTheme}
+  image={avatarSrc || "/media/profile-pic.webp"}
+  imageAlt={`${profile?.name || "Showayeb Ahamed"}`}
+  favicon={avatarSrc || undefined}
+  siteName={profile?.name || "Showayeb Ahamed"}
+  twitterHandle={twitterHandle}
+>
   <div class="relative min-h-screen overflow-visible">
     <!-- Background Decorative Collage Tape Accent -->
     <div class="hidden xl:block fixed top-6 right-8 pointer-events-none select-none z-0">

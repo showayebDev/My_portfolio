@@ -1,4 +1,8 @@
 // @ts-check
+import dns from 'node:dns'
+if (typeof dns?.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first')
+}
 import pg from 'pg'
 
 const INITIAL_POSTGRES_SCHEMA = `
