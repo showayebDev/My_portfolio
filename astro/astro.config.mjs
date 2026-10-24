@@ -28,13 +28,22 @@ function localMediaIntegration() {
     name: "local-media-optimizer",
     hooks: {
       "astro:build:done": async ({ dir }) => {
-        const distDir = fileURLToPath(dir);
-        const publicDir = path.resolve(distDir, "../public");
+        const buildDir = fileURLToPath(dir);
+        const projectRoot = fileURLToPath(new URL(".", import.meta.url));
+        const publicDir = path.resolve(projectRoot, "public");
 
-        // 1. Ensure favicon is downloaded and present in dist root
+        // 1. Ensure favicon is downloaded into public/
         await ensureFaviconDownloaded();
 
-        // 2. Ensure all files from public/ are synced to dist/
+        // 2. Identify all distribution target folders (e.g. dist/ and dist/client/)
+        const targetDirs = new Set([buildDir]);
+        if (fs.existsSync(path.join(buildDir, "client"))) {
+          targetDirs.add(path.join(buildDir, "client"));
+        }
+        if (buildDir.endsWith("/client") || buildDir.endsWith("\\client")) {
+          targetDirs.add(path.dirname(buildDir));
+        }
+
         const copyDirRecursive = (src, dest) => {
           if (!fs.existsSync(src)) return;
           fs.mkdirSync(dest, { recursive: true });
@@ -49,17 +58,9 @@ function localMediaIntegration() {
             }
           }
         };
-        copyDirRecursive(publicDir, distDir);
 
-        // Guarantee favicon in dist root
-        const publicFavicon = path.join(publicDir, "favicon.ico");
-        const distFavicon = path.join(distDir, "favicon.ico");
-        if (fs.existsSync(publicFavicon) && !fs.existsSync(distFavicon)) {
-          fs.copyFileSync(publicFavicon, distFavicon);
-        }
-
-        // 3. Scan all HTML files in dist/ and rewrite any remote R2 / external media links to local paths
         const scanAndRewriteHtml = (dirPath) => {
+          if (!fs.existsSync(dirPath)) return;
           const entries = fs.readdirSync(dirPath, { withFileTypes: true });
           for (const entry of entries) {
             const fullPath = path.join(dirPath, entry.name);
@@ -90,8 +91,21 @@ function localMediaIntegration() {
           }
         };
 
-        scanAndRewriteHtml(distDir);
-        console.log("[Local Media Integration] ✓ Verified all image links and favicon.ico in dist root");
+        for (const target of targetDirs) {
+          copyDirRecursive(publicDir, target);
+
+          const publicFavicon = path.join(publicDir, "favicon.ico");
+          const distFavicon = path.join(target, "favicon.ico");
+          if (fs.existsSync(publicFavicon) && !fs.existsSync(distFavicon)) {
+            try {
+              fs.copyFileSync(publicFavicon, distFavicon);
+            } catch (_) {}
+          }
+
+          scanAndRewriteHtml(target);
+        }
+
+        console.log("[Local Media Integration] ✓ Synced public media and verified favicon.ico in distribution targets");
       },
     },
   };
@@ -107,5 +121,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
 
-  adapter: cloudflare()
+  adapter: cloudflare({
+    prerenderEnvironment: "node",
+  })
 });

@@ -28,5 +28,8 @@
     "docker:push:all": "docker compose push",
     "docker:publish": "npm run docker:publish:all",
     "docker:publish:all": "npm run docker:build:cms && npm run docker:build:astro && npm run docker:push:cms && npm run docker:push:astro"
+  },
+  "devDependencies": {
+    "wrangler": "^4.152.0"
   }
 }
