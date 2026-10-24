@@ -477,6 +477,14 @@ h1, h2, h3, h4, .collage-serif {
   line-height: 1.7;
 }
 
+.markdown-body p:not([align="center"]),
+.markdown-body li,
+.markdown-body blockquote,
+.markdown-body blockquote p {
+  text-align: justify;
+  text-justify: inter-word;
+}
+
 .markdown-body a {
   color: var(--link-color) !important;
   font-weight: 600;

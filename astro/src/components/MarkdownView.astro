@@ -10,7 +10,7 @@ const { html } = Astro.props;
   <div class="markdown-body md:p-8" set:html={html} />
 </div>
 
-<script is:inline>
+<script is:inline data-astro-rerun>
   document.querySelectorAll('.markdown-body pre > code').forEach((block) => {
     const wrapper = block.parentElement;
     if (!wrapper || wrapper.querySelector('.markdown-copy-btn')) return;

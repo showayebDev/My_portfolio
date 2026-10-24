@@ -1,5 +1,7 @@
 ---
 import '../styles/globals.css';
+import { ClientRouter } from 'astro:transitions';
+import TopLoader from '../components/TopLoader.astro';
 
 interface Props {
   title?: string;
@@ -144,40 +146,48 @@ const ogImageAlt = imageAlt || title || siteName;
       rel="stylesheet"
     />
 
+    <ClientRouter />
+
     <!-- Zero-Flash Theme Script -->
     <script is:inline define:vars={{ defaultTheme }}>
       (function() {
-        try {
-          var config = defaultTheme || 'dark';
-          var html = document.documentElement;
-          var active = 'dark';
+        function applyCurrentTheme() {
+          try {
+            var config = defaultTheme || 'dark';
+            var html = document.documentElement;
+            var active = 'dark';
 
-          if (config === 'dark') {
-            active = 'dark';
-          } else if (config === 'light') {
-            active = 'light';
-          } else {
-            var stored = localStorage.getItem('theme');
-            if (config === 'auto') {
-              if (stored === 'light' || stored === 'dark') {
-                active = stored;
-              } else {
-                active = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-              }
-            } else if (config === 'a_light') {
-              active = stored === 'dark' ? 'dark' : 'light';
+            if (config === 'dark') {
+              active = 'dark';
+            } else if (config === 'light') {
+              active = 'light';
             } else {
-              active = stored === 'light' ? 'light' : 'dark';
+              var stored = localStorage.getItem('theme');
+              if (config === 'auto') {
+                if (stored === 'light' || stored === 'dark') {
+                  active = stored;
+                } else {
+                  active = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+                }
+              } else if (config === 'a_light') {
+                active = stored === 'dark' ? 'dark' : 'light';
+              } else {
+                active = stored === 'light' ? 'light' : 'dark';
+              }
             }
-          }
 
-          html.classList.remove('light', 'dark');
-          html.classList.add(active);
-        } catch(e) {}
+            html.classList.remove('light', 'dark');
+            html.classList.add(active);
+          } catch(e) {}
+        }
+
+        applyCurrentTheme();
+        document.addEventListener('astro:after-swap', applyCurrentTheme);
       })();
     </script>
   </head>
   <body class="min-h-screen bg-[var(--bg-color)] text-[var(--text-color)] transition-colors duration-300 antialiased selection:bg-[var(--link-color)] selection:text-white">
+    <TopLoader />
     <slot />
   </body>
 </html>
