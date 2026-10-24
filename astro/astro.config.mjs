@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 import { loadEnv } from "vite";
 import { ensureFaviconDownloaded } from "./src/lib/media.js";
 
+import cloudflare from "@astrojs/cloudflare";
+
 const env = loadEnv(process.env.NODE_ENV || "production", process.cwd(), "");
 const site = (
   env.PUBLIC_SITE_URL ||
@@ -100,7 +102,10 @@ export default defineConfig({
   site,
   output: "static",
   integrations: [localMediaIntegration()],
+
   vite: {
     plugins: [tailwindcss()],
   },
+
+  adapter: cloudflare()
 });
