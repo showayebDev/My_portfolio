@@ -3,6 +3,27 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { withPayload } from '@payloadcms/next/withPayload'
 
+/** @type {Array<import('next/dist/shared/lib/image-config').RemotePattern>} */
+const remotePatterns = [
+  {
+    protocol: 'https',
+    hostname: '**',
+  },
+]
+
+if (process.env.NODE_ENV === 'development') {
+  remotePatterns.push(
+    {
+      protocol: 'http',
+      hostname: 'localhost',
+    },
+    {
+      protocol: 'http',
+      hostname: 's3',
+    }
+  )
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
@@ -27,24 +48,7 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-      ...(process.env.NODE_ENV === 'development'
-        ? [
-            {
-              protocol: 'http',
-              hostname: 'localhost',
-            },
-            {
-              protocol: 'http',
-              hostname: 's3',
-            },
-          ]
-        : []),
-    ],
+    remotePatterns,
     localPatterns: [
       {
         pathname: '/**',
