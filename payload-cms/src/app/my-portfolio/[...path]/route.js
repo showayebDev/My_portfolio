@@ -57,17 +57,19 @@ export async function GET(req, context) {
     const headerSecret = req.headers.get('x-payload-secret')
     const hasSecretHeader = Boolean(payloadSecret && headerSecret && (await timingSafeCompare(headerSecret, payloadSecret)))
 
-    // 2. Timing-safe verification of Authorization: Bearer <secret>
+    // 2. Timing-safe verification of Authorization: Bearer <secret> or Admin Session
     const bearerToken = extractBearerToken(req.headers.get('authorization'))
     const hasBearerSecret = Boolean(payloadSecret && bearerToken && (await timingSafeCompare(bearerToken, payloadSecret)))
+    const hasBearerAdmin = Boolean(payloadSecret && bearerToken && (await verifyAdminSession(bearerToken, payloadSecret)))
 
     // 3. Cryptographically verify genuine admin session cookie (payload-token)
-    const tokenFromCookie = parseCookie(req.headers.get('cookie'), 'payload-token')
+    const rawCookieToken = req.cookies?.get ? req.cookies.get('payload-token')?.value : null
+    const tokenFromCookie = rawCookieToken || parseCookie(req.headers.get('cookie'), 'payload-token')
     const hasValidAdminSession = Boolean(
       payloadSecret && tokenFromCookie && (await verifyAdminSession(tokenFromCookie, payloadSecret))
     )
 
-    if (!hasSecretHeader && !hasBearerSecret && !hasValidAdminSession) {
+    if (!hasSecretHeader && !hasBearerSecret && !hasBearerAdmin && !hasValidAdminSession) {
       return new Response('Unauthorized: Access restricted by FULL_RESTRICTION', {
         status: 401,
         headers: { 'Content-Type': 'text/plain' },

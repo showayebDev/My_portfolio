@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import {
   timingSafeCompare,
   extractBearerToken,
+  parseCookie,
+  derivePayloadJwtSecret,
   verifyAdminSession,
 } from './lib/auth-helpers.js'
 
@@ -15,7 +17,7 @@ export const PUBLIC_API_PREFIXES = [
   '/api/health',
 ]
 
-export { timingSafeCompare, extractBearerToken, verifyAdminSession }
+export { timingSafeCompare, extractBearerToken, parseCookie, derivePayloadJwtSecret, verifyAdminSession }
 
 /**
  * Next.js Edge Middleware for FULL_RESTRICTION mode.
@@ -53,15 +55,23 @@ export async function middleware(request) {
     }
 
     const bearerToken = extractBearerToken(request.headers.get('authorization'))
-    if (bearerToken && (await timingSafeCompare(bearerToken, payloadSecret))) {
-      return NextResponse.next()
+    if (bearerToken) {
+      if (await timingSafeCompare(bearerToken, payloadSecret)) {
+        return NextResponse.next()
+      }
+      if (await verifyAdminSession(bearerToken, payloadSecret)) {
+        return NextResponse.next()
+      }
     }
   }
 
   // 3. Cryptographically verify genuine admin session cookie (payload-token)
-  const tokenCookie = request.cookies.get('payload-token')
-  if (tokenCookie && tokenCookie.value && payloadSecret) {
-    const isValid = await verifyAdminSession(tokenCookie.value, payloadSecret)
+  const cookieHeader = request.headers.get('cookie')
+  const rawCookieToken = request.cookies?.get ? request.cookies.get('payload-token')?.value : null
+  const tokenValue = rawCookieToken || parseCookie(cookieHeader, 'payload-token')
+
+  if (tokenValue && payloadSecret) {
+    const isValid = await verifyAdminSession(tokenValue, payloadSecret)
     if (isValid) {
       return NextResponse.next()
     }

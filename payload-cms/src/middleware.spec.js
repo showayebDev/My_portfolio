@@ -4,6 +4,7 @@ import {
   timingSafeCompare,
   extractBearerToken,
   parseCookie,
+  derivePayloadJwtSecret,
   verifyAdminSession,
 } from './lib/auth-helpers.js'
 import { middleware, PUBLIC_API_PREFIXES } from './middleware.js'
@@ -84,7 +85,7 @@ describe('Auth Helpers Unit Tests', () => {
   })
 
   describe('verifyAdminSession', () => {
-    it('validates a genuine token signed with the matching secret', async () => {
+    it('validates a genuine token signed with the matching raw secret', async () => {
       const secretKey = new TextEncoder().encode(TEST_SECRET)
       const validToken = await new SignJWT({ id: 1, email: 'admin@example.com' })
         .setProtectedHeader({ alg: 'HS256' })
@@ -92,6 +93,25 @@ describe('Auth Helpers Unit Tests', () => {
 
       const isValid = await verifyAdminSession(validToken, TEST_SECRET)
       expect(isValid).toBe(true)
+    })
+
+    it('validates a genuine token signed with Payload CMS native derived secret', async () => {
+      const derived = await derivePayloadJwtSecret(TEST_SECRET)
+      const validToken = await new SignJWT({ id: 'admin1', email: 'admin@example.com' })
+        .setProtectedHeader({ alg: 'HS256' })
+        .sign(new TextEncoder().encode(derived))
+
+      const isValid = await verifyAdminSession(validToken, TEST_SECRET)
+      expect(isValid).toBe(true)
+    })
+
+    it('validates a genuine token with surrounding quotes', async () => {
+      const derived = await derivePayloadJwtSecret(TEST_SECRET)
+      const validToken = await new SignJWT({ id: 'admin1', email: 'admin@example.com' })
+        .setProtectedHeader({ alg: 'HS256' })
+        .sign(new TextEncoder().encode(derived))
+
+      expect(await verifyAdminSession(`"${validToken}"`, TEST_SECRET)).toBe(true)
     })
 
     it('rejects forged tokens with arbitrary values', async () => {
@@ -231,6 +251,49 @@ describe('FULL_RESTRICTION Middleware Integration Tests', () => {
       const req = createMockRequest({
         pathname: '/my-portfolio/projects/demo.webp',
         cookies: { 'payload-token': genuineToken },
+      })
+      const res = await middleware(req)
+      expect(res.status).not.toBe(401)
+    })
+
+    it('allows admin to save data on /api/globals/profile with native Payload CMS token without secret header', async () => {
+      const derived = await derivePayloadJwtSecret(TEST_SECRET)
+      const genuineToken = await new SignJWT({ id: 1, email: 'admin@showayeb.dev', collection: 'users' })
+        .setProtectedHeader({ alg: 'HS256' })
+        .sign(new TextEncoder().encode(derived))
+
+      const req = createMockRequest({
+        pathname: '/api/globals/profile',
+        method: 'POST',
+        cookies: { 'payload-token': genuineToken },
+      })
+      const res = await middleware(req)
+      expect(res.status).not.toBe(401)
+    })
+
+    it('allows admin access with Authorization: Bearer <admin-jwt>', async () => {
+      const derived = await derivePayloadJwtSecret(TEST_SECRET)
+      const genuineToken = await new SignJWT({ id: 1, email: 'admin@showayeb.dev' })
+        .setProtectedHeader({ alg: 'HS256' })
+        .sign(new TextEncoder().encode(derived))
+
+      const req = createMockRequest({
+        pathname: '/api/globals/profile',
+        headers: { authorization: `Bearer ${genuineToken}` },
+      })
+      const res = await middleware(req)
+      expect(res.status).not.toBe(401)
+    })
+
+    it('allows admin access when payload-token cookie is inside raw Cookie header string', async () => {
+      const derived = await derivePayloadJwtSecret(TEST_SECRET)
+      const genuineToken = await new SignJWT({ id: 1, email: 'admin@showayeb.dev' })
+        .setProtectedHeader({ alg: 'HS256' })
+        .sign(new TextEncoder().encode(derived))
+
+      const req = createMockRequest({
+        pathname: '/api/globals/profile',
+        headers: { cookie: `theme=dark; payload-token="${genuineToken}"; _ga=GA1.2.3` },
       })
       const res = await middleware(req)
       expect(res.status).not.toBe(401)
