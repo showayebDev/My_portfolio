@@ -77,10 +77,66 @@ const trustedDomains = Array.from(
     [
       'http://localhost:3000',
       'http://127.0.0.1:3000',
+      'http://localhost:4321',
+      'http://127.0.0.1:4321',
       siteUrl,
     ].filter(Boolean)
   )
 )
+
+/**
+ * Resolves storage collection overrides based on FULL_RESTRICTION and public storage URLs.
+ * Extracts nested ternaries into clear, readable branches.
+ * @returns {any}
+ */
+function getMediaStorageConfig() {
+  /** @param {any} [args] */
+  const generateProxyURL = (args) => {
+    const filename = args?.filename || ''
+    const prefix = args?.prefix
+    const key = prefix ? `${prefix}/${filename}` : filename
+    return `/my-portfolio/${key}`
+  }
+
+  if (process.env.FULL_RESTRICTION === 'true') {
+    return {
+      generateFileURL: generateProxyURL,
+    }
+  }
+
+  if (process.env.R2_PUBLIC_URL) {
+    const base = process.env.R2_PUBLIC_URL.replace(/\/$/, '')
+    return {
+      disablePayloadAccessControl: true,
+      /** @param {any} [args] */
+      generateFileURL: (args) => {
+        const filename = args?.filename || ''
+        const prefix = args?.prefix
+        const key = prefix ? `${prefix}/${filename}` : filename
+        return `${base}/${key}`
+      },
+    }
+  }
+
+  const s3PublicUrl = process.env.S3_PUBLIC_URL
+  if (s3PublicUrl && !s3PublicUrl.includes('localhost:9000') && !s3PublicUrl.includes('s3:9000')) {
+    const base = s3PublicUrl.replace(/\/$/, '')
+    return {
+      disablePayloadAccessControl: true,
+      /** @param {any} [args] */
+      generateFileURL: (args) => {
+        const filename = args?.filename || ''
+        const prefix = args?.prefix
+        const key = prefix ? `${prefix}/${filename}` : filename
+        return `${base}/${key}`
+      },
+    }
+  }
+
+  return {
+    generateFileURL: generateProxyURL,
+  }
+}
 
 export default buildConfig({
   sharp,
@@ -115,17 +171,19 @@ export default buildConfig({
     defaultFromAddress: 'noreply@localhost',
     defaultFromName: 'Portfolio Admin',
     sendEmail: async (message) => {
-      const urlMatch = typeof message.html === 'string' ? message.html.match(/https?:\/\/[^\s"'>]+/i) : null
-      const resetLink = urlMatch ? urlMatch[0] : null
+      if (process.env.NODE_ENV !== 'production') {
+        const urlMatch = typeof message.html === 'string' ? message.html.match(/https?:\/\/[^\s"'>]+/i) : null
+        const resetLink = urlMatch ? urlMatch[0] : null
 
-      console.log('\n======================================================')
-      console.log('📧 [PAYLOAD EMAIL - CONSOLE ADAPTER]')
-      console.log(`👤 To:      ${message.to}`)
-      console.log(`📋 Subject: ${message.subject}`)
-      if (resetLink) {
-        console.log(`🔗 Reset Link: ${resetLink}`)
+        console.log('\n======================================================')
+        console.log('📧 [PAYLOAD EMAIL - CONSOLE ADAPTER] (DEV ONLY)')
+        console.log(`👤 To:      ${message.to}`)
+        console.log(`📋 Subject: ${message.subject}`)
+        if (resetLink) {
+          console.log(`🔗 Reset Link: ${resetLink}`)
+        }
+        console.log('======================================================\n')
       }
-      console.log('======================================================\n')
       return Promise.resolve()
     },
   }),
@@ -214,34 +272,7 @@ export default buildConfig({
   plugins: [
     s3Storage({
       collections: {
-        media: {
-          ...(process.env.R2_PUBLIC_URL
-            ? {
-                disablePayloadAccessControl: true,
-                generateFileURL: ({ filename, prefix }) => {
-                  const key = prefix ? `${prefix}/${filename}` : filename
-                  const base = (process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
-                  return `${base}/${key}`
-                },
-              }
-            : process.env.S3_PUBLIC_URL &&
-              !process.env.S3_PUBLIC_URL.includes('localhost:9000') &&
-              !process.env.S3_PUBLIC_URL.includes('s3:9000')
-            ? {
-                disablePayloadAccessControl: true,
-                generateFileURL: ({ filename, prefix }) => {
-                  const key = prefix ? `${prefix}/${filename}` : filename
-                  const base = (process.env.S3_PUBLIC_URL || '').replace(/\/$/, '')
-                  return `${base}/${key}`
-                },
-              }
-            : {
-                generateFileURL: ({ filename, prefix }) => {
-                  const key = prefix ? `${prefix}/${filename}` : filename
-                  return `/my-portfolio/${key}`
-                },
-              }),
-        },
+        media: getMediaStorageConfig(),
       },
       clientUploads: true,
       bucket: process.env.S3_BUCKET || process.env.R2_BUCKET || 'my-portfolio',

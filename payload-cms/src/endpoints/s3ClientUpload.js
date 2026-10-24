@@ -63,6 +63,23 @@ export async function handleS3GenerateSignedURL(req) {
     throw new APIError('Filename is required', 400)
   }
 
+  const ALLOWED_MIME_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/svg+xml',
+    'image/x-icon',
+    'video/mp4',
+    'video/webm',
+    'video/quicktime',
+    'audio/mpeg',
+    'application/pdf',
+  ])
+  if (mimeType && !ALLOWED_MIME_TYPES.has(mimeType)) {
+    throw new APIError('Unsupported or unsafe file type: ' + mimeType, 400)
+  }
+
   const { bucket, client: signingClient } = getSigningClient()
   if (!bucket) {
     throw new APIError('S3 storage bucket is not configured', 500)

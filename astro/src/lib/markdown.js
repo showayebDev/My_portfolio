@@ -1,5 +1,6 @@
 import { marked } from "marked";
 import hljs from "highlight.js";
+import sanitizeHtml from "sanitize-html";
 
 function hljsEnv(hljsInstance) {
   return {
@@ -68,9 +69,45 @@ const renderer = {
 
 marked.use({ renderer, gfm: true, breaks: false });
 
+const SANITIZE_OPTIONS = {
+  allowedTags: [
+    ...sanitizeHtml.defaults.allowedTags,
+    "img",
+    "span",
+    "h1",
+    "h2",
+    "table",
+    "thead",
+    "tbody",
+    "tr",
+    "th",
+    "td",
+    "del",
+    "s",
+    "strike",
+    "sub",
+    "sup",
+  ],
+  allowedAttributes: {
+    ...sanitizeHtml.defaults.allowedAttributes,
+    a: ["href", "name", "target", "rel", "title"],
+    img: ["src", "alt", "title", "class", "width", "height", "loading"],
+    code: ["class"],
+    span: ["class"],
+    pre: ["class"],
+    th: ["align"],
+    td: ["align"],
+  },
+  allowedClasses: {
+    "*": ["hljs*", "language-*"],
+  },
+};
+
 export function renderMarkdown(content) {
   if (!content || typeof content !== "string") return "";
-  return marked.parse(content);
+  const rawHtml = marked.parse(content);
+  return sanitizeHtml(rawHtml, SANITIZE_OPTIONS);
 }
 
 export default renderMarkdown;
+

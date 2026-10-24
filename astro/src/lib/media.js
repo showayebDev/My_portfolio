@@ -53,10 +53,16 @@ function syncToDist(sourcePath, relativeFilePath) {
   const { distDir, clientDir } = getDirectories();
   const targets = [];
   if (fs.existsSync(distDir)) {
-    targets.push(path.resolve(distDir, relativeFilePath));
+    const target = path.resolve(distDir, relativeFilePath);
+    if (target.startsWith(distDir + path.sep)) {
+      targets.push(target);
+    }
   }
   if (fs.existsSync(clientDir)) {
-    targets.push(path.resolve(clientDir, relativeFilePath));
+    const target = path.resolve(clientDir, relativeFilePath);
+    if (target.startsWith(clientDir + path.sep)) {
+      targets.push(target);
+    }
   }
 
   for (const target of targets) {
@@ -111,6 +117,10 @@ export async function downloadAndLocalizeMedia(rawUrl) {
   const { publicDir, distDir, clientDir } = getDirectories();
 
   const publicFilePath = path.resolve(publicDir, relativeFilePath);
+  if (!publicFilePath.startsWith(publicDir + path.sep)) {
+    console.warn(`[Media Downloader] ⚠️ Path traversal attempt blocked: ${relativeFilePath}`);
+    return localPath;
+  }
 
   // 1. If valid file already exists in public folder, sync to dist and return
   if (fs.existsSync(publicFilePath)) {
@@ -143,10 +153,16 @@ export async function downloadAndLocalizeMedia(rawUrl) {
     let buffer = null;
     let fetchedUrl = '';
 
+    const payloadSecret =
+      typeof process !== 'undefined' && process.env?.PAYLOAD_SECRET
+        ? process.env.PAYLOAD_SECRET
+        : '';
+    const fetchHeaders = payloadSecret ? { 'x-payload-secret': payloadSecret } : {};
+
     for (const candidate of candidateUrls) {
       if (!candidate.startsWith('http://') && !candidate.startsWith('https://')) continue;
       try {
-        const res = await fetch(candidate);
+        const res = await fetch(candidate, { headers: fetchHeaders });
         if (res.ok) {
           const arrayBuffer = await res.arrayBuffer();
           buffer = Buffer.from(arrayBuffer);
@@ -235,9 +251,15 @@ export async function ensureFaviconDownloaded() {
       'https://pub-6434979c26444eb0a2baab22fd4c838f.r2.dev/favicon.ico',
     ];
 
+    const payloadSecret =
+      typeof process !== 'undefined' && process.env?.PAYLOAD_SECRET
+        ? process.env.PAYLOAD_SECRET
+        : '';
+    const fetchHeaders = payloadSecret ? { 'x-payload-secret': payloadSecret } : {};
+
     for (const candidate of candidateUrls) {
       try {
-        const res = await fetch(candidate);
+        const res = await fetch(candidate, { headers: fetchHeaders });
         if (res.ok) {
           const arrayBuffer = await res.arrayBuffer();
           const buffer = Buffer.from(arrayBuffer);

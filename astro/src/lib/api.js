@@ -76,10 +76,19 @@ export function sanitizeDocMedia(doc) {
   return clone;
 }
 
+// Server-only runtime secret resolution (never exposed or inlined into client bundles)
+const PAYLOAD_SECRET =
+  typeof process !== 'undefined' && process.env?.PAYLOAD_SECRET
+    ? process.env.PAYLOAD_SECRET
+    : '';
+
 export async function fetchFromApi(endpoint) {
   const url = `${INTERNAL_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
   try {
-    const res = await fetch(url);
+    const headers = {
+      ...(PAYLOAD_SECRET ? { 'x-payload-secret': PAYLOAD_SECRET } : {}),
+    };
+    const res = await fetch(url, { headers });
     if (!res.ok) {
       console.warn(`[Astro API] Failed fetch ${url}: HTTP ${res.status}`);
       return null;

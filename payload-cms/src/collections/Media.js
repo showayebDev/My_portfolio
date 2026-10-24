@@ -137,6 +137,19 @@ export const Media = {
     ],
   },
   upload: {
+    mimeTypes: [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+      'image/svg+xml',
+      'image/x-icon',
+      'video/mp4',
+      'video/webm',
+      'video/quicktime',
+      'audio/mpeg',
+      'application/pdf',
+    ],
     crop: false,
     focalPoint: false,
     formatOptions: {

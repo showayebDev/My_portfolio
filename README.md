@@ -63,6 +63,7 @@ My_portfolio/
 │   │   ├── collections/       # Users, Projects, Skills, Media, Education
 │   │   ├── globals/           # Profile & Social Links Globals
 │   │   ├── endpoints/         # Database & S3 migration endpoints
+│   │   ├── middleware.js      # Edge Middleware for FULL_RESTRICTION mode
 │   │   └── payload.config.js  # Database, Lexical editor & S3 storage config
 │   ├── .env                   # Remote PostgreSQL & S3 credentials
 │   └── package.json           # Next.js & Payload CMS dependencies
@@ -99,6 +100,20 @@ My_portfolio/
 
 ---
 
+## 🛡️ Security & Privacy (`FULL_RESTRICTION`)
+
+This project implements an optional, zero-trust **`FULL_RESTRICTION`** security architecture to keep your headless CMS backend and storage bucket 100% private:
+
+* **Private R2 / S3 Storage:** Cloudflare R2's `Public Development URL` or custom domains can remain **completely disabled**. No media files or raw assets are publicly exposed.
+* **Internal Media Proxy (`/my-portfolio/*`):** Media files are streamed through Payload CMS's internal S3 proxy using private AWS SDK S3 credentials.
+* **Edge Middleware Protection:** When `FULL_RESTRICTION=true` is enabled in `payload-cms`:
+  * All public API endpoints (`/api/*`) and media proxy routes (`/my-portfolio/*`) require authentication. Unauthorized requests return `401 Unauthorized`.
+  * **Astro Build-Time Integration:** Astro automatically sends an `x-payload-secret` header matching `PAYLOAD_SECRET` during SSG build, securely downloading content and localizing images into its static output.
+  * **Admin Panel Access:** Logged-in administrators retain full access in the browser via standard `payload-token` session cookies.
+  * **Essential Auth Routes:** Public auth endpoints (`/api/users/login`, `/api/users/logout`, etc.) and system health checks remain accessible.
+
+---
+
 ## 🚀 Getting Started
 
 ### Method 1: Local Development (Node.js)
@@ -112,12 +127,15 @@ npm run install:all
 * **Frontend:** Copy `astro/.env.example` to `astro/.env`:
   ```ini
   PAYLOAD_URL=http://localhost:3000
+  PUBLIC_SITE_URL=http://localhost:4321
+  PAYLOAD_SECRET=your_secret_key_matching_payload_cms
   ```
-* **Backend:** Copy `payload-cms/.env.example` to `payload-cms/.env` and provide your database credentials:
+* **Backend:** Copy `payload-cms/.env.example` to `payload-cms/.env`:
   ```ini
   DATABASE_URL=postgresql://user:password@host/db?sslmode=require
-  PAYLOAD_SECRET=your_secret_key
+  PAYLOAD_SECRET=your_secret_key_matching_payload_cms
   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+  FULL_RESTRICTION=true
   ```
 
 #### 3. Start Development Servers:
@@ -136,16 +154,23 @@ npm run install:all
 
 Runs both the Payload CMS and Astro Frontend containers connected to your remote cloud database (Neon) and storage (Cloudflare R2):
 
-```bash
-# Start containers in background
-npm run docker:up
+1. **Configure Environment:** Copy `.env.docker.example` to `.env.docker` and adjust your values:
+   ```bash
+   cp .env.docker.example .env.docker
+   ```
+   *(Both containers automatically inherit `PAYLOAD_SECRET` and `FULL_RESTRICTION` so the Astro container can authenticate and download media during build).*
 
-# View logs
-docker compose logs -f
+2. **Manage Containers:**
+   ```bash
+   # Start containers in background
+   npm run docker:up
 
-# Stop containers
-npm run docker:down
-```
+   # View logs
+   docker compose logs -f
+
+   # Stop containers
+   npm run docker:down
+   ```
 
 * **Payload CMS & Admin:** [http://localhost:3000/admin](http://localhost:3000/admin)
 * **Astro Frontend:** [http://localhost:4321](http://localhost:4321)
@@ -157,13 +182,22 @@ npm run docker:down
 
 Runs a completely isolated local development environment inside Docker with zero external cloud dependencies:
 
-```bash
-# Start full local stack
-npm run docker:full:up
+1. **Configure Environment:** Copy `.env.docker.full.example` to `.env.docker.full`:
+   ```bash
+   cp .env.docker.full.example .env.docker.full
+   ```
 
-# Stop full local stack
-npm run docker:full:down
-```
+2. **Manage Stack:**
+   ```bash
+   # Start full local stack
+   npm run docker:full:up
+
+   # View logs
+   docker compose -f docker-compose.full.yml logs -f
+
+   # Stop full local stack
+   npm run docker:full:down
+   ```
 
 | Service | Container Name | URL | Credentials / Notes |
 | :--- | :--- | :--- | :--- |
@@ -180,8 +214,9 @@ Pre-built multi-architecture Docker images are published and maintained on Docke
 
 | Image | Tag | Description |
 | :--- | :--- | :--- |
-| **[`showayebdev/my_portfolio_astro`](https://hub.docker.com/r/showayebdev/my_portfolio_astro)** | `latest` | Fast, SEO-optimized Astro SSG frontend |
-| **[`showayebdev/my_portfolio`](https://hub.docker.com/r/showayebdev/my_portfolio)** | `latest` | Headless Payload CMS 3.x backend |
+| **[`showayebdev/my_portfolio_astro`](https://hub.docker.com/r/showayebdev/my_portfolio_astro)** | `latest` | Ultra-fast Astro SSG frontend with automated Payload CMS API authentication and media localization |
+| **[`showayebdev/my_portfolio`](https://hub.docker.com/r/showayebdev/my_portfolio)** | `latest` | Headless Payload CMS 3.x backend (Next.js Standalone, PostgreSQL, R2/S3 private proxy, FULL_RESTRICTION mode) |
+
 
 ---
 

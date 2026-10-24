@@ -29,3 +29,4 @@ Thumbs.db
 !.vscode/extensions.json
 !.vscode/launch.json
 .idea/
+graphify-out/

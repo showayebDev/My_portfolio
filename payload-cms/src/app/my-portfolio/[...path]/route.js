@@ -1,6 +1,12 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import path from 'path'
 import { Readable } from 'stream'
+import {
+  timingSafeCompare,
+  extractBearerToken,
+  parseCookie,
+  verifyAdminSession,
+} from '../../../lib/auth-helpers.js'
 
 /** @type {S3Client | null} */
 let cachedS3Client = null
@@ -40,8 +46,33 @@ export async function GET(req, context) {
   const key = Array.isArray(segments) ? segments.join('/') : String(segments)
   const bucket = process.env.S3_BUCKET || process.env.R2_BUCKET || 'my-portfolio'
 
-  if (!key) {
+  if (!key || key.includes('..') || path.isAbsolute(key)) {
     return new Response('Not Found', { status: 404 })
+  }
+
+  if (process.env.FULL_RESTRICTION === 'true') {
+    const payloadSecret = process.env.PAYLOAD_SECRET
+
+    // 1. Timing-safe verification of x-payload-secret
+    const headerSecret = req.headers.get('x-payload-secret')
+    const hasSecretHeader = Boolean(payloadSecret && headerSecret && (await timingSafeCompare(headerSecret, payloadSecret)))
+
+    // 2. Timing-safe verification of Authorization: Bearer <secret>
+    const bearerToken = extractBearerToken(req.headers.get('authorization'))
+    const hasBearerSecret = Boolean(payloadSecret && bearerToken && (await timingSafeCompare(bearerToken, payloadSecret)))
+
+    // 3. Cryptographically verify genuine admin session cookie (payload-token)
+    const tokenFromCookie = parseCookie(req.headers.get('cookie'), 'payload-token')
+    const hasValidAdminSession = Boolean(
+      payloadSecret && tokenFromCookie && (await verifyAdminSession(tokenFromCookie, payloadSecret))
+    )
+
+    if (!hasSecretHeader && !hasBearerSecret && !hasValidAdminSession) {
+      return new Response('Unauthorized: Access restricted by FULL_RESTRICTION', {
+        status: 401,
+        headers: { 'Content-Type': 'text/plain' },
+      })
+    }
   }
 
   const range = req.headers.get('range')
@@ -84,7 +115,7 @@ export async function GET(req, context) {
       return new Response('Not Found', { status: 404 })
     }
     console.error(`[my-portfolio storage proxy error for ${key}]:`, err?.message || err)
-    return new Response('Storage error: ' + (err?.message || err), { status: 502 })
+    return new Response('Storage service error', { status: 502 })
   }
 
   return new Response('Not Found', { status: 404 })

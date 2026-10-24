@@ -102,10 +102,29 @@ function localMediaIntegration() {
             } catch (_) {}
           }
 
+          const headersFile = path.join(target, "_headers");
+          const secHeaders = [
+            "/*",
+            "  X-Frame-Options: DENY",
+            "  X-Content-Type-Options: nosniff",
+            "  Referrer-Policy: strict-origin-when-cross-origin",
+            "  Permissions-Policy: camera=(), microphone=(), geolocation=()",
+            "  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload",
+          ].join("\n");
+
+          if (fs.existsSync(headersFile)) {
+            const current = fs.readFileSync(headersFile, "utf-8");
+            if (!current.includes("X-Frame-Options")) {
+              fs.writeFileSync(headersFile, `${secHeaders}\n\n${current}`, "utf-8");
+            }
+          } else {
+            fs.writeFileSync(headersFile, `${secHeaders}\n`, "utf-8");
+          }
+
           scanAndRewriteHtml(target);
         }
 
-        console.log("[Local Media Integration] ✓ Synced public media and verified favicon.ico in distribution targets");
+        console.log("[Local Media Integration] ✓ Synced public media, injected security headers, and verified favicon.ico in distribution targets");
       },
     },
   };

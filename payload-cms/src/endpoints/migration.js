@@ -139,6 +139,9 @@ async function ensureAdmin(req) {
  * @param {import('payload').PayloadRequest} req
  */
 export async function handleGetStatus(req) {
+  const authErr = await ensureAdmin(req)
+  if (authErr) return authErr
+
   try {
     const dbUrl = (process.env.DATABASE_URL || process.env.MONGODB_URI || '').trim()
     const isPostgres = dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://')
