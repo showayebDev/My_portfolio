@@ -22,7 +22,7 @@ const nextConfig = {
     return null
   },
   images: {
-    dangerouslyAllowLocalIP: true,
+    dangerouslyAllowLocalIP: process.env.NODE_ENV === 'development',
     qualities: [75, 90],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
@@ -32,10 +32,18 @@ const nextConfig = {
         protocol: 'https',
         hostname: '**',
       },
-      {
-        protocol: 'http',
-        hostname: '**',
-      },
+      ...(process.env.NODE_ENV === 'development'
+        ? [
+            {
+              protocol: 'http',
+              hostname: 'localhost',
+            },
+            {
+              protocol: 'http',
+              hostname: 's3',
+            },
+          ]
+        : []),
     ],
     localPatterns: [
       {

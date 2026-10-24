@@ -113,18 +113,27 @@ async function fetchSourceFile(doc) {
 async function ensureAdmin(req) {
   if (req.user) return null
 
-  // Allow setup/restore operations if the active database has 0 users (initial bootstrap state)
-  try {
-    const usersResult = await req.payload.find({
-      collection: 'users',
-      limit: 1,
-    })
-    if (usersResult.totalDocs === 0) {
+  // Allow execution if authorized with x-payload-secret header
+  const payloadSecret = process.env.PAYLOAD_SECRET
+  const headerSecret = req.headers?.get ? req.headers.get('x-payload-secret') : null
+  if (payloadSecret && headerSecret && headerSecret === payloadSecret) {
+    return null
+  }
+
+  // In non-production development environments only, allow setup/restore if 0 users exist
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      const usersResult = await req.payload.find({
+        collection: 'users',
+        limit: 1,
+      })
+      if (usersResult.totalDocs === 0) {
+        return null
+      }
+    } catch {
+      // If table/collection does not exist yet in dev, allow bootstrap
       return null
     }
-  } catch {
-    // If table/collection does not exist yet, allow bootstrap
-    return null
   }
 
   return Response.json(

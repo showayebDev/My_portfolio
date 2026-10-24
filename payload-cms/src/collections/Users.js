@@ -28,10 +28,9 @@ export const Users = {
   auth: {
     forgotPassword: {
       generateEmailHTML: ({ req, token, user }) => {
-        const host = req?.headers?.get?.('host')
-        const proto = req?.headers?.get?.('x-forwarded-proto') || 'http'
-        const origin = req?.headers?.get?.('origin') || (host ? `${proto}://${host}` : null)
-        const siteUrl = (origin || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '')
+        // Enforce trusted configured site URL to prevent password reset poisoning via Host / Origin header injection
+        const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+        const siteUrl = configuredUrl.trim().replace(/\/$/, '')
         const resetPasswordURL = `${siteUrl}/admin/reset/${token}`
 
         if (process.env.NODE_ENV !== 'production') {

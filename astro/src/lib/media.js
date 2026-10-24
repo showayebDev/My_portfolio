@@ -162,7 +162,10 @@ export async function downloadAndLocalizeMedia(rawUrl) {
     for (const candidate of candidateUrls) {
       if (!candidate.startsWith('http://') && !candidate.startsWith('https://')) continue;
       try {
-        const res = await fetch(candidate, { headers: fetchHeaders });
+        // Security: Only send internal x-payload-secret to internal payloadBase, never leak to external URLs
+        const isInternalPayload = candidate.startsWith(payloadBase);
+        const headers = isInternalPayload ? fetchHeaders : {};
+        const res = await fetch(candidate, { headers });
         if (res.ok) {
           const arrayBuffer = await res.arrayBuffer();
           buffer = Buffer.from(arrayBuffer);

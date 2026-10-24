@@ -164,6 +164,17 @@ export const Media = {
         if (!bucket || !filename) return null
 
         let prefix = resolvedParams?.prefix || req.searchParams?.get('prefix') || ''
+
+        // Security: Prevent path traversal in filename and prefix
+        if (
+          filename.includes('..') ||
+          filename.includes('/') ||
+          filename.includes('\\') ||
+          (prefix && (prefix.includes('..') || path.isAbsolute(prefix)))
+        ) {
+          return new Response('Invalid media request', { status: 400 })
+        }
+
         if (!prefix && req.payload) {
           try {
             const found = await req.payload.find({
@@ -206,6 +217,12 @@ export const Media = {
               headers: {
                 'Content-Type': contentType,
                 'Accept-Ranges': 'bytes',
+                ...(contentType === 'image/svg+xml'
+                  ? {
+                      'Content-Security-Policy': "default-src 'none'; sandbox;",
+                      'X-Content-Type-Options': 'nosniff',
+                    }
+                  : {}),
                 ...(s3Res.ContentLength != null ? { 'Content-Length': String(s3Res.ContentLength) } : {}),
                 ...(s3Res.ContentRange ? { 'Content-Range': s3Res.ContentRange } : {}),
                 ...(s3Res.ETag ? { ETag: s3Res.ETag } : {}),

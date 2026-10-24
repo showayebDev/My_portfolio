@@ -402,9 +402,10 @@ export async function ensurePostgresSchema(connectionString) {
   checkedUrls.add(connectionString)
 
   const isLocal = connectionString.includes('sslmode=disable') || connectionString.includes('@postgres:')
+  const allowInsecureSSL = process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'false' || connectionString.includes('sslmode=no-verify')
   const client = new pg.Client({
     connectionString,
-    ...(isLocal ? {} : { ssl: { rejectUnauthorized: false } }),
+    ...(isLocal ? {} : { ssl: { rejectUnauthorized: !allowInsecureSSL } }),
     connectionTimeoutMillis: 10000,
   })
 

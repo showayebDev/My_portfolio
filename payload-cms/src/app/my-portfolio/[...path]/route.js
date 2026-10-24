@@ -104,6 +104,12 @@ export async function GET(req, context) {
           'Content-Type': contentType,
           'Accept-Ranges': 'bytes',
           'Cache-Control': 'public, max-age=31536000, immutable',
+          ...(contentType === 'image/svg+xml'
+            ? {
+                'Content-Security-Policy': "default-src 'none'; sandbox;",
+                'X-Content-Type-Options': 'nosniff',
+              }
+            : {}),
           ...(s3Res.ContentLength != null ? { 'Content-Length': String(s3Res.ContentLength) } : {}),
           ...(s3Res.ContentRange ? { 'Content-Range': s3Res.ContentRange } : {}),
           ...(s3Res.ETag ? { ETag: s3Res.ETag } : {}),

@@ -215,10 +215,14 @@ const showToggle = configTheme !== "dark" && configTheme !== "light";
                   }
                 } catch (_e) {}
 
+                const rawUrl = (social.url || "").trim();
+                const isSafeUrl = !rawUrl || /^https?:\/\/|^mailto:|^tel:|^#|^\//i.test(rawUrl);
+                const safeUrl = isSafeUrl ? (rawUrl || "#") : "#";
+
                 return (
                   <a
-                    href={social.url || "#"}
-                    target="_blank"
+                    href={safeUrl}
+                    target={safeUrl.startsWith("http") ? "_blank" : undefined}
                     rel="noopener noreferrer"
                     class="flex justify-between items-center p-2.5 bg-[var(--card-note-color)] hover:bg-[var(--card-kraft-color)] border border-[var(--border-color)] rounded-xl transition-all duration-200 group hover:translate-x-1 shadow-sm"
                   >

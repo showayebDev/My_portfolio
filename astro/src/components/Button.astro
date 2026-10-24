@@ -23,11 +23,15 @@ if (lower.includes("github") || lower.includes("repo") || lower.includes("source
 } else if (lower.includes("live") || lower.includes("demo") || lower.includes("visit") || lower.includes("site") || lower.includes("app")) {
   iconType = "external";
 }
+
+const rawLink = (link || "").trim();
+const isSafeLink = !rawLink || /^https?:\/\/|^mailto:|^tel:|^#|^\//i.test(rawLink);
+const safeHref = isSafeLink ? (rawLink || "#") : "#";
 ---
 
 <a
-  href={link}
-  target="_blank"
+  href={safeHref}
+  target={safeHref.startsWith("http") ? "_blank" : undefined}
   rel="noopener noreferrer"
   class={`inline-flex items-center justify-center gap-1.5 ${className}`}
 >

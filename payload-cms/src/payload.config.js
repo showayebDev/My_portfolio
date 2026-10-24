@@ -203,6 +203,10 @@ export default buildConfig({
   onInit: async (payload) => {
     await ensureS3Bucket()
 
+    if (process.env.NODE_ENV === 'production' && process.env.PAYLOAD_SECRET === 'your-random-strong-secret-key-min-32-chars') {
+      console.warn('⚠️ [SECURITY WARNING] PAYLOAD_SECRET is using the default placeholder value. Change it immediately in your .env file to secure your deployment!')
+    }
+
     if (process.env.NODE_ENV === 'development') {
       try {
         const { totalDocs } = await payload.find({
@@ -242,10 +246,11 @@ export default buildConfig({
 
     if (isPostgres) {
       const isLocal = dbUrl.includes('sslmode=disable') || dbUrl.includes('@postgres:')
+      const allowInsecureSSL = process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'false' || dbUrl.includes('sslmode=no-verify')
       const adapterObj = postgresAdapter({
         pool: {
           connectionString: dbUrl,
-          ...(isLocal ? {} : { ssl: { rejectUnauthorized: false } }),
+          ...(isLocal ? {} : { ssl: { rejectUnauthorized: !allowInsecureSSL } }),
         },
         push: false,
       })
