@@ -13,21 +13,7 @@
     "build:astro": "npm run build --prefix astro",
     "install:cms": "npm install --prefix payload-cms",
     "install:astro": "npm install --prefix astro",
-    "install:all": "npm install --prefix payload-cms && npm install --prefix astro",
-    "docker:build": "npm run docker:build:all",
-    "docker:build:cms": "docker build --target cms -t showayebdev/my_portfolio:latest .",
-    "docker:build:astro": "docker build --target astro -t showayebdev/my_portfolio_astro:latest .",
-    "docker:build:all": "docker compose build",
-    "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down",
-    "docker:full:up": "docker compose -f docker-compose.full.yml up -d",
-    "docker:full:down": "docker compose -f docker-compose.full.yml down",
-    "docker:push": "docker push showayebdev/my_portfolio:latest",
-    "docker:push:cms": "docker push showayebdev/my_portfolio:latest",
-    "docker:push:astro": "docker push showayebdev/my_portfolio_astro:latest",
-    "docker:push:all": "docker compose push",
-    "docker:publish": "npm run docker:publish:all",
-    "docker:publish:all": "npm run docker:build:cms && npm run docker:build:astro && npm run docker:push:cms && npm run docker:push:astro"
+    "install:all": "npm install --prefix payload-cms && npm install --prefix astro"
   },
   "devDependencies": {
     "wrangler": "^4.152.0"
