@@ -43,6 +43,7 @@ const publishedProjects = projectData.filter((p) => p._status !== "draft");
   <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
     {publishedProjects.map((project, idx) => {
       const slug = project.slug || project.name;
+      const transitionSlug = (slug || `project-${idx}`).replace(/[^a-zA-Z0-9_-]/g, '-');
       const imgSrc = (typeof project.image === "object" && project.image?.url)
         ? project.image.url
         : project.imageUrl || project.img || null;
@@ -70,6 +71,7 @@ const publishedProjects = projectData.filter((p) => p._status !== "draft");
                     height="64"
                     class="w-full h-full object-contain rounded"
                     loading="lazy"
+                    transition:name={`project-image-${transitionSlug}`}
                   />
                 ) : (
                   <div class="w-full h-full flex items-center justify-center text-xl bg-[var(--card-kraft-color)]">
@@ -81,7 +83,10 @@ const publishedProjects = projectData.filter((p) => p._status !== "draft");
               <!-- Content -->
               <div class="flex-1 min-w-0 text-left">
                 <div class="flex items-center gap-2">
-                  <h4 class="collage-serif text-base font-bold text-[var(--text-color)] group-hover:text-[var(--link-color)] transition-colors truncate">
+                  <h4
+                    class="collage-serif text-base font-bold text-[var(--text-color)] group-hover:text-[var(--link-color)] transition-colors truncate"
+                    transition:name={`project-title-${transitionSlug}`}
+                  >
                     {project.title}
                   </h4>
                 </div>

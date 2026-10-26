@@ -1,7 +1,6 @@
 ---
 import '../styles/globals.css';
 import { ClientRouter } from 'astro:transitions';
-import TopLoader from '../components/TopLoader.astro';
 
 interface Props {
   title?: string;
@@ -187,7 +186,6 @@ const ogImageAlt = imageAlt || title || siteName;
     </script>
   </head>
   <body class="min-h-screen bg-[var(--bg-color)] text-[var(--text-color)] transition-colors duration-300 antialiased selection:bg-[var(--link-color)] selection:text-white">
-    <TopLoader />
     <slot />
   </body>
 </html>

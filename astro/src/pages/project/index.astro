@@ -126,6 +126,7 @@ if (twitterSocial?.name && twitterSocial.name.startsWith("@")) {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-stretch">
         {projects.map((project: any, index: number) => {
           const slug = project.slug || project.name;
+          const transitionSlug = (slug || `project-${index}`).replace(/[^a-zA-Z0-9_-]/g, '-');
           const imgSrc = (typeof project.image === "object" && project.image?.url)
             ? project.image.url
             : project.imageUrl || project.img || null;
@@ -172,6 +173,7 @@ if (twitterSocial?.name && twitterSocial.name.startsWith("@")) {
                             width="500"
                             height="300"
                             loading="lazy"
+                            transition:name={`project-image-${transitionSlug}`}
                           />
                         ) : (
                           <div class="w-full h-full flex items-center justify-center text-4xl">
@@ -184,7 +186,10 @@ if (twitterSocial?.name && twitterSocial.name.startsWith("@")) {
 
                   <!-- Title and Short Details -->
                   <div class="px-1 text-left">
-                    <h4 class="collage-serif text-lg font-bold text-[var(--text-color)] group-hover:text-[var(--link-color)] transition-colors line-clamp-1">
+                    <h4
+                      class="collage-serif text-lg font-bold text-[var(--text-color)] group-hover:text-[var(--link-color)] transition-colors line-clamp-1"
+                      transition:name={`project-title-${transitionSlug}`}
+                    >
                       {project.title}
                     </h4>
                     <p class="text-xs text-[var(--secondary-text-color)] line-clamp-2 mt-1.5 font-medium leading-relaxed">

@@ -27,6 +27,7 @@ if (process.env.NODE_ENV === 'development') {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  outputFileTracingRoot: path.resolve(import.meta.dirname, '..'),
   experimental: {
     serverActions: {
       bodySizeLimit: '500mb',

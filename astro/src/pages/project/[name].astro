@@ -23,6 +23,8 @@ if (!project) {
   return Astro.redirect('/404');
 }
 
+const transitionSlug = (project.slug || project.name || name || '').replace(/[^a-zA-Z0-9_-]/g, '-');
+
 const defaultTheme = profile?.theme || "dark";
 
 function parseButtons(buttons: any) {
@@ -99,9 +101,13 @@ if (twitterSocial?.name && twitterSocial.name.startsWith("@")) {
                       alt={project.title}
                       class="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
                       loading="eager"
+                      transition:name={`project-image-${transitionSlug}`}
                     />
                   </div>
-                  <div class="polaroid-caption !text-sm md:!text-base lg:!text-sm !mt-1.5 truncate max-w-[200px] md:max-w-[220px] lg:max-w-[200px]">
+                  <div
+                    class="polaroid-caption !text-sm md:!text-base lg:!text-sm !mt-1.5 truncate max-w-[200px] md:max-w-[220px] lg:max-w-[200px]"
+                    transition:name={`project-title-${transitionSlug}`}
+                  >
                     {project.title}
                   </div>
                 </div>
