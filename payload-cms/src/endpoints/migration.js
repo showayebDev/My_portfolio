@@ -19,6 +19,7 @@ import { SkillCategories } from '../collections/SkillCategories.js'
 import { Education } from '../collections/Education.js'
 import { Profile } from '../globals/Profile.js'
 import { ensurePostgresSchema } from '../lib/autoInitPostgres.js'
+import { timingSafeCompare } from '../lib/auth-helpers.js'
 
 /**
  * Creates an S3 Client for the given credentials
@@ -105,18 +106,19 @@ async function fetchSourceFile(doc) {
 }
 
 /**
- * Helper to check admin authorization.
- * Allows execution if the user is authenticated, OR if the active database has 0 users
- * so the administrator can bootstrap and seed their credentials.
+ * Helper to check admin authorization for migration operations.
+ * Allows execution if the user is genuinely authenticated as admin,
+ * or if explicitly authorized with a dedicated MIGRATION_SECRET via x-migration-secret (timing-safe),
+ * OR in non-production environments if the database has 0 users for initial bootstrapping.
  * @param {import('payload').PayloadRequest} req
  */
 async function ensureAdmin(req) {
   if (req.user) return null
 
-  // Allow execution if authorized with x-payload-secret header
-  const payloadSecret = process.env.PAYLOAD_SECRET
-  const headerSecret = req.headers?.get ? req.headers.get('x-payload-secret') : null
-  if (payloadSecret && headerSecret && headerSecret === payloadSecret) {
+  // Allow execution only if authorized with dedicated MIGRATION_SECRET using constant-time comparison
+  const migrationSecret = process.env.MIGRATION_SECRET
+  const headerSecret = req.headers?.get ? req.headers.get('x-migration-secret') : null
+  if (migrationSecret && headerSecret && (await timingSafeCompare(headerSecret, migrationSecret))) {
     return null
   }
 

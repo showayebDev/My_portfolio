@@ -76,13 +76,19 @@ const appLogger = /** @type {any} */ ({
 const rawSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim().replace(/\/$/, '')
 const siteUrl = rawSiteUrl && !/^https?:\/\//i.test(rawSiteUrl) ? `https://${rawSiteUrl}` : rawSiteUrl
 
-const trustedDomains = Array.from(
-  new Set(
-    [
+const localDevDomains = isProduction
+  ? []
+  : [
       'http://localhost:3000',
       'http://127.0.0.1:3000',
       'http://localhost:4321',
       'http://127.0.0.1:4321',
+    ]
+
+const trustedDomains = Array.from(
+  new Set(
+    [
+      ...localDevDomains,
       siteUrl,
     ].filter(Boolean)
   )

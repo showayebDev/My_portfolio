@@ -14,13 +14,13 @@ function getS3Client() {
   if (!cachedS3Client) {
     cachedS3Client = new S3Client({
       credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID || 'minioadmin',
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY || 'minioadmin',
+        accessKeyId: process.env.S3_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID || (process.env.NODE_ENV !== 'production' ? 'minioadmin' : ''),
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY || (process.env.NODE_ENV !== 'production' ? 'minioadmin' : ''),
       },
       region: process.env.S3_REGION || process.env.R2_REGION || 'auto',
       ...(process.env.S3_ENDPOINT || process.env.R2_ENDPOINT
         ? { endpoint: process.env.S3_ENDPOINT || process.env.R2_ENDPOINT }
-        : { endpoint: 'http://localhost:9000' }),
+        : process.env.NODE_ENV !== 'production' ? { endpoint: 'http://localhost:9000' } : {}),
       forcePathStyle: true,
     })
   }

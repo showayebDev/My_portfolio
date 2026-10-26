@@ -159,11 +159,29 @@ export async function downloadAndLocalizeMedia(rawUrl) {
         : '';
     const fetchHeaders = payloadSecret ? { 'x-payload-secret': payloadSecret } : {};
 
+/**
+ * Safely checks if candidate URL matches internal payload origin.
+ * Prevents credential leaking to external domains or subdomain prefixes.
+ * @param {string} candidate
+ * @param {string} payloadBase
+ * @returns {boolean}
+ */
+function isInternalPayloadUrl(candidate, payloadBase) {
+  if (!candidate || !payloadBase) return false;
+  try {
+    const candidateUrl = new URL(candidate);
+    const payloadUrl = new URL(payloadBase);
+    return candidateUrl.origin === payloadUrl.origin;
+  } catch {
+    return false;
+  }
+}
+
     for (const candidate of candidateUrls) {
       if (!candidate.startsWith('http://') && !candidate.startsWith('https://')) continue;
       try {
         // Security: Only send internal x-payload-secret to internal payloadBase, never leak to external URLs
-        const isInternalPayload = candidate.startsWith(payloadBase);
+        const isInternalPayload = isInternalPayloadUrl(candidate, payloadBase);
         const headers = isInternalPayload ? fetchHeaders : {};
         const res = await fetch(candidate, { headers });
         if (res.ok) {
@@ -262,7 +280,9 @@ export async function ensureFaviconDownloaded() {
 
     for (const candidate of candidateUrls) {
       try {
-        const res = await fetch(candidate, { headers: fetchHeaders });
+        const isInternalPayload = isInternalPayloadUrl(candidate, payloadBase);
+        const headers = isInternalPayload ? fetchHeaders : {};
+        const res = await fetch(candidate, { headers });
         if (res.ok) {
           const arrayBuffer = await res.arrayBuffer();
           const buffer = Buffer.from(arrayBuffer);
