@@ -70,6 +70,7 @@ if (twitterSocial?.name && twitterSocial.name.startsWith("@")) {
   title={title}
   description={description}
   defaultTheme={defaultTheme}
+  transition={profile?.transition || "fade"}
   favicon={imgSrc || avatarSrc || undefined}
   image={imgSrc || avatarSrc || "/media/profile-pic.webp"}
   imageAlt={`${project.title}`}

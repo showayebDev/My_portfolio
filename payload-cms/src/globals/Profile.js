@@ -303,6 +303,55 @@ export const Profile = {
               },
             },
             {
+              name: 'transition',
+              type: 'select',
+              label: 'Page View Transition',
+              defaultValue: 'fade',
+              required: true,
+              options: [
+                {
+                  label: 'fade - Smooth Crossfade (Built-in Default)',
+                  value: 'fade',
+                },
+                {
+                  label: 'slide - Horizontal Slide (Left/Right slide based on navigation)',
+                  value: 'slide',
+                },
+                {
+                  label: 'slide-up - Vertical Slide Up (Smooth bottom-to-top rise)',
+                  value: 'slide-up',
+                },
+                {
+                  label: 'zoom - Cinematic Scale & Zoom (Expands smoothly into view)',
+                  value: 'zoom',
+                },
+                {
+                  label: 'blur - Depth of Field Lens Blur (Cinematic soft blur crossfade)',
+                  value: 'blur',
+                },
+                {
+                  label: 'flip - 3D Perspective Card Flip (Subtle 3D angle transition)',
+                  value: 'flip',
+                },
+                {
+                  label: 'no transition- top bar loader',
+                  value: 'top-loader',
+                },
+                {
+                  label: 'none - Instant Swap (No transition animation)',
+                  value: 'none',
+                },
+                {
+                  label: 'initial - Browser Native Default Transition',
+                  value: 'initial',
+                },
+              ],
+              admin: {
+                description:
+                  'Select page view transition animation: "fade" (smooth crossfade), "slide" (horizontal navigation), "slide-up" (vertical motion), "zoom" (cinematic scaling), "blur" (depth blur), "flip" (3D card perspective), "no transition- top bar loader" (instant page swap with top progress bar), "none" (instant switch), or "initial" (browser native).',
+              },
+            },
+            {
               name: 'showPercent',
               type: 'checkbox',
               label: 'Show Skill Proficiency Percentages & Animated Progress Rings',

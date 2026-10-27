@@ -678,3 +678,155 @@ h1, h2, h3, h4, .collage-serif {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--tape-amber);
 }
+
+/* ============================================================
+   CUSTOM VIEW TRANSITIONS KEYFRAMES
+   ============================================================ */
+
+/* 1. Zoom Transition */
+@keyframes vtZoomOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+@keyframes vtZoomIn {
+  from {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes vtZoomOutReverse {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+@keyframes vtZoomInReverse {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 2. Slide-Up / Vertical Transition */
+@keyframes vtSlideUpOld {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+@keyframes vtSlideUpNew {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes vtSlideDownOld {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+@keyframes vtSlideDownNew {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 3. Cinematic Blur Transition */
+@keyframes vtBlurOut {
+  from {
+    opacity: 1;
+    filter: blur(0px);
+  }
+  to {
+    opacity: 0;
+    filter: blur(8px);
+  }
+}
+@keyframes vtBlurIn {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+/* 4. 3D Perspective Flip Transition */
+@keyframes vtFlipOut {
+  from {
+    opacity: 1;
+    transform: perspective(1200px) rotateY(0deg);
+  }
+  to {
+    opacity: 0;
+    transform: perspective(1200px) rotateY(-8deg);
+  }
+}
+@keyframes vtFlipIn {
+  from {
+    opacity: 0;
+    transform: perspective(1200px) rotateY(8deg);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1200px) rotateY(0deg);
+  }
+}
+@keyframes vtFlipOutReverse {
+  from {
+    opacity: 1;
+    transform: perspective(1200px) rotateY(0deg);
+  }
+  to {
+    opacity: 0;
+    transform: perspective(1200px) rotateY(8deg);
+  }
+}
+@keyframes vtFlipInReverse {
+  from {
+    opacity: 0;
+    transform: perspective(1200px) rotateY(-8deg);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1200px) rotateY(0deg);
+  }
+}

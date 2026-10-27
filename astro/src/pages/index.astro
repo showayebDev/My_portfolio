@@ -34,6 +34,7 @@ if (twitterSocial?.name && twitterSocial.name.startsWith("@")) {
   title={title}
   description={description}
   defaultTheme={defaultTheme}
+  transition={profile?.transition || "fade"}
   image={avatarSrc || "/media/profile-pic.webp"}
   imageAlt={`${profile?.name || "Showayeb Ahamed"}`}
   favicon={avatarSrc || undefined}

@@ -1,4 +1,8 @@
 // @ts-check
+import dns from 'node:dns'
+if (typeof dns?.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first')
+}
 import fs from 'node:fs'
 import path from 'node:path'
 import { withPayload } from '@payloadcms/next/withPayload'

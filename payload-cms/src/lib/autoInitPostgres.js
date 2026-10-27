@@ -30,6 +30,10 @@ DO $$ BEGIN
   CREATE TYPE "public"."enum_profile_theme" AS ENUM('auto', 'dark', 'light', 'a_dark', 'a_light');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
+DO $$ BEGIN
+  CREATE TYPE "public"."enum_profile_transition" AS ENUM('fade', 'slide', 'slide-up', 'zoom', 'blur', 'flip', 'top-loader', 'none', 'initial');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
 CREATE TABLE IF NOT EXISTS "users_sessions" (
   "_order" integer NOT NULL,
   "_parent_id" integer NOT NULL,
@@ -244,6 +248,7 @@ CREATE TABLE IF NOT EXISTS "profile" (
   "projects_header_title" varchar DEFAULT 'Projects',
   "explore_more_git_hub_url" varchar DEFAULT 'https://github.com',
   "theme" "enum_profile_theme" DEFAULT 'dark' NOT NULL,
+  "transition" "enum_profile_transition" DEFAULT 'fade',
   "show_percent" boolean DEFAULT false,
   "updated_at" timestamp(3) with time zone,
   "created_at" timestamp(3) with time zone
@@ -417,7 +422,7 @@ export async function ensurePostgresSchema(connectionString) {
   const client = new pg.Client({
     connectionString,
     ...(isLocal ? {} : { ssl: { rejectUnauthorized: !allowInsecureSSL } }),
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 15000,
   })
 
   try {
@@ -519,11 +524,23 @@ export async function ensurePostgresSchema(connectionString) {
         DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Steam'; EXCEPTION WHEN duplicate_object THEN null; END $$;
         DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Pinterest'; EXCEPTION WHEN duplicate_object THEN null; END $$;
         DO $$ BEGIN ALTER TYPE "public"."enum_profile_socials_platform" ADD VALUE IF NOT EXISTS 'Website'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN
+          CREATE TYPE "public"."enum_profile_transition" AS ENUM('fade', 'slide', 'slide-up', 'zoom', 'blur', 'flip', 'top-loader', 'none', 'initial');
+        EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_transition" ADD VALUE IF NOT EXISTS 'slide-up'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_transition" ADD VALUE IF NOT EXISTS 'zoom'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_transition" ADD VALUE IF NOT EXISTS 'blur'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_transition" ADD VALUE IF NOT EXISTS 'flip'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN ALTER TYPE "public"."enum_profile_transition" ADD VALUE IF NOT EXISTS 'top-loader'; EXCEPTION WHEN duplicate_object THEN null; END $$;
+        ALTER TABLE "profile" ADD COLUMN IF NOT EXISTS "transition" "enum_profile_transition" DEFAULT 'fade';
       `).catch(() => {})
     }
   } catch (err) {
     checkedUrls.delete(connectionString)
-    const errorMsg = err instanceof Error ? err.message : String(err)
+    const errorMsg =
+      // @ts-ignore
+      (Array.isArray(err?.errors) ? err.errors.map((e) => e?.message).filter(Boolean).join('; ') : null) ||
+      (err instanceof Error ? err.message : String(err))
     console.warn('[DB Auto-Init] Note:', errorMsg)
   } finally {
     await client.end().catch(() => {})

@@ -13,6 +13,7 @@ const avatarSrc = (typeof profile?.avatar === "object" && profile?.avatar?.url)
   title="404: Page Not Found – Showayeb Ahamed"
   description="The requested page could not be located in the archives."
   defaultTheme={defaultTheme}
+  transition={profile?.transition || "fade"}
   image={avatarSrc || "/media/profile-pic.webp"}
   favicon={avatarSrc || undefined}
   siteName={profile?.name || "Showayeb Ahamed"}

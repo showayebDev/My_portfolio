@@ -1,0 +1,239 @@
+---
+// TopLoader.astro
+// Provides a top loading progress bar (white bar across all themes)
+// Emulates NextTopLoader / NProgress during page navigations
+---
+
+<div id="top-loader-container" transition:persist>
+  <div id="top-loader" role="progressbar" aria-hidden="true">
+    <div class="top-loader-peg"></div>
+  </div>
+</div>
+
+<style>
+  #top-loader-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    z-index: 999999;
+    pointer-events: none;
+  }
+
+  #top-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0%;
+    /* White bar across all themes */
+    background: #ffffff;
+    /* Dual contrast shadow:
+       1) High intensity white neon glow
+       2) Subtle dark drop-shadow for light theme contrast so the white bar is clearly visible on any background */
+    box-shadow:
+      0 0 10px rgba(255, 255, 255, 0.95),
+      0 0 5px rgba(255, 255, 255, 0.8),
+      0 1px 3px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transition: width 200ms cubic-bezier(0.1, 0.05, 0.2, 1), opacity 200ms ease;
+    border-radius: 0 2px 2px 0;
+  }
+
+  .top-loader-peg {
+    position: absolute;
+    right: 0px;
+    top: 0;
+    width: 100px;
+    height: 100%;
+    box-shadow:
+      0 0 14px #ffffff,
+      0 0 8px #ffffff;
+    opacity: 1;
+    transform: rotate(3deg) translate(0px, -4px);
+  }
+</style>
+
+<script is:inline>
+  (function() {
+    if (window.__topLoaderInitialized) return;
+    window.__topLoaderInitialized = true;
+
+    var loader = null;
+    var currentProgress = 0;
+    var crawlInterval = null;
+    var finishTimeout = null;
+    var safetyTimeout = null;
+    var isRunning = false;
+
+    function getLoader() {
+      if (!loader || !document.contains(loader)) {
+        loader = document.getElementById('top-loader');
+      }
+      return loader;
+    }
+
+    function setProgress(n) {
+      var el = getLoader();
+      if (!el) return;
+      currentProgress = n;
+      el.style.width = n + '%';
+    }
+
+    function start() {
+      var el = getLoader();
+      if (!el) return;
+
+      if (crawlInterval) clearInterval(crawlInterval);
+      if (finishTimeout) clearTimeout(finishTimeout);
+      if (safetyTimeout) clearTimeout(safetyTimeout);
+
+      isRunning = true;
+      currentProgress = 0;
+      el.style.transition = 'width 180ms cubic-bezier(0.1, 0.05, 0.2, 1), opacity 150ms ease';
+      el.style.opacity = '1';
+      setProgress(15);
+
+      // Smooth incremental crawling (NextTopLoader / NProgress style)
+      crawlInterval = setInterval(function() {
+        if (currentProgress < 90) {
+          var diff = 90 - currentProgress;
+          var step = Math.max(0.5, diff * 0.08 + Math.random() * 2);
+          setProgress(Math.min(90, currentProgress + step));
+        }
+      }, 200);
+
+      // Safety timeout: automatically finish after 8 seconds if navigation gets canceled/aborted
+      safetyTimeout = setTimeout(function() {
+        done();
+      }, 8000);
+    }
+
+    function done() {
+      var el = getLoader();
+      if (!el) return;
+
+      if (crawlInterval) {
+        clearInterval(crawlInterval);
+        crawlInterval = null;
+      }
+      if (safetyTimeout) {
+        clearTimeout(safetyTimeout);
+        safetyTimeout = null;
+      }
+
+      if (!isRunning) return;
+
+      // Finish smoothly to 100%
+      el.style.transition = 'width 150ms ease-out, opacity 250ms ease';
+      setProgress(100);
+
+      finishTimeout = setTimeout(function() {
+        el.style.opacity = '0';
+        setTimeout(function() {
+          setProgress(0);
+          currentProgress = 0;
+          isRunning = false;
+        }, 250);
+      }, 180);
+    }
+
+    function hide() {
+      var el = getLoader();
+      if (crawlInterval) clearInterval(crawlInterval);
+      if (finishTimeout) clearTimeout(finishTimeout);
+      if (safetyTimeout) clearTimeout(safetyTimeout);
+      isRunning = false;
+      if (el) {
+        el.style.opacity = '0';
+        setProgress(0);
+      }
+      currentProgress = 0;
+    }
+
+    // Expose on window for programmatic calls if needed
+    window.__topLoader = {
+      start: start,
+      done: done,
+      hide: hide
+    };
+
+    // 1. Astro View Transitions Events
+    document.addEventListener('astro:before-preparation', function() {
+      start();
+    });
+
+    document.addEventListener('astro:before-swap', function() {
+      if (currentProgress < 85) {
+        setProgress(88);
+      }
+    });
+
+    document.addEventListener('astro:page-load', function() {
+      if (isRunning) {
+        done();
+      }
+    });
+
+    // 2. Intercept internal link clicks for instant 0ms visual feedback
+    document.addEventListener('click', function(e) {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.defaultPrevented) {
+        return;
+      }
+
+      var target = e.target;
+      while (target && target.tagName !== 'A') {
+        target = target.parentElement;
+      }
+
+      if (!target || target.tagName !== 'A') return;
+
+      var href = target.getAttribute('href');
+      var targetAttr = target.getAttribute('target');
+
+      if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:') || targetAttr === '_blank') {
+        return;
+      }
+
+      try {
+        var url = new URL(target.href, window.location.href);
+        if (url.origin === window.location.origin) {
+          if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) {
+            return;
+          }
+          start();
+          try {
+            sessionStorage.setItem('top_loader_pending', '1');
+          } catch (_) {}
+        }
+      } catch (_) {}
+    }, true);
+
+    // 3. Fallback for beforeunload (e.g. form submit, browser back/forward, or full reload)
+    window.addEventListener('beforeunload', function() {
+      start();
+      try {
+        sessionStorage.setItem('top_loader_pending', '1');
+      } catch (_) {}
+    });
+
+    // 4. Handle initial load or page reload with pending navigation
+    try {
+      if (sessionStorage.getItem('top_loader_pending') === '1') {
+        sessionStorage.removeItem('top_loader_pending');
+        start();
+        setTimeout(function() {
+          done();
+        }, 120);
+      }
+    } catch (_) {}
+
+    // 5. Restore from bfcache (back-forward cache)
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) {
+        hide();
+      }
+    });
+  })();
+</script>

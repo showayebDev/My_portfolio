@@ -582,6 +582,10 @@ export interface Profile {
    */
   theme: 'auto' | 'dark' | 'light' | 'a_dark' | 'a_light';
   /**
+   * Select page view transition animation: "fade" (smooth crossfade), "slide" (horizontal navigation), "slide-up" (vertical motion), "zoom" (cinematic scaling), "blur" (depth blur), "flip" (3D card perspective), "no transition- top bar loader" (instant page swap with top progress bar), "none" (instant switch), or "initial" (browser native).
+   */
+  transition: 'fade' | 'slide' | 'slide-up' | 'zoom' | 'blur' | 'flip' | 'top-loader' | 'none' | 'initial';
+  /**
    * When enabled, displays proficiency percentage text and animated circular rings around skill icons. When disabled, displays clean icons and titles.
    */
   showPercent?: boolean | null;
@@ -624,6 +628,7 @@ export interface ProfileSelect<T extends boolean = true> {
   projectsHeaderTitle?: T;
   exploreMoreGitHubUrl?: T;
   theme?: T;
+  transition?: T;
   showPercent?: T;
   updatedAt?: T;
   createdAt?: T;

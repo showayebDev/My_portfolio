@@ -1,11 +1,13 @@
 ---
 import '../styles/globals.css';
 import { ClientRouter } from 'astro:transitions';
+import TopLoader from '../components/TopLoader.astro';
 
 interface Props {
   title?: string;
   description?: string;
   defaultTheme?: string;
+  transition?: string;
   favicon?: string;
   image?: string;
   imageAlt?: string;
@@ -22,6 +24,7 @@ const {
   title = "Showayeb Ahamed – Portfolio",
   description = "Welcome to my portfolio! Discover my skills, projects, and work in web development and software engineering.",
   defaultTheme = "dark",
+  transition,
   favicon,
   image,
   imageAlt,
@@ -82,6 +85,69 @@ function getMimeType(url: string): string {
 
 const ogImageType = getMimeType(ogImage);
 const ogImageAlt = imageAlt || title || siteName;
+
+// View transition animation configured via CMS Profile Global (or prop) (default: 'fade')
+// Supported options:
+// - Built-in: 'fade', 'slide', 'none', 'initial'
+// - Custom:   'zoom', 'slide-up', 'blur', 'flip'
+// - Loader:   'top-loader' / 'no-transition-loader' ('no transition- top bar loader')
+const rawTransition = String(transition || "fade").trim().toLowerCase();
+
+const isTopLoader =
+  rawTransition === 'top-loader' ||
+  rawTransition === 'topbar-loader' ||
+  rawTransition === 'no-transition-loader' ||
+  rawTransition === 'no-transition-top-bar-loader' ||
+  rawTransition === 'no transition- top bar loader' ||
+  rawTransition === 'loader';
+
+const customTransitions: Record<string, any> = {
+  zoom: {
+    forwards: {
+      old: { name: 'vtZoomOut', duration: '0.28s', easing: 'cubic-bezier(0.4, 0, 1, 1)', fillMode: 'both' },
+      new: { name: 'vtZoomIn', duration: '0.28s', easing: 'cubic-bezier(0, 0, 0.2, 1)', fillMode: 'both' },
+    },
+    backwards: {
+      old: { name: 'vtZoomOutReverse', duration: '0.28s', easing: 'cubic-bezier(0.4, 0, 1, 1)', fillMode: 'both' },
+      new: { name: 'vtZoomInReverse', duration: '0.28s', easing: 'cubic-bezier(0, 0, 0.2, 1)', fillMode: 'both' },
+    },
+  },
+  'slide-up': {
+    forwards: {
+      old: { name: 'vtSlideUpOld', duration: '0.3s', easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fillMode: 'both' },
+      new: { name: 'vtSlideUpNew', duration: '0.3s', easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fillMode: 'both' },
+    },
+    backwards: {
+      old: { name: 'vtSlideDownOld', duration: '0.3s', easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fillMode: 'both' },
+      new: { name: 'vtSlideDownNew', duration: '0.3s', easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fillMode: 'both' },
+    },
+  },
+  blur: {
+    forwards: {
+      old: { name: 'vtBlurOut', duration: '0.25s', easing: 'ease-out', fillMode: 'both' },
+      new: { name: 'vtBlurIn', duration: '0.25s', easing: 'ease-in', fillMode: 'both' },
+    },
+    backwards: {
+      old: { name: 'vtBlurOut', duration: '0.25s', easing: 'ease-out', fillMode: 'both' },
+      new: { name: 'vtBlurIn', duration: '0.25s', easing: 'ease-in', fillMode: 'both' },
+    },
+  },
+  flip: {
+    forwards: {
+      old: { name: 'vtFlipOut', duration: '0.32s', easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fillMode: 'both' },
+      new: { name: 'vtFlipIn', duration: '0.32s', easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fillMode: 'both' },
+    },
+    backwards: {
+      old: { name: 'vtFlipOutReverse', duration: '0.32s', easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fillMode: 'both' },
+      new: { name: 'vtFlipInReverse', duration: '0.32s', easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fillMode: 'both' },
+    },
+  },
+};
+
+const builtinTransitions = ['fade', 'slide', 'none', 'initial'];
+const pageTransition = isTopLoader
+  ? 'none'
+  : (customTransitions[rawTransition] || (builtinTransitions.includes(rawTransition) ? rawTransition : 'fade'));
 ---
 
 <!doctype html>
@@ -185,7 +251,11 @@ const ogImageAlt = imageAlt || title || siteName;
       })();
     </script>
   </head>
-  <body class="min-h-screen bg-[var(--bg-color)] text-[var(--text-color)] transition-colors duration-300 antialiased selection:bg-[var(--link-color)] selection:text-white">
+  <body
+    class="min-h-screen bg-[var(--bg-color)] text-[var(--text-color)] transition-colors duration-300 antialiased selection:bg-[var(--link-color)] selection:text-white"
+    transition:animate={pageTransition}
+  >
+    {isTopLoader && <TopLoader />}
     <slot />
   </body>
 </html>

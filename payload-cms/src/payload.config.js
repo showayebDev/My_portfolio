@@ -261,6 +261,11 @@ export default buildConfig({
         pool: {
           connectionString: dbUrl,
           ...(isLocal ? {} : { ssl: { rejectUnauthorized: !allowInsecureSSL } }),
+          connectionTimeoutMillis: 15000,
+          idleTimeoutMillis: 30000,
+          max: 10,
+          keepAlive: true,
+          keepAliveInitialDelayMillis: 10000,
         },
         push: false,
       })
@@ -271,7 +276,25 @@ export default buildConfig({
         const origConnect = adapter.connect
         adapter.connect = async function (options) {
           await ensurePostgresSchema(dbUrl)
-          return origConnect.call(this, options)
+          const maxRetries = 3
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+              return await origConnect.call(this, options)
+            } catch (/** @type {any} */ err) {
+              const errMsg =
+                (Array.isArray(err?.errors) ? err.errors.map((/** @type {any} */ e) => e?.message).filter(Boolean).join('; ') : null) ||
+                err?.message ||
+                String(err)
+              if (attempt < maxRetries) {
+                console.warn(
+                  `⚠️ [Postgres Connection] Attempt ${attempt}/${maxRetries} failed (${errMsg}). Retrying in ${attempt * 1500}ms...`
+                )
+                await new Promise((resolve) => setTimeout(resolve, attempt * 1500))
+              } else {
+                throw new Error(`Error: cannot connect to Postgres: ${errMsg}`)
+              }
+            }
+          }
         }
         return adapter
       }
