@@ -145,10 +145,27 @@ export async function getEducation() {
   return await Promise.all((data?.docs || []).map(sanitizeDocMediaAsync));
 }
 
-export async function getSkills() {
-  const data = await fetchFromApi('/api/skills?sort=sortOrder&limit=100');
-  const filtered = (data?.docs || []).filter((s) => s.showInFrontend !== false);
-  return await Promise.all(filtered.map(sanitizeDocMediaAsync));
+export async function getSkills(profile = null) {
+  const data = await fetchFromApi('/api/skills?limit=100');
+  const allSkills = await Promise.all((data?.docs || []).map(sanitizeDocMediaAsync));
+
+  const targetProfile = profile !== null ? profile : await getProfile().catch(() => null);
+  const selectedList = targetProfile?.skillsOrder;
+  if (Array.isArray(selectedList) && selectedList.length > 0) {
+    const skillMap = new Map(allSkills.map((s) => [String(s.id), s]));
+    const ordered = [];
+    for (const item of selectedList) {
+      const id = String(typeof item === 'object' && item !== null ? item.id : item);
+      if (skillMap.has(id)) {
+        ordered.push(skillMap.get(id));
+      } else if (typeof item === 'object' && item !== null) {
+        ordered.push(await sanitizeDocMediaAsync(item));
+      }
+    }
+    return ordered;
+  }
+
+  return allSkills;
 }
 
 export async function getSkillCategories() {
@@ -189,13 +206,14 @@ export async function getAllProjects() {
 }
 
 export async function getPortfolioData() {
-  const [profile, education, skills, categories, projectsData] = await Promise.all([
+  const [profile, education, categories, projectsData] = await Promise.all([
     getProfile(),
     getEducation(),
-    getSkills(),
     getSkillCategories(),
     getAllProjects(),
   ]);
+
+  const skills = await getSkills(profile);
 
   let featured = [];
   if (Array.isArray(profile?.featuredProjects) && profile.featuredProjects.length > 0) {

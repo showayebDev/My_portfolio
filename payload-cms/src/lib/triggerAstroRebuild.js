@@ -49,7 +49,11 @@ export async function triggerAstroRebuild(reason = 'content updated') {
   const astroSibling = path.resolve(process.cwd(), '../astro');
   const astroDir = fs.existsSync(astroSibling) ? astroSibling : path.resolve(process.cwd(), 'astro');
 
-  exec(`npm run build --prefix "${astroDir}"`, (error, _stdout, _stderr) => {
+  const runtime = process.argv[0].includes('bun') || process.versions.bun ? 'bun' : 'npm';
+  const buildCmd = runtime === 'bun'
+    ? `bun run --cwd "${astroDir}" build`
+    : `npm run build --prefix "${astroDir}"`;
+  exec(buildCmd, (error, _stdout, _stderr) => {
     isRebuilding = false;
     if (error) {
       console.error('[Payload Hook] ❌ Astro build error:', error.message);

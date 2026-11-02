@@ -130,8 +130,6 @@ CREATE TABLE IF NOT EXISTS "skills" (
   "icon_url" varchar,
   "percent" numeric DEFAULT 80,
   "color" varchar DEFAULT '#38bdf8',
-  "sort_order" numeric DEFAULT 0,
-  "show_in_frontend" boolean DEFAULT true,
   "updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   "created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
 );
@@ -259,7 +257,8 @@ CREATE TABLE IF NOT EXISTS "profile_rels" (
   "order" integer,
   "parent_id" integer NOT NULL,
   "path" varchar NOT NULL,
-  "projects_id" integer
+  "projects_id" integer,
+  "skills_id" integer
 );
 
 DO $$ BEGIN
@@ -346,6 +345,10 @@ DO $$ BEGIN
   ALTER TABLE "profile_rels" ADD CONSTRAINT "profile_rels_projects_fk" FOREIGN KEY ("projects_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
+DO $$ BEGIN
+  ALTER TABLE "profile_rels" ADD CONSTRAINT "profile_rels_skills_fk" FOREIGN KEY ("skills_id") REFERENCES "public"."skills"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
 CREATE INDEX IF NOT EXISTS "users_sessions_order_idx" ON "users_sessions" USING btree ("_order");
 CREATE INDEX IF NOT EXISTS "users_sessions_parent_id_idx" ON "users_sessions" USING btree ("_parent_id");
 CREATE INDEX IF NOT EXISTS "users_updated_at_idx" ON "users" USING btree ("updated_at");
@@ -403,6 +406,7 @@ CREATE INDEX IF NOT EXISTS "profile_rels_order_idx" ON "profile_rels" USING btre
 CREATE INDEX IF NOT EXISTS "profile_rels_parent_idx" ON "profile_rels" USING btree ("parent_id");
 CREATE INDEX IF NOT EXISTS "profile_rels_path_idx" ON "profile_rels" USING btree ("path");
 CREATE INDEX IF NOT EXISTS "profile_rels_projects_id_idx" ON "profile_rels" USING btree ("projects_id");
+CREATE INDEX IF NOT EXISTS "profile_rels_skills_id_idx" ON "profile_rels" USING btree ("skills_id");
 `
 
 const checkedUrls = new Set()
@@ -487,8 +491,10 @@ export async function ensurePostgresSchema(connectionString) {
           "order" integer,
           "parent_id" integer NOT NULL,
           "path" varchar NOT NULL,
-          "projects_id" integer
+          "projects_id" integer,
+          "skills_id" integer
         );
+        ALTER TABLE "profile_rels" ADD COLUMN IF NOT EXISTS "skills_id" integer;
         DO $$ BEGIN
           ALTER TABLE "profile_rels" ADD CONSTRAINT "profile_rels_parent_fk" 
           FOREIGN KEY ("parent_id") REFERENCES "public"."profile"("id") ON DELETE cascade ON UPDATE no action;
@@ -497,10 +503,15 @@ export async function ensurePostgresSchema(connectionString) {
           ALTER TABLE "profile_rels" ADD CONSTRAINT "profile_rels_projects_fk" 
           FOREIGN KEY ("projects_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;
         EXCEPTION WHEN duplicate_object THEN null; END $$;
+        DO $$ BEGIN
+          ALTER TABLE "profile_rels" ADD CONSTRAINT "profile_rels_skills_fk" 
+          FOREIGN KEY ("skills_id") REFERENCES "public"."skills"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION WHEN duplicate_object THEN null; END $$;
         CREATE INDEX IF NOT EXISTS "profile_rels_order_idx" ON "profile_rels" USING btree ("order");
         CREATE INDEX IF NOT EXISTS "profile_rels_parent_idx" ON "profile_rels" USING btree ("parent_id");
         CREATE INDEX IF NOT EXISTS "profile_rels_path_idx" ON "profile_rels" USING btree ("path");
         CREATE INDEX IF NOT EXISTS "profile_rels_projects_id_idx" ON "profile_rels" USING btree ("projects_id");
+        CREATE INDEX IF NOT EXISTS "profile_rels_skills_id_idx" ON "profile_rels" USING btree ("skills_id");
 
         ALTER TABLE "profile_socials" ADD COLUMN IF NOT EXISTS "icon_id" integer;
         ALTER TABLE "profile_socials" ADD COLUMN IF NOT EXISTS "icon_url" varchar;

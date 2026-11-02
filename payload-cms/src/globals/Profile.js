@@ -133,6 +133,22 @@ export const Profile = {
           ],
         },
         {
+          label: 'Skills Ordering',
+          fields: [
+            {
+              name: 'skillsOrder',
+              type: 'relationship',
+              relationTo: 'skills',
+              hasMany: true,
+              label: 'Skills Display & Ordering (Drag & drop)',
+              admin: {
+                description:
+                  'Select and drag-and-drop the skills you want displayed on the portfolio in your exact desired order. If left empty, all skills will be displayed automatically.',
+              },
+            },
+          ],
+        },
+        {
           label: 'Contact & Socials',
           fields: [
             {

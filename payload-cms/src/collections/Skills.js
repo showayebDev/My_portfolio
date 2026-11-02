@@ -6,7 +6,7 @@ export const Skills = {
   slug: 'skills',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'showInFrontend', 'categories', 'percent', 'color', 'sortOrder'],
+    defaultColumns: ['name', 'categories', 'percent', 'color'],
   },
   access: {
     read: () => true
@@ -76,22 +76,7 @@ export const Skills = {
           label: 'Accent Color / Hex Code (e.g. #61dafb)',
           defaultValue: '#38bdf8',
         },
-        {
-          name: 'sortOrder',
-          type: 'number',
-          label: 'Sort Order',
-          defaultValue: 0,
-        },
       ],
-    },
-    {
-      name: 'showInFrontend',
-      type: 'checkbox',
-      label: 'Show in Frontend',
-      defaultValue: true,
-      admin: {
-        description: 'Check to show this skill on the front end portfolio. Uncheck to hide it.',
-      },
     },
   ],
 }

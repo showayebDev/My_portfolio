@@ -218,11 +218,6 @@ export interface Skill {
   iconUrl?: string | null;
   percent?: number | null;
   color?: string | null;
-  sortOrder?: number | null;
-  /**
-   * Check to show this skill on the front end portfolio. Uncheck to hide it.
-   */
-  showInFrontend?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -427,8 +422,6 @@ export interface SkillsSelect<T extends boolean = true> {
   iconUrl?: T;
   percent?: T;
   color?: T;
-  sortOrder?: T;
-  showInFrontend?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -527,6 +520,10 @@ export interface Profile {
    * Select and drag-and-drop projects to set your custom display order on the /project page. Any remaining projects not added here will automatically appear after them, ordered newest first.
    */
   allProjectsOrder?: (number | Project)[] | null;
+  /**
+   * Select and drag-and-drop the skills you want displayed on the portfolio in your exact desired order. If left empty, all skills will be displayed automatically.
+   */
+  skillsOrder?: (number | Skill)[] | null;
   email?: string | null;
   socials?:
     | {
@@ -611,6 +608,7 @@ export interface ProfileSelect<T extends boolean = true> {
   avatarUrl?: T;
   featuredProjects?: T;
   allProjectsOrder?: T;
+  skillsOrder?: T;
   email?: T;
   socials?:
     | T

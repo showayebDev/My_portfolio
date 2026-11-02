@@ -4,16 +4,17 @@
   "description": "Payload CMS Backend for Portfolio",
   "license": "MIT",
   "type": "module",
+  "packageManager": "bun@1.4.4",
   "scripts": {
     "version:gen": "node scripts/generate-version.mjs",
     "clean:lock": "node -e \"import('fs').then(fs => { if (fs.existsSync('.next/lock')) fs.unlinkSync('.next/lock'); })\"",
-    "build": "node scripts/generate-version.mjs && npm run clean:lock && cross-env NODE_OPTIONS=\"--no-deprecation --dns-result-order=ipv4first --max-old-space-size=8000\" next build --webpack",
+    "build": "node scripts/generate-version.mjs && node -e \"import('fs').then(fs => { if (fs.existsSync('.next/lock')) fs.unlinkSync('.next/lock'); })\" && cross-env NODE_OPTIONS=\"--no-deprecation --dns-result-order=ipv4first --max-old-space-size=8000\" next build --webpack",
     "dev": "node scripts/generate-version.mjs && cross-env NODE_OPTIONS=\"--no-deprecation --dns-result-order=ipv4first\" next dev",
     "develop": "node scripts/generate-version.mjs && cross-env NODE_OPTIONS=\"--no-deprecation --dns-result-order=ipv4first\" next dev",
     "devsafe": "node scripts/generate-version.mjs && rm -rf .next && cross-env NODE_OPTIONS=\"--no-deprecation --dns-result-order=ipv4first\" next dev",
     "generate:importmap": "cross-env NODE_OPTIONS=\"--no-deprecation --dns-result-order=ipv4first\" payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=\"--no-deprecation --dns-result-order=ipv4first\" payload generate:types",
-    "ii": "npm install",
+    "ii": "bun install",
     "lint": "cross-env NODE_OPTIONS=\"--no-deprecation --dns-result-order=ipv4first\" eslint .",
     "payload": "cross-env NODE_OPTIONS=\"--no-deprecation --dns-result-order=ipv4first\" payload",
     "start": "cross-env NODE_OPTIONS=\"--no-deprecation --dns-result-order=ipv4first\" next start",
@@ -67,7 +68,7 @@
   },
   "engines": {
     "node": ">=20.18.1",
-    "pnpm": "^9 || ^10 || ^11"
+    "bun": ">=1.0.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

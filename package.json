@@ -3,19 +3,24 @@
   "version": "1.0.0",
   "private": true,
   "description": "Portfolio Monorepo: Astro SSG Frontend & Payload CMS Backend",
+  "packageManager": "bun@1.4.4",
   "scripts": {
-    "start:cms": "npm run start --prefix payload-cms",
-    "start:astro": "npm run preview --prefix astro",
-    "dev:cms": "npm run dev --prefix payload-cms",
-    "dev:astro": "npm run dev --prefix astro",
-    "build": "npm run build:cms && npm run build:astro",
-    "build:cms": "npm run build --prefix payload-cms",
-    "build:astro": "npm run build --prefix astro",
-    "install:cms": "npm install --prefix payload-cms",
-    "install:astro": "npm install --prefix astro",
-    "install:all": "npm install --prefix payload-cms && npm install --prefix astro"
+    "start:cms": "node scripts/run.mjs cms start",
+    "start:astro": "node scripts/run.mjs astro preview",
+    "dev:cms": "node scripts/run.mjs cms dev",
+    "dev:astro": "node scripts/run.mjs astro dev",
+    "build": "node scripts/run.mjs all build",
+    "build:cms": "node scripts/run.mjs cms build",
+    "build:astro": "node scripts/run.mjs astro build",
+    "install:cms": "node scripts/run.mjs cms install",
+    "install:astro": "node scripts/run.mjs astro install",
+    "install:all": "node scripts/run.mjs all install"
   },
   "devDependencies": {
     "wrangler": "^4.152.0"
+  },
+  "engines": {
+    "node": ">=22.23.4",
+    "bun": ">=1.0.0"
   }
 }

@@ -1160,8 +1160,6 @@ export async function executeDumpImport(targetPayload, dump) {
           color: item.color || '#38bdf8',
           ...(mappedIcon ? { icon: mappedIcon } : {}),
           iconUrl: item.iconUrl || '',
-          sortOrder: item.sortOrder ?? 0,
-          showInFrontend: item.showInFrontend ?? true,
         }
 
         if (existing.docs.length > 0) {
@@ -1171,6 +1169,7 @@ export async function executeDumpImport(targetPayload, dump) {
             data: skillData,
           })
           idMap.skills[oldId] = updated.id
+          if (item.name) idMap.skills[item.name] = updated.id
           stats.skills++
         } else {
           const created = await targetPayload.create({
@@ -1178,6 +1177,7 @@ export async function executeDumpImport(targetPayload, dump) {
             data: skillData,
           })
           idMap.skills[oldId] = created.id
+          if (item.name) idMap.skills[item.name] = created.id
           stats.skills++
         }
       } catch (/** @type {any} */ skillErr) {
@@ -1339,6 +1339,28 @@ export async function executeDumpImport(targetPayload, dump) {
           .map((prj) => idMap.projects[prj.id || prj._id] || (prj.slug ? idMap.projects[prj.slug] : null))
           .filter(Boolean)
         cleanProfileData.allProjectsOrder = legacyOrder
+      }
+
+      // Map skillsOrder (hasMany relationship)
+      if (Array.isArray(cleanProfileData.skillsOrder)) {
+        cleanProfileData.skillsOrder = cleanProfileData.skillsOrder
+          .map((/** @type {any} */ item) => {
+            const oldId = typeof item === 'object' && item !== null ? item.id || item._id : item
+            const name = typeof item === 'object' && item !== null ? item.name : null
+            return idMap.skills[oldId] || (name ? idMap.skills[name] : null) || null
+          })
+          .filter(Boolean)
+      } else {
+        // Fallback for older dumps where skills had sortOrder / showInFrontend
+        const sortedSkills = [...(collections['skills'] || [])]
+          .filter((s) => s.showInFrontend !== false)
+          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+        const legacySkills = sortedSkills
+          .map((s) => idMap.skills[s.id || s._id] || (s.name ? idMap.skills[s.name] : null))
+          .filter(Boolean)
+        if (legacySkills.length > 0) {
+          cleanProfileData.skillsOrder = legacySkills
+        }
       }
 
       await targetPayload.updateGlobal({

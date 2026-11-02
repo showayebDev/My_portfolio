@@ -76,14 +76,14 @@ My_portfolio/
 * **Framework:** [Astro 7](https://astro.build/) (Static Site Generation)
 * **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
 * **Markdown:** [Marked](https://marked.js.org/) & [Highlight.js](https://highlightjs.org/)
-* **Runtime:** Node.js `>= 22`
+* **Runtime & Package Manager:** [Bun](https://bun.sh/) `>= 1.0` (or Node.js `>= 22`)
 
 ### Backend (`payload-cms/`)
 * **Framework:** [Next.js 16](https://nextjs.org/) (Standalone Output) & [React 19](https://react.org/)
 * **Headless CMS:** [Payload CMS 3.x](https://payloadcms.com/)
 * **Editor:** Lexical Rich Text & Markdown Editor
 * **API Documentation:** Interactive Swagger UI at `/docs`
-* **Runtime:** Node.js `>= 20`
+* **Runtime & Package Manager:** [Bun](https://bun.sh/) `>= 1.0` (or Node.js `>= 20`)
 
 ### Databases & Cloud Storage
 * **Databases:** PostgreSQL (Neon Cloud / Supabase / Local)
@@ -107,11 +107,11 @@ This project implements an optional, zero-trust **`FULL_RESTRICTION`** security 
 
 ## 🚀 Getting Started
 
-### Method 1: Local Development (Node.js)
+### Local Development (Bun)
 
 #### 1. Install all dependencies across the monorepo:
 ```bash
-npm run install:all
+bun run install:all
 ```
 
 #### 2. Configure Environment Variables:
@@ -132,12 +132,35 @@ npm run install:all
 #### 3. Start Development Servers:
 * **Start CMS Backend:**
   ```bash
+  bun run dev:cms        # Runs Payload CMS at http://localhost:3000
+  ```
+* **Start Astro Frontend:**
+  ```bash
+  bun run dev:astro      # Runs Astro Dev Server at http://localhost:4321
+  ```
+
+---
+
+### Local Development (Node.js — Alternative)
+
+Bun is the primary runtime, but the project also works under Node.js `>= 22`. Use `npm` instead of `bun` for the commands below:
+
+#### 1. Install all dependencies across the monorepo:
+```bash
+npm run install:all
+```
+
+#### 2. Start Development Servers:
+* **Start CMS Backend:**
+  ```bash
   npm run dev:cms        # Runs Payload CMS at http://localhost:3000
   ```
 * **Start Astro Frontend:**
   ```bash
   npm run dev:astro      # Runs Astro Dev Server at http://localhost:4321
   ```
+
+> **Note:** When running under Node.js, the Payload CMS `triggerAstroRebuild` hook automatically detects the runtime and runs the Astro rebuild with `npm run build --prefix astro` instead of `bun`.
 
 ---
 
@@ -147,12 +170,12 @@ Run these scripts from the repository root:
 
 | Command | Description |
 | :--- | :--- |
-| **`npm run install:all`** | Installs `node_modules` for both `astro` and `payload-cms` |
-| **`npm run dev:cms`** | Starts Payload CMS Next.js backend in development mode |
-| **`npm run dev:astro`** | Starts Astro frontend in local development mode |
-| **`npm run build`** | Builds both Payload CMS and Astro for production |
-| **`npm run build:cms`** | Builds Payload CMS backend for production |
-| **`npm run build:astro`** | Builds Astro frontend for production |
+| **`bun run install:all`** | Installs `node_modules` for both `astro` and `payload-cms` |
+| **`bun run dev:cms`** | Starts Payload CMS Next.js backend in development mode |
+| **`bun run dev:astro`** | Starts Astro frontend in local development mode |
+| **`bun run build`** | Builds both Payload CMS and Astro for production |
+| **`bun run build:cms`** | Builds Payload CMS backend for production |
+| **`bun run build:astro`** | Builds Astro frontend for production |
 
 ---
 
