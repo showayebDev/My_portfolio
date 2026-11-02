@@ -108,7 +108,7 @@ export async function handleS3GenerateSignedURL(req) {
   })
 
   // URL valid for 15 minutes (900 seconds)
-  const url = await getSignedUrl(signingClient, command, {
+  const url = await getSignedUrl(/** @type {any} */ (signingClient), command, {
     expiresIn: 900,
     signableHeaders,
   })

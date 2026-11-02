@@ -533,7 +533,7 @@ export async function handlePresignUpload(req) {
     })
 
     // URL valid for 15 minutes (900 seconds)
-    const uploadUrl = await getSignedUrl(signingClient, command, { expiresIn: 900 })
+    const uploadUrl = await getSignedUrl(/** @type {any} */ (signingClient), command, { expiresIn: 900 })
 
     const publicUrlBase = (process.env.S3_PUBLIC_URL || process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
     const publicUrl = publicUrlBase ? `${publicUrlBase}/${s3Key}` : `/api/media/file/${encodeURIComponent(filename)}?prefix=${encodeURIComponent(safePrefix)}`
